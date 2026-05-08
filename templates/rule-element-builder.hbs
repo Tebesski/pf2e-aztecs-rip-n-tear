@@ -1,0 +1,202 @@
+<form autocomplete="off" onsubmit="event.preventDefault();">
+<div class="rnt-scrollable">
+
+   <div class="rnt-section">
+      <div class="rnt-section-title"><i class="fa-solid fa-gears rnt-section-title-icon"></i>{{localize "pf2e-aztecs-rip-n-tear.ruleElement"}}</div>
+      <div class="rnt-field">
+         <label class="rnt-field-label">{{localize "pf2e-aztecs-rip-n-tear.category"}}</label>
+         <div class="rnt-field-control">
+            <select name="category" id="re-category">
+               <option value="custom" {{#if isCustom}}selected{{/if}}>{{localize "pf2e-aztecs-rip-n-tear.custom"}}</option>
+               <option value="speed" {{#if isSpeed}}selected{{/if}}>{{localize "pf2e-aztecs-rip-n-tear.speed"}}</option>
+               <option value="save" {{#if isSave}}selected{{/if}}>{{localize "pf2e-aztecs-rip-n-tear.save"}}</option>
+               <option value="attack" {{#if isAttack}}selected{{/if}}>{{localize "pf2e-aztecs-rip-n-tear.attack"}}</option>
+               <option value="damage" {{#if isDamage}}selected{{/if}}>{{localize "pf2e-aztecs-rip-n-tear.damage"}}</option>
+               <option value="iwr" {{#if isIWR}}selected{{/if}}>{{localize "pf2e-aztecs-rip-n-tear.iwrLong"}}</option>
+               <option value="skill" {{#if isSkill}}selected{{/if}}>{{localize "pf2e-aztecs-rip-n-tear.skill"}}</option>
+               <option value="maxHp" {{#if isMaxHp}}selected{{/if}}>{{localize "pf2e-aztecs-rip-n-tear.maxHp"}}</option>
+               <option value="ac" {{#if isAc}}selected{{/if}}>{{localize "pf2e-aztecs-rip-n-tear.ac"}}</option>
+               <option value="spellDc" {{#if isSpellDc}}selected{{/if}}>{{localize "pf2e-aztecs-rip-n-tear.spellDc"}}</option>
+               <option value="spellAttack" {{#if isSpellAttack}}selected{{/if}}>{{localize "pf2e-aztecs-rip-n-tear.spellAttack"}}</option>
+               <option value="initiative" {{#if isInitiative}}selected{{/if}}>{{localize "pf2e-aztecs-rip-n-tear.initiative"}}</option>
+            </select>
+         </div>
+      </div>
+   </div>
+
+   <div class="rnt-section">
+      {{#if isCustom}}
+      <div class="rnt-field rnt-field-stack">
+         <label class="rnt-field-label">{{localize "pf2e-aztecs-rip-n-tear.json"}}</label>
+         <textarea name="customJson" rows="10">{
+  "key": "FlatModifier",
+  "selector": "ac",
+  "value": -1
+}</textarea>
+      </div>
+      {{/if}}
+
+      {{#if isSpeed}}
+      <div class="rnt-field">
+         <label class="rnt-field-label">{{localize "pf2e-aztecs-rip-n-tear.targetSpeed"}}</label>
+         <div class="rnt-field-control">
+            <select name="speedTarget">
+               <option value="speed">{{localize "pf2e-aztecs-rip-n-tear.allSpeeds"}}</option>
+               <option value="land-speed">{{localize "pf2e-aztecs-rip-n-tear.landSpeed"}}</option>
+               <option value="fly-speed">{{localize "pf2e-aztecs-rip-n-tear.flySpeed"}}</option>
+               <option value="swim-speed">{{localize "pf2e-aztecs-rip-n-tear.swimSpeed"}}</option>
+               <option value="burrow-speed">{{localize "pf2e-aztecs-rip-n-tear.burrowSpeed"}}</option>
+               <option value="climb-speed">{{localize "pf2e-aztecs-rip-n-tear.climbSpeed"}}</option>
+            </select>
+         </div>
+      </div>
+      {{/if}}
+
+      {{#if isSave}}
+      <div class="rnt-field">
+         <label class="rnt-field-label">{{localize "pf2e-aztecs-rip-n-tear.targetSave"}}</label>
+         <div class="rnt-field-control">
+            <select name="saveTarget">
+               <option value="saving-throw">{{localize "pf2e-aztecs-rip-n-tear.allSaves"}}</option>
+               <option value="fortitude">{{localize "pf2e-aztecs-rip-n-tear.fortitude"}}</option>
+               <option value="reflex">{{localize "pf2e-aztecs-rip-n-tear.reflex"}}</option>
+               <option value="will">{{localize "pf2e-aztecs-rip-n-tear.will"}}</option>
+            </select>
+         </div>
+      </div>
+      {{/if}}
+
+      {{#if isAttack}}
+      <div class="rnt-field">
+         <label class="rnt-field-label">{{localize "pf2e-aztecs-rip-n-tear.targetAttack"}}</label>
+         <div class="rnt-field-control">
+            <select name="attackTarget">
+               <option value="all">{{localize "pf2e-aztecs-rip-n-tear.allAttacks"}}</option>
+               {{#each attacks}}<option value="{{this.slug}}">{{this.name}}</option>{{/each}}
+            </select>
+         </div>
+      </div>
+      {{/if}}
+
+      {{#if isSkill}}
+      <div class="rnt-field">
+         <label class="rnt-field-label">{{localize "pf2e-aztecs-rip-n-tear.targetSkill"}}</label>
+         <div class="rnt-field-control">
+            <select name="skillTarget">
+               <option value="skill-check">{{localize "pf2e-aztecs-rip-n-tear.allSkills"}}</option>
+               {{#each skills}}<option value="{{this.slug}}">{{this.label}}</option>{{/each}}
+            </select>
+         </div>
+      </div>
+      {{/if}}
+
+      {{#if isIWR}}
+      <div class="rnt-field">
+         <label class="rnt-field-label">{{localize "pf2e-aztecs-rip-n-tear.iwrType"}}</label>
+         <div class="rnt-field-control">
+            <select name="iwrType">
+               <option value="Weakness">{{localize "pf2e-aztecs-rip-n-tear.weakness"}}</option>
+               <option value="Resistance">{{localize "pf2e-aztecs-rip-n-tear.resistance"}}</option>
+               <option value="Immunity">{{localize "pf2e-aztecs-rip-n-tear.immunity"}}</option>
+            </select>
+         </div>
+      </div>
+      <div class="rnt-field">
+         <label class="rnt-field-label">{{localize "pf2e-aztecs-rip-n-tear.damageType"}}</label>
+         <div class="rnt-field-control">
+            <select name="dmgType">
+               {{#each dmgTypes}}<option value="{{this.slug}}">{{this.label}}</option>{{/each}}
+            </select>
+         </div>
+      </div>
+      <div class="rnt-field">
+         <label class="rnt-field-label">{{localize "pf2e-aztecs-rip-n-tear.value"}}</label>
+         <div class="rnt-field-control"><input type="number" name="value" value="5" /></div>
+      </div>
+      {{/if}}
+
+      {{#if isDamage}}
+      <div class="rnt-field">
+         <label class="rnt-field-label">{{localize "pf2e-aztecs-rip-n-tear.targetAttack"}}</label>
+         <div class="rnt-field-control">
+            <select name="attackTarget">
+               <option value="all">{{localize "pf2e-aztecs-rip-n-tear.allAttacks"}}</option>
+               {{#each attacks}}<option value="{{this.slug}}">{{this.name}}</option>{{/each}}
+            </select>
+         </div>
+      </div>
+      <div class="rnt-field">
+         <label class="rnt-field-label">{{localize "pf2e-aztecs-rip-n-tear.damageKind"}}</label>
+         <div class="rnt-field-control">
+            <select name="dmgKind">
+               <option value="flat">{{localize "pf2e-aztecs-rip-n-tear.flatDamage"}}</option>
+               <option value="dice">{{localize "pf2e-aztecs-rip-n-tear.damageDice"}}</option>
+            </select>
+         </div>
+      </div>
+      <div class="rnt-field rnt-field-stack">
+         <label class="rnt-field-label">{{localize "pf2e-aztecs-rip-n-tear.value"}} / {{localize "pf2e-aztecs-rip-n-tear.dice"}}</label>
+         <div class="rnt-input-group">
+            <input type="number" name="value" value="1" placeholder="{{localize 'pf2e-aztecs-rip-n-tear.flatDamage'}}" />
+            <span style="color: var(--rnt-text-muted); padding: 0 4px;">{{localize "pf2e-aztecs-rip-n-tear.or"}}</span>
+            <input type="number" name="diceNum" value="1" />
+            <span style="color: var(--rnt-text-muted);">d</span>
+            <select name="diceStep" style="flex: 0 0 60px;">
+               <option value="4">4</option>
+               <option value="6">6</option>
+               <option value="8">8</option>
+               <option value="10">10</option>
+               <option value="12">12</option>
+            </select>
+         </div>
+      </div>
+      <div class="rnt-field-grid">
+         <div class="rnt-field">
+            <label class="rnt-field-label">{{localize "pf2e-aztecs-rip-n-tear.damageType"}}</label>
+            <div class="rnt-field-control">
+               <select name="dmgType">
+                  {{#each dmgTypes}}<option value="{{this.slug}}">{{this.label}}</option>{{/each}}
+               </select>
+            </div>
+         </div>
+         <div class="rnt-field">
+            <label class="rnt-field-label">{{localize "pf2e-aztecs-rip-n-tear.damageCategory"}}</label>
+            <div class="rnt-field-control">
+               <select name="dmgCategory">
+                  <option value="">{{localize "pf2e-aztecs-rip-n-tear.normal"}}</option>
+                  <option value="persistent">{{localize "pf2e-aztecs-rip-n-tear.persistent"}}</option>
+                  <option value="precision">{{localize "pf2e-aztecs-rip-n-tear.precision"}}</option>
+                  <option value="splash">{{localize "pf2e-aztecs-rip-n-tear.splash"}}</option>
+               </select>
+            </div>
+         </div>
+      </div>
+      {{/if}}
+
+      {{#if showModifier}}
+      <div class="rnt-field-grid">
+         <div class="rnt-field">
+            <label class="rnt-field-label">{{localize "pf2e-aztecs-rip-n-tear.value"}}</label>
+            <div class="rnt-field-control"><input type="number" name="value" value="{{defaultValue}}" /></div>
+         </div>
+         <div class="rnt-field">
+            <label class="rnt-field-label">{{localize "pf2e-aztecs-rip-n-tear.modifierType"}}</label>
+            <div class="rnt-field-control">
+               <select name="modType">
+                  <option value="untyped">{{localize "pf2e-aztecs-rip-n-tear.untyped"}}</option>
+                  <option value="status">{{localize "pf2e-aztecs-rip-n-tear.status"}}</option>
+                  <option value="circumstance">{{localize "pf2e-aztecs-rip-n-tear.circumstance"}}</option>
+               </select>
+            </div>
+         </div>
+      </div>
+      {{/if}}
+   </div>
+
+</div>
+<div class="rnt-footer">
+   <button type="button" class="rnt-btn-primary rnt-btn-block" data-action="saveRuleElement">
+      <i class="fa-solid fa-save"></i> {{localize "pf2e-aztecs-rip-n-tear.confirm"}}
+   </button>
+</div>
+</form>

@@ -1,0 +1,43 @@
+<form autocomplete="off" onsubmit="event.preventDefault();">
+<div class="rnt-scrollable">
+
+   <div class="rnt-section">
+      <div class="rnt-section-title"><i class="fa-solid fa-heart rnt-section-title-icon"></i>{{part.name}}</div>
+      <div class="rnt-persistent-info">
+         <div class="rnt-persistent-info-row">
+            <strong>{{#if part.useRupture}}{{localize "pf2e-aztecs-rip-n-tear.ruptureHp"}}{{else}}{{localize "pf2e-aztecs-rip-n-tear.hp"}}{{/if}}</strong>
+            <span>{{part.hp.value}} / {{part.hp.max}}</span>
+         </div>
+      </div>
+   </div>
+
+   <div class="rnt-section">
+      <label class="rnt-toggle">
+         <input type="checkbox" data-action="toggleHoT" {{#if isHoT}}checked{{/if}} />
+         <span><i class="fa-solid fa-clock-rotate-left"></i> {{localize "pf2e-aztecs-rip-n-tear.healOverTime"}}</span>
+      </label>
+
+      {{#if isHoT}}
+      <div class="rnt-field">
+         <label class="rnt-field-label">{{localize "pf2e-aztecs-rip-n-tear.healPerRound"}}</label>
+         <div class="rnt-field-control"><input type="number" name="hotAmount" value="1" autofocus /></div>
+      </div>
+      <div class="rnt-field">
+         <label class="rnt-field-label">{{localize "pf2e-aztecs-rip-n-tear.durationRounds"}}</label>
+         <div class="rnt-field-control"><input type="number" name="hotDuration" value="3" /></div>
+      </div>
+      {{else}}
+      <div class="rnt-field">
+         <label class="rnt-field-label">{{localize "pf2e-aztecs-rip-n-tear.healAmount"}}</label>
+         <div class="rnt-field-control"><input type="number" name="healAmount" value="1" autofocus /></div>
+      </div>
+      {{/if}}
+   </div>
+
+</div>
+<div class="rnt-footer">
+   <button type="button" class="rnt-btn-primary rnt-btn-block" data-action="applyHeal">
+      <i class="fa-solid fa-heart-circle-plus"></i> {{localize "pf2e-aztecs-rip-n-tear.healBtn"}}
+   </button>
+</div>
+</form>

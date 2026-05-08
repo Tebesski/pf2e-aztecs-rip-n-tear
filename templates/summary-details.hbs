@@ -1,0 +1,90 @@
+<div class="rnt-summary-details rnt-scrollable" style="max-height: 600px;">
+   {{#if isThresholds}}
+   <ul class="rnt-summary-list">
+      {{#each item.thresholds as |t|}}
+      <li>
+         <div style="font-weight: 700; padding-bottom: 4px; border-bottom: 1px solid var(--rnt-border); margin-bottom: 6px;">
+            <i class="fa-solid fa-heart" style="color: var(--rnt-warning);"></i> {{localize "pf2e-aztecs-rip-n-tear.atHp"}} {{t.hpValue}} {{localize "pf2e-aztecs-rip-n-tear.hp"}}
+            {{#if t.disableAbilities}}<span style="color: var(--rnt-danger); font-size: var(--rnt-font-size-xs); margin-left: 8px;">({{localize "pf2e-aztecs-rip-n-tear.disableAbilities"}})</span>{{/if}}
+         </div>
+
+         {{#if t.conditions.length}}
+         <div style="margin-top: 4px;"><strong>{{localize "pf2e-aztecs-rip-n-tear.conditions"}}:</strong>
+            <ul style="margin: 0; padding-left: 20px;">
+               {{#each t.conditions}}
+               <li style="text-transform: capitalize;">{{this.slug}} {{#if this.hasValue}}{{this.value}}{{/if}}</li>
+               {{/each}}
+            </ul>
+         </div>
+         {{/if}}
+
+         {{#if t.effects.length}}
+         <div style="margin-top: 4px;"><strong>{{localize "pf2e-aztecs-rip-n-tear.effects"}}:</strong>
+            <ul style="margin: 0; padding-left: 20px;">
+               {{#each t.effects}}
+               <li>
+                  <img src="{{this.img}}" style="width: 16px; height: 16px; vertical-align: middle; border: none;" onerror="this.src='icons/svg/mystery-man.svg';"/>
+                  {{this.name}}
+               </li>
+               {{/each}}
+            </ul>
+         </div>
+         {{/if}}
+
+         {{#if t.damages.length}}
+         <div style="margin-top: 4px;"><strong>{{localize "pf2e-aztecs-rip-n-tear.damages"}}:</strong>
+            <ul style="margin: 0; padding-left: 20px;">
+               {{#each t.damages}}
+               <li style="text-transform: capitalize;">
+                  {{this.diceNum}}{{#if this.diceStep}}d{{this.diceStep}}{{/if}} {{this.dmgType}} {{#if this.dmgCategory}}({{this.dmgCategory}}){{/if}}
+               </li>
+               {{/each}}
+            </ul>
+         </div>
+         {{/if}}
+
+         {{#if t.ruleElements.length}}
+         <div style="margin-top: 4px;"><strong>{{localize "pf2e-aztecs-rip-n-tear.ruleElements"}}:</strong> {{#if t.customDescription}}{{t.customDescription}}{{else}}{{localize "pf2e-aztecs-rip-n-tear.noDescription"}}{{/if}}</div>
+         {{/if}}
+      </li>
+      {{/each}}
+   </ul>
+   {{/if}}
+
+   {{#if isTriggers}}
+   <ul class="rnt-summary-list">
+      {{#each item.triggers as |trig|}}
+      <li>
+         <div style="font-weight: 700; padding-bottom: 4px; border-bottom: 1px solid var(--rnt-border); margin-bottom: 6px; text-transform: capitalize;">
+            <i class="fa-solid fa-bolt" style="color: var(--rnt-info);"></i> {{trig.type}} → {{trig.target}}
+            {{#if (eq trig.target "aura")}}<span style="font-weight: normal; font-size: var(--rnt-font-size-xs); color: var(--rnt-text-muted);">({{trig.radius}}ft, {{trig.targetFilters}})</span>{{/if}}
+         </div>
+
+         {{#if (eq trig.type "damage")}}
+         <ul style="margin: 0; padding-left: 20px;">
+            {{#each trig.damages}}
+            <li style="text-transform: capitalize;">
+               {{this.diceNum}}{{#if this.diceStep}}d{{this.diceStep}}{{/if}} {{this.dmgType}} {{#if this.dmgCategory}}({{this.dmgCategory}}){{/if}}
+            </li>
+            {{/each}}
+         </ul>
+         {{/if}}
+
+         {{#if (eq trig.type "effect")}}
+         <div style="display: flex; align-items: center; gap: 6px;">
+            <img src="{{trig.img}}" style="width: 20px; height: 20px; border: none;" onerror="this.src='icons/svg/mystery-man.svg';"/>
+            {{#if trig.name}}{{trig.name}}{{else}}{{localize "pf2e-aztecs-rip-n-tear.unknownEffect"}}{{/if}}
+         </div>
+         {{/if}}
+
+         {{#if (eq trig.type "condition")}}
+         <div style="display: flex; align-items: center; gap: 6px; text-transform: capitalize;">
+            <img src="systems/pf2e/icons/conditions/{{#if trig.slug}}{{trig.slug}}{{else}}blinded{{/if}}.webp" style="width: 20px; height: 20px; border: none;" onerror="this.src='icons/svg/hazard.svg';"/>
+            {{#if trig.slug}}{{trig.slug}}{{else}}{{localize "pf2e-aztecs-rip-n-tear.blinded"}}{{/if}} {{#if trig.hasValue}}{{trig.value}}{{/if}}
+         </div>
+         {{/if}}
+      </li>
+      {{/each}}
+   </ul>
+   {{/if}}
+</div>

@@ -1,0 +1,37 @@
+<div class="rnt-persistent">
+
+   <div class="rnt-persistent-headline">
+      {{{headlineHtml}}}
+      <span class="rnt-persistent-amount">{{amount}} {{localize "pf2e-aztecs-rip-n-tear.persistent"}} {{dmgType}}</span>
+   </div>
+
+   <div class="rnt-persistent-info">
+      <div class="rnt-persistent-info-row"><strong>{{localize "pf2e-aztecs-rip-n-tear.hp"}}</strong><span>{{part.hp.value}} / {{part.hp.max}}</span></div>
+      <div class="rnt-persistent-info-row"><strong>{{localize "pf2e-aztecs-rip-n-tear.immunities"}}</strong><span>{{iwrImmune}}</span></div>
+      <div class="rnt-persistent-info-row"><strong>{{localize "pf2e-aztecs-rip-n-tear.weaknesses"}}</strong><span>{{iwrWeak}}</span></div>
+      <div class="rnt-persistent-info-row"><strong>{{localize "pf2e-aztecs-rip-n-tear.resistances"}}</strong><span>{{iwrResist}}</span></div>
+   </div>
+
+   <div class="rnt-persistent-actions">
+      <button type="button" class="rnt-btn rnt-btn-danger rnt-btn-block" data-action="dealDamage">
+         <i class="fa-solid fa-heart-crack"></i> {{localize "pf2e-aztecs-rip-n-tear.dealDamage"}}
+      </button>
+
+      <div class="rnt-input-group">
+         <button type="button" class="rnt-btn" data-action="rollRecovery" style="flex: 1;">
+            <i class="fa-solid fa-dice-d20"></i> {{localize "pf2e-aztecs-rip-n-tear.rollRecovery"}}
+         </button>
+         <label class="rnt-toggle" style="flex: 0 0 auto;">{{localize "pf2e-aztecs-rip-n-tear.dc"}}</label>
+         <input type="number" id="recoveryDc" value="{{defaultDc}}" class="rnt-input-tiny" style="text-align: center; font-weight: 700;">
+      </div>
+
+      <label class="rnt-toggle" style="justify-content: flex-end; font-size: var(--rnt-font-size-xs);">
+         <input type="checkbox" id="rememberDc" {{#if rememberDc}}checked{{/if}}> {{localize "pf2e-aztecs-rip-n-tear.rememberDc"}}
+      </label>
+
+      <button type="button" class="rnt-btn rnt-btn-block" data-action="removeEffect">
+         <i class="fa-solid fa-trash"></i> {{localize "pf2e-aztecs-rip-n-tear.removeEffect"}}
+      </button>
+   </div>
+
+</div>

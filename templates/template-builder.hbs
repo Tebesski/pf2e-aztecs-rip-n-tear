@@ -1,0 +1,133 @@
+<div class="rnt-scrollable" style="display: flex; flex-direction: column; gap: 12px;">
+
+   {{!-- ===================== TOP: composer ===================== --}}
+   <div class="rnt-section">
+      <div class="rnt-section-title">{{localize "pf2e-aztecs-rip-n-tear.tplNew"}}</div>
+
+      <div class="rnt-field">
+         <label class="rnt-field-label">{{localize "pf2e-aztecs-rip-n-tear.templateName"}}</label>
+         <div class="rnt-field-control"><input type="text" name="tplName" value="{{working.name}}" placeholder="{{localize 'pf2e-aztecs-rip-n-tear.templateNamePh'}}" /></div>
+      </div>
+
+      <label class="rnt-toggle">
+         <input type="checkbox" name="tplAutoApply" {{#if working.autoApply}}checked{{/if}} />
+         <span>{{localize "pf2e-aztecs-rip-n-tear.tplAutoApply"}}</span>
+      </label>
+
+      {{#if working.autoApply}}
+      <div class="rnt-field">
+         <label class="rnt-field-label">{{localize "pf2e-aztecs-rip-n-tear.tplTraits"}}</label>
+         <div class="rnt-field-control"><input type="text" name="tplTraits" value="{{working.traits}}" placeholder="{{localize 'pf2e-aztecs-rip-n-tear.tplTraitsPh'}}" /></div>
+      </div>
+      {{/if}}
+
+      <div class="rnt-subsection-title">
+         <span class="rnt-section-title-flex"><i class="fa-solid fa-bone"></i> {{localize "pf2e-aztecs-rip-n-tear.title"}}</span>
+         <a class="rnt-action-link rnt-action-add rnt-subsection-title-actions" data-action="addPart"><i class="fa-solid fa-plus"></i> {{localize "pf2e-aztecs-rip-n-tear.addBodyPart"}}</a>
+      </div>
+      {{#if working.parts.length}}
+      <div class="rnt-repeat-list">
+         {{#each working.parts as |p|}}
+         <div class="rnt-linked-row">
+            <input type="checkbox" data-include-key="parts" data-id="{{p.id}}" {{#if p._include}}checked{{/if}} />
+            <a class="rnt-linked-name" data-action="editPart" data-id="{{p.id}}"><i class="fa-solid fa-bone"></i> {{p.name}}</a>
+            <a class="rnt-repeat-remove" data-action="removeBuiltPart" data-id="{{p.id}}"><i class="fa-solid fa-trash"></i></a>
+         </div>
+         {{/each}}
+      </div>
+      {{else}}
+      <div class="rnt-empty">{{localize "pf2e-aztecs-rip-n-tear.noBodyParts"}}</div>
+      {{/if}}
+
+      <div class="rnt-subsection-title">
+         <span class="rnt-section-title-flex"><i class="fa-solid fa-bolt"></i> {{localize "pf2e-aztecs-rip-n-tear.damageReactions"}}</span>
+         <a class="rnt-action-link rnt-action-add rnt-subsection-title-actions" data-action="addReaction"><i class="fa-solid fa-plus"></i> {{localize "pf2e-aztecs-rip-n-tear.addReaction"}}</a>
+      </div>
+      {{#if working.reactions.length}}
+      <div class="rnt-repeat-list">
+         {{#each working.reactions as |r|}}
+         <div class="rnt-linked-row">
+            <input type="checkbox" data-include-key="reactions" data-id="{{r.id}}" {{#if r._include}}checked{{/if}} />
+            <a class="rnt-linked-name" data-action="editReaction" data-id="{{r.id}}"><i class="fa-solid fa-bolt"></i> {{r.name}}</a>
+            <a class="rnt-repeat-remove" data-action="removeBuiltReaction" data-id="{{r.id}}"><i class="fa-solid fa-trash"></i></a>
+         </div>
+         {{/each}}
+      </div>
+      {{else}}
+      <div class="rnt-empty">{{localize "pf2e-aztecs-rip-n-tear.noDamageReactions"}}</div>
+      {{/if}}
+
+      <div class="rnt-subsection-title">
+         <span class="rnt-section-title-flex"><i class="fa-solid fa-skull"></i> {{localize "pf2e-aztecs-rip-n-tear.deathReaction"}}</span>
+         {{#unless hasDeath}}
+         <a class="rnt-action-link rnt-action-add rnt-subsection-title-actions" data-action="addDeath"><i class="fa-solid fa-plus"></i> {{localize "pf2e-aztecs-rip-n-tear.addDeathReaction"}}</a>
+         {{/unless}}
+      </div>
+      {{#if hasDeath}}
+      <div class="rnt-repeat-list">
+         <div class="rnt-linked-row">
+            <input type="checkbox" data-include-key="death" {{#if working.deathReaction._include}}checked{{/if}} />
+            <a class="rnt-linked-name" data-action="editDeath"><i class="fa-solid fa-skull"></i> {{working.deathReaction.name}}</a>
+            <a class="rnt-repeat-remove" data-action="removeBuiltDeath"><i class="fa-solid fa-trash"></i></a>
+         </div>
+      </div>
+      {{else}}
+      <div class="rnt-empty">{{localize "pf2e-aztecs-rip-n-tear.noDeathReaction"}}</div>
+      {{/if}}
+
+      <button type="button" class="rnt-btn-primary rnt-btn-block" data-action="save">
+         <i class="fa-solid fa-floppy-disk"></i> {{localize "pf2e-aztecs-rip-n-tear.saveNewTemplate"}}
+      </button>
+   </div>
+
+   {{!-- ===================== BOTTOM: existing templates ===================== --}}
+   <div class="rnt-section">
+      <div class="rnt-section-title">{{localize "pf2e-aztecs-rip-n-tear.tplExisting"}}</div>
+      {{#if existing.length}}
+      <div class="rnt-called-shot-list">
+         {{#each existing as |t|}}
+         <label class="rnt-called-shot-row">
+            <input type="radio" name="rnt-tpl-pick" data-action="selectExisting" data-id="{{t.id}}" {{#if (eq t.id ../selected.id)}}checked{{/if}} />
+            <span class="rnt-called-shot-name">{{t.name}}</span>
+            <span class="rnt-called-shot-info">{{t.parts.length}} parts · {{t.reactions.length}} reactions{{#if t.deathReaction}} · death{{/if}}</span>
+         </label>
+         {{/each}}
+      </div>
+
+      {{#if selected}}
+      <div class="rnt-section" style="margin-top: 8px;">
+         <div class="rnt-subsection-title">{{selected.name}}</div>
+         <div class="rnt-repeat-list">
+            {{#each selected.parts}}
+            <div class="rnt-linked-row">
+               <a class="rnt-linked-name" data-action="openExistingElement" data-tpl-id="{{../selected.id}}" data-kind="part" data-id="{{this.id}}"><i class="fa-solid fa-bone"></i> {{this.name}}</a>
+            </div>
+            {{/each}}
+            {{#each selected.reactions}}
+            <div class="rnt-linked-row">
+               <a class="rnt-linked-name" data-action="openExistingElement" data-tpl-id="{{../selected.id}}" data-kind="reaction" data-id="{{this.id}}"><i class="fa-solid fa-bolt"></i> {{this.name}}</a>
+            </div>
+            {{/each}}
+            {{#if selected.deathReaction}}
+            <div class="rnt-linked-row">
+               <a class="rnt-linked-name" data-action="openExistingElement" data-tpl-id="{{selected.id}}" data-kind="death"><i class="fa-solid fa-skull"></i> {{selected.deathReaction.name}}</a>
+            </div>
+            {{/if}}
+         </div>
+      </div>
+
+      <div style="display: flex; gap: 6px;">
+         <button type="button" class="rnt-btn rnt-btn-block" data-action="rewriteExisting" data-id="{{selected.id}}">
+            <i class="fa-solid fa-pen-to-square"></i> {{localize "pf2e-aztecs-rip-n-tear.rewriteTemplate"}}
+         </button>
+         <button type="button" class="rnt-btn rnt-btn-danger rnt-btn-block" data-action="removeExisting" data-id="{{selected.id}}">
+            <i class="fa-solid fa-trash"></i> {{localize "pf2e-aztecs-rip-n-tear.removeTemplate"}}
+         </button>
+      </div>
+      {{/if}}
+      {{else}}
+      <div class="rnt-empty">{{localize "pf2e-aztecs-rip-n-tear.noTemplates"}}</div>
+      {{/if}}
+   </div>
+
+</div>

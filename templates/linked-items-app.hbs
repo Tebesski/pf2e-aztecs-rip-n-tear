@@ -1,0 +1,24 @@
+<div class="rnt-scrollable">
+   <div class="rnt-section">
+      <div class="rnt-section-title">
+         {{#if (eq linkType "spells")}}<i class="fa-solid fa-wand-magic-sparkles rnt-section-title-icon"></i>{{else}}<i class="fa-solid fa-suitcase rnt-section-title-icon"></i>{{/if}}
+         {{part.name}} — {{#if (eq linkType "spells")}}{{localize "pf2e-aztecs-rip-n-tear.spellcasting"}}{{else}}{{localize "pf2e-aztecs-rip-n-tear.abilities"}}{{/if}}
+      </div>
+      {{#if items.length}}
+      <div class="rnt-linked-items-list">
+         {{#each items}}
+         <div class="rnt-linked-item-row">
+            <a class="rnt-linked-name" data-action="openItem" data-id="{{this.id}}">
+               <i class="fa-solid {{this.icon}}"></i> {{this.name}}
+            </a>
+            <a class="rnt-linked-remove" data-action="unlinkItem" data-id="{{this.id}}" data-tooltip="{{localize 'pf2e-aztecs-rip-n-tear.unlink'}}">
+               <i class="fa-solid fa-link-slash"></i>
+            </a>
+         </div>
+         {{/each}}
+      </div>
+      {{else}}
+      <div class="rnt-empty">{{localize "pf2e-aztecs-rip-n-tear.noLinkedItems"}}</div>
+      {{/if}}
+   </div>
+</div>

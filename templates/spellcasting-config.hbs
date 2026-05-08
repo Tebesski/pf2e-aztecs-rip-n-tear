@@ -1,0 +1,31 @@
+<form autocomplete="off" onsubmit="event.preventDefault();">
+<div class="rnt-scrollable">
+   {{#if entries.length}}
+   <div class="rnt-spellcasting-list">
+      {{#each entries}}
+      <div class="rnt-spellcasting-entry">
+         <label>
+            <input type="checkbox" name="linkedEntries" value="{{this.id}}" {{#if this.checked}}checked{{/if}}>
+            <i class="fa-solid fa-book-sparkles" style="color: var(--rnt-accent);"></i> {{this.name}}
+         </label>
+         {{#each this.spells}}
+         <div class="rnt-spell-row">
+            <label>
+               <input type="checkbox" name="linkedSpells" value="{{this.id}}" {{#if this.checked}}checked{{/if}}>
+               <i class="fa-solid fa-wand-magic-sparkles" style="color: var(--rnt-text-muted); font-size: 0.85em;"></i> {{this.name}}
+            </label>
+         </div>
+         {{/each}}
+      </div>
+      {{/each}}
+   </div>
+   {{else}}
+   <div class="rnt-empty">{{localize "pf2e-aztecs-rip-n-tear.noSpellcastingFound"}}</div>
+   {{/if}}
+</div>
+<div class="rnt-footer">
+   <button type="button" class="rnt-btn-primary rnt-btn-block" data-action="saveConfig">
+      <i class="fa-solid fa-save"></i> {{localize "pf2e-aztecs-rip-n-tear.save"}}
+   </button>
+</div>
+</form>

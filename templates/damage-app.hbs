@@ -1,0 +1,61 @@
+<form autocomplete="off" onsubmit="event.preventDefault();">
+<div class="rnt-scrollable">
+
+   <div class="rnt-section">
+      <div class="rnt-section-title"><i class="fa-solid fa-bone rnt-section-title-icon"></i>{{part.name}}</div>
+      <div class="rnt-persistent-info">
+         {{#if part.useRupture}}
+         <div class="rnt-persistent-info-row"><strong>{{localize "pf2e-aztecs-rip-n-tear.ruptureThreshold"}}</strong><span>{{part.hp.max}}</span></div>
+         {{else}}
+         <div class="rnt-persistent-info-row"><strong>{{localize "pf2e-aztecs-rip-n-tear.hp"}}</strong><span>{{part.hp.value}} / {{part.hp.max}}</span></div>
+         {{/if}}
+         <div class="rnt-persistent-info-row"><strong>{{localize "pf2e-aztecs-rip-n-tear.hardness"}}</strong><span>{{part.hardness}}</span></div>
+         <div class="rnt-persistent-info-row"><strong>{{localize "pf2e-aztecs-rip-n-tear.immunities"}}</strong><span>{{iwrImmune}}</span></div>
+         <div class="rnt-persistent-info-row"><strong>{{localize "pf2e-aztecs-rip-n-tear.weaknesses"}}</strong><span>{{iwrWeak}}</span></div>
+         <div class="rnt-persistent-info-row"><strong>{{localize "pf2e-aztecs-rip-n-tear.resistances"}}</strong><span>{{iwrResist}}</span></div>
+      </div>
+   </div>
+
+   <div class="rnt-section">
+      <div class="rnt-section-title">
+         <span><i class="fa-solid fa-burst rnt-section-title-icon"></i>{{localize "pf2e-aztecs-rip-n-tear.damageInstances"}}</span>
+         <a class="rnt-action-link rnt-action-add" data-action="addDamage"><i class="fa-solid fa-plus"></i> {{localize "pf2e-aztecs-rip-n-tear.addDamage"}}</a>
+      </div>
+      <div class="rnt-repeat-list">
+         {{#each damages as |d i|}}
+         <div class="rnt-damage-row-flat">
+            <input type="text" name="damages.{{i}}.amount" value="{{d.amount}}" placeholder="0" />
+            <select name="damages.{{i}}.dmgType">
+               {{#each ../pf2eDamageTypes}}<option value="{{this.slug}}" {{#if (eq ../dmgType this.slug)}}selected{{/if}}>{{this.label}}</option>{{/each}}
+            </select>
+            <select name="damages.{{i}}.dmgCategory">
+               <option value="" {{#if (eq d.dmgCategory "")}}selected{{/if}}>{{localize "pf2e-aztecs-rip-n-tear.normal"}}</option>
+               <option value="persistent" {{#if (eq d.dmgCategory "persistent")}}selected{{/if}}>{{localize "pf2e-aztecs-rip-n-tear.persistent"}}</option>
+               <option value="precision" {{#if (eq d.dmgCategory "precision")}}selected{{/if}}>{{localize "pf2e-aztecs-rip-n-tear.precision"}}</option>
+               <option value="splash" {{#if (eq d.dmgCategory "splash")}}selected{{/if}}>{{localize "pf2e-aztecs-rip-n-tear.splash"}}</option>
+            </select>
+            <a class="rnt-repeat-remove" data-action="removeDamage" data-index="{{i}}"><i class="fa-solid fa-trash"></i></a>
+         </div>
+         {{/each}}
+      </div>
+   </div>
+
+   <div class="rnt-section">
+      <div class="rnt-section-title"><i class="fa-solid fa-shield-halved rnt-section-title-icon"></i>{{localize "pf2e-aztecs-rip-n-tear.hardnessBypass"}}</div>
+      <div class="rnt-field">
+         <label class="rnt-field-label">{{localize "pf2e-aztecs-rip-n-tear.ignoreHardness"}}</label>
+         <div class="rnt-field-control"><input type="number" name="ignoreHardness" value="0" /></div>
+      </div>
+      <div class="rnt-field">
+         <label class="rnt-field-label">{{localize "pf2e-aztecs-rip-n-tear.ignoreAllHardness"}}</label>
+         <div class="rnt-field-control"><input type="checkbox" name="ignoreAllHardness" /></div>
+      </div>
+   </div>
+
+</div>
+<div class="rnt-footer">
+   <button type="button" class="rnt-btn-primary rnt-btn-block" data-action="applyDamage">
+      <i class="fa-solid fa-heart-crack"></i> {{localize "pf2e-aztecs-rip-n-tear.damageBtn"}}
+   </button>
+</div>
+</form>

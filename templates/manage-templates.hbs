@@ -1,0 +1,48 @@
+<div class="rnt-scrollable" style="display: flex; flex-direction: column; gap: 12px;">
+
+   <div style="display: flex; gap: 6px; align-items: center;">
+      <label class="rnt-toggle">
+         <input type="checkbox" data-action="toggleAll" {{#if allChecked}}checked{{/if}} />
+         <span>{{localize "pf2e-aztecs-rip-n-tear.toggleAll"}}</span>
+      </label>
+      <div style="margin-left: auto; display: flex; gap: 6px;">
+         <button type="button" class="rnt-btn" data-action="importTemplate">
+            <i class="fa-solid fa-file-import"></i> {{localize "pf2e-aztecs-rip-n-tear.tplImport"}}
+         </button>
+         {{#if hasSelection}}
+         <button type="button" class="rnt-btn" data-action="exportSelected">
+            <i class="fa-solid fa-file-export"></i> {{localize "pf2e-aztecs-rip-n-tear.exportSelected"}}
+         </button>
+         <button type="button" class="rnt-btn rnt-btn-danger" data-action="removeSelected">
+            <i class="fa-solid fa-trash"></i> {{localize "pf2e-aztecs-rip-n-tear.removeSelected"}}
+         </button>
+         {{/if}}
+      </div>
+   </div>
+
+   {{#if templates.length}}
+   <div class="rnt-repeat-list">
+      {{#each templates}}
+      <div class="rnt-linked-row">
+         <input type="checkbox" data-tpl-select="{{this.id}}" {{#if this._selected}}checked{{/if}} />
+         <a class="rnt-linked-name" data-action="openTemplate" data-id="{{this.id}}">
+            <i class="fa-solid fa-puzzle-piece"></i> {{this.name}}
+            <span style="color: var(--rnt-text-muted); font-size: 0.85em; margin-left: 8px;">
+               {{this.parts.length}} parts · {{this.reactions.length}} reactions{{#if this.deathReaction}} · death{{/if}}
+               {{#if this.autoApply}} · auto({{#each this.traits}}{{this}}{{#unless @last}}, {{/unless}}{{/each}}){{/if}}
+            </span>
+         </a>
+         <a class="rnt-repeat-remove" data-action="exportOne" data-id="{{this.id}}" data-tooltip="{{localize 'pf2e-aztecs-rip-n-tear.export'}}">
+            <i class="fa-solid fa-file-export"></i>
+         </a>
+         <a class="rnt-repeat-remove" data-action="removeOne" data-id="{{this.id}}" data-tooltip="{{localize 'pf2e-aztecs-rip-n-tear.delete'}}">
+            <i class="fa-solid fa-trash"></i>
+         </a>
+      </div>
+      {{/each}}
+   </div>
+   {{else}}
+   <div class="rnt-empty">{{localize "pf2e-aztecs-rip-n-tear.noTemplates"}}</div>
+   {{/if}}
+
+</div>

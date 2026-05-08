@@ -1,0 +1,69 @@
+<div class="rnt-scrollable" style="display: flex; flex-direction: column; gap: 12px;">
+
+   {{#unless selected}}
+   {{#if all.length}}
+   <div class="rnt-section">
+      <div class="rnt-section-title">{{localize "pf2e-aztecs-rip-n-tear.tplPickOne"}}</div>
+      <div class="rnt-called-shot-list">
+         {{#each all as |t|}}
+         <label class="rnt-called-shot-row">
+            <input type="radio" name="rnt-tpl-pick" data-action="pick" data-id="{{t.id}}" />
+            <span class="rnt-called-shot-name">{{t.name}}</span>
+            <span class="rnt-called-shot-info">{{t.parts.length}} parts · {{t.reactions.length}} reactions{{#if t.deathReaction}} · death{{/if}}</span>
+         </label>
+         {{/each}}
+      </div>
+   </div>
+   {{else}}
+   <div class="rnt-empty">{{localize "pf2e-aztecs-rip-n-tear.noTemplates"}}</div>
+   {{/if}}
+   {{/unless}}
+
+   {{#if selected}}
+   <div class="rnt-section">
+      <div class="rnt-section-title">
+         <a class="rnt-action-link" data-action="back" style="margin-right: 8px;"><i class="fa-solid fa-arrow-left"></i></a>
+         <span>{{selected.name}}</span>
+      </div>
+
+      {{#if elements.parts.length}}
+      <div class="rnt-subsection-title"><i class="fa-solid fa-bone"></i> {{localize "pf2e-aztecs-rip-n-tear.title"}}</div>
+      <div class="rnt-repeat-list">
+         {{#each elements.parts}}
+         <div class="rnt-linked-row">
+            <input type="checkbox" data-filter-key="part" data-id="{{this.id}}" {{#if this._checked}}checked{{/if}} />
+            <a class="rnt-linked-name" data-action="openElement" data-tpl-id="{{../selected.id}}" data-kind="part" data-id="{{this.id}}"><i class="fa-solid fa-bone"></i> {{this.name}}</a>
+         </div>
+         {{/each}}
+      </div>
+      {{/if}}
+
+      {{#if elements.reactions.length}}
+      <div class="rnt-subsection-title"><i class="fa-solid fa-bolt"></i> {{localize "pf2e-aztecs-rip-n-tear.damageReactions"}}</div>
+      <div class="rnt-repeat-list">
+         {{#each elements.reactions}}
+         <div class="rnt-linked-row">
+            <input type="checkbox" data-filter-key="reaction" data-id="{{this.id}}" {{#if this._checked}}checked{{/if}} />
+            <a class="rnt-linked-name" data-action="openElement" data-tpl-id="{{../selected.id}}" data-kind="reaction" data-id="{{this.id}}"><i class="fa-solid fa-bolt"></i> {{this.name}}</a>
+         </div>
+         {{/each}}
+      </div>
+      {{/if}}
+
+      {{#if elements.deathReaction}}
+      <div class="rnt-subsection-title"><i class="fa-solid fa-skull"></i> {{localize "pf2e-aztecs-rip-n-tear.deathReaction"}}</div>
+      <div class="rnt-repeat-list">
+         <div class="rnt-linked-row">
+            <input type="checkbox" data-filter-key="death" {{#if elements.deathReaction._checked}}checked{{/if}} />
+            <a class="rnt-linked-name" data-action="openElement" data-tpl-id="{{selected.id}}" data-kind="death"><i class="fa-solid fa-skull"></i> {{elements.deathReaction.name}}</a>
+         </div>
+      </div>
+      {{/if}}
+
+      <button type="button" class="rnt-btn-primary rnt-btn-block" data-action="confirm">
+         <i class="fa-solid {{#if isExport}}fa-file-export{{else}}fa-arrow-down-to-bracket{{/if}}"></i> {{confirmLabel}}
+      </button>
+   </div>
+   {{/if}}
+
+</div>

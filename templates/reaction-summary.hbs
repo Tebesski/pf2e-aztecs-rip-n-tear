@@ -1,0 +1,77 @@
+<div class="rnt-summary-content">
+   <div class="rnt-summary-grid">
+      <div class="rnt-summary-cell"><i class="fa-solid fa-bolt"></i><span class="rnt-summary-label">{{localize "pf2e-aztecs-rip-n-tear.action"}}</span><span class="rnt-summary-value" style="text-transform: capitalize;">{{actionType}}</span></div>
+      <div class="rnt-summary-cell"><i class="fa-solid fa-crosshairs"></i><span class="rnt-summary-label">{{localize "pf2e-aztecs-rip-n-tear.reactsTo"}}</span><span class="rnt-summary-value">{{#if (eq reactTo "both")}}{{localize "pf2e-aztecs-rip-n-tear.partAndCreature"}}{{else if (eq reactTo "creature")}}{{localize "pf2e-aztecs-rip-n-tear.creatureOnly"}}{{else}}{{localize "pf2e-aztecs-rip-n-tear.partOnly"}}{{/if}}</span></div>
+      {{#if minDamage}}
+      <div class="rnt-summary-cell"><i class="fa-solid fa-heart-crack"></i><span class="rnt-summary-label">{{localize "pf2e-aztecs-rip-n-tear.minDamageShort"}}</span><span class="rnt-summary-value">{{minDamage}}</span></div>
+      {{/if}}
+   </div>
+
+   {{#if damageTypes.length}}
+   <div class="rnt-summary-section">
+      <div class="rnt-summary-line"><strong>{{localize "pf2e-aztecs-rip-n-tear.triggerOnDmgTypes"}}:</strong>
+         {{#each damageTypes}}<span class="rnt-summary-tag">{{this}}</span>{{/each}}
+      </div>
+   </div>
+   {{/if}}
+
+   {{#if triggers.length}}
+   <div class="rnt-summary-section">
+      <div class="rnt-summary-mini-title">
+         <i class="fa-solid fa-bolt"></i>
+         {{localize "pf2e-aztecs-rip-n-tear.triggers"}} ({{triggers.length}})
+      </div>
+      <div class="rnt-summary-thresholds">
+         {{#each triggers as |trig|}}
+         <div class="rnt-summary-threshold">
+            <div class="rnt-summary-threshold-head">
+               <i class="fa-solid {{trig.iconClass}}"></i>
+               <span class="rnt-summary-threshold-hp">{{trig.typeLabel}} <span class="rnt-summary-arrow">&rarr;</span> {{trig.targetLabel}}</span>
+               {{#if (eq trig.target "aura")}}<span class="rnt-summary-tag">{{trig.radius}}ft, {{trig.targetFiltersLabel}}</span>{{/if}}
+            </div>
+            {{#if (eq trig.type "damage")}}
+            <div class="rnt-summary-threshold-row">
+               <span class="rnt-summary-row-label">{{localize "pf2e-aztecs-rip-n-tear.damages"}}:</span>
+               <span class="rnt-summary-row-value">
+                  {{#each trig.damages}}<span class="rnt-summary-tag">{{this.diceNum}}{{#if this.diceStep}}d{{this.diceStep}}{{/if}} {{this.dmgType}}{{#if this.dmgCategory}} ({{this.dmgCategory}}){{/if}}</span>{{/each}}
+               </span>
+            </div>
+            {{/if}}
+            {{#if (eq trig.type "effect")}}
+            <div class="rnt-summary-threshold-row">
+               <span class="rnt-summary-row-label">{{localize "pf2e-aztecs-rip-n-tear.effect"}}:</span>
+               <span class="rnt-summary-row-value">
+                  <span class="rnt-summary-tag rnt-summary-tag-img"><img src="{{trig.img}}" onerror="this.src='icons/svg/mystery-man.svg';"/>{{#if trig.name}}{{trig.name}}{{else}}{{localize "pf2e-aztecs-rip-n-tear.unknownEffect"}}{{/if}}</span>
+               </span>
+            </div>
+            {{/if}}
+            {{#if (eq trig.type "macro")}}
+            <div class="rnt-summary-threshold-row">
+               <span class="rnt-summary-row-label">{{localize "pf2e-aztecs-rip-n-tear.macro"}}:</span>
+               <span class="rnt-summary-row-value">
+                  <span class="rnt-summary-tag rnt-summary-tag-img"><img src="{{trig.img}}" onerror="this.src='icons/svg/dice-target.svg';"/>{{#if trig.name}}{{trig.name}}{{else}}&mdash;{{/if}}</span>
+               </span>
+            </div>
+            {{/if}}
+            {{#if (eq trig.type "condition")}}
+            <div class="rnt-summary-threshold-row">
+               <span class="rnt-summary-row-label">{{localize "pf2e-aztecs-rip-n-tear.condition"}}:</span>
+               <span class="rnt-summary-row-value">
+                  <span class="rnt-summary-tag rnt-summary-tag-img"><img src="systems/pf2e/icons/conditions/{{#if trig.slug}}{{trig.slug}}{{else}}blinded{{/if}}.webp" onerror="this.src='icons/svg/hazard.svg';"/>{{#if trig.slug}}{{trig.slug}}{{else}}{{localize "pf2e-aztecs-rip-n-tear.blinded"}}{{/if}}{{#if trig.hasValue}} {{trig.value}}{{/if}}</span>
+               </span>
+            </div>
+            {{/if}}
+            {{#if (eq trig.type "saving-throw")}}
+            <div class="rnt-summary-threshold-row">
+               <span class="rnt-summary-row-label">{{localize "pf2e-aztecs-rip-n-tear.savingThrow"}}:</span>
+               <span class="rnt-summary-row-value">
+                  <span class="rnt-summary-tag">{{trig.saveTypeLabel}} {{localize "pf2e-aztecs-rip-n-tear.dc"}} {{trig.dc}}{{#if trig.isBasicSave}} ({{localize "pf2e-aztecs-rip-n-tear.basicSavingThrow"}}){{/if}}</span>
+               </span>
+            </div>
+            {{/if}}
+         </div>
+         {{/each}}
+      </div>
+   </div>
+   {{/if}}
+</div>

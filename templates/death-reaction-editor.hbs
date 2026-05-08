@@ -1,0 +1,303 @@
+<form autocomplete="off" onsubmit="event.preventDefault();">
+<div class="rnt-scrollable">
+
+   {{!-- ===================== Identity (no header) ===================== --}}
+   <div class="rnt-identity">
+      <div class="rnt-identity-row">
+         <div class="rnt-identity-name">
+            <input type="text" name="name" value="{{dr.name}}" placeholder="{{localize 'pf2e-aztecs-rip-n-tear.deathReactionNamePh'}}">
+         </div>
+         <label class="rnt-identity-rupture">
+            <input type="checkbox" name="useDelay" {{checked dr.useDelay}}>
+            {{localize "pf2e-aztecs-rip-n-tear.delayedTrigger"}}
+            <i class="fa-solid fa-circle-info rnt-info" data-tooltip="{{localize 'pf2e-aztecs-rip-n-tear.delayedTriggerTooltip'}}"></i>
+         </label>
+      </div>
+
+      {{#if dr.useDelay}}
+      <div class="rnt-identity-acrow">
+         <div class="rnt-identity-acitem">
+            <label>{{localize "pf2e-aztecs-rip-n-tear.delayRounds"}}</label>
+            <input type="number" name="delayRounds" value="{{dr.delayRounds}}" min="1">
+         </div>
+         <div class="rnt-identity-acitem">
+            <label>{{localize "pf2e-aztecs-rip-n-tear.expiry"}}</label>
+            <select name="expiry" style="width: auto; flex: 1;">
+               <option value="turn-start" {{#if (eq dr.expiry "turn-start")}}selected{{/if}}>{{localize "pf2e-aztecs-rip-n-tear.turnStart"}}</option>
+               <option value="turn-end" {{#if (eq dr.expiry "turn-end")}}selected{{/if}}>{{localize "pf2e-aztecs-rip-n-tear.turnEnd"}}</option>
+            </select>
+         </div>
+      </div>
+      {{/if}}
+   </div>
+
+   {{!-- ===================== SFX ===================== --}}
+   <div class="rnt-section">
+      <div class="rnt-section-title">{{localize "pf2e-aztecs-rip-n-tear.sound"}}</div>
+      <div class="rnt-sfx-field">
+         <label>{{localize "pf2e-aztecs-rip-n-tear.sfxTrigger"}}</label>
+         <input type="text" name="sfxTrigger" value="{{dr.sfxTrigger}}" placeholder="path/to/sound.ogg" />
+         <button type="button" class="rnt-btn-icon" data-action="pickFile"><i class="fa-solid fa-folder-open"></i></button>
+         <button type="button" class="rnt-btn-icon" data-action="previewSfx"><i class="fa-solid fa-play"></i></button>
+      </div>
+   </div>
+
+   {{!-- ===================== Triggers ===================== --}}
+   <div class="rnt-bar-heading">
+      <h3>{{localize "pf2e-aztecs-rip-n-tear.triggers"}} <i class="fa-solid fa-circle-info rnt-info" data-tooltip="{{localize 'pf2e-aztecs-rip-n-tear.macrosReceiveTooltip'}}"></i></h3>
+      <a class="rnt-action-link rnt-action-add" data-action="addTrigger"><i class="fa-solid fa-plus"></i> {{localize "pf2e-aztecs-rip-n-tear.addTrigger"}}</a>
+   </div>
+
+   <div class="rnt-repeat-list">
+      {{#each dr.triggers as |trig i|}}
+      <div class="rnt-trigger-card">
+         <div class="rnt-trigger-header">
+            <select name="triggers.{{i}}.type" style="flex: 1;">
+               <option value="damage" {{#if (eq trig.type "damage")}}selected{{/if}}>{{localize "pf2e-aztecs-rip-n-tear.dealDamage"}}</option>
+               <option value="saving-throw" {{#if (eq trig.type "saving-throw")}}selected{{/if}}>{{localize "pf2e-aztecs-rip-n-tear.savingThrow"}}</option>
+               <option value="effect" {{#if (eq trig.type "effect")}}selected{{/if}}>{{localize "pf2e-aztecs-rip-n-tear.typeEffect"}}</option>
+               <option value="condition" {{#if (eq trig.type "condition")}}selected{{/if}}>{{localize "pf2e-aztecs-rip-n-tear.typeCondition"}}</option>
+               <option value="macro" {{#if (eq trig.type "macro")}}selected{{/if}}>{{localize "pf2e-aztecs-rip-n-tear.executeMacro"}}</option>
+            </select>
+            <select name="triggers.{{i}}.target" style="flex: 1;">
+               <option value="triggerer" {{#if (eq trig.target "triggerer")}}selected{{/if}}>{{localize "pf2e-aztecs-rip-n-tear.triggerer"}}</option>
+               <option value="self" {{#if (eq trig.target "self")}}selected{{/if}}>{{localize "pf2e-aztecs-rip-n-tear.self"}}</option>
+               <option value="aura" {{#if (eq trig.target "aura")}}selected{{/if}}>{{localize "pf2e-aztecs-rip-n-tear.aura"}}</option>
+            </select>
+            <a class="rnt-threshold-remove" data-action="removeTrigger" data-index="{{i}}" data-tooltip="{{localize 'pf2e-aztecs-rip-n-tear.removeTrigger'}}"><i class="fa-solid fa-trash"></i></a>
+         </div>
+
+         {{#if (eq trig.target "aura")}}
+         <div class="rnt-input-group">
+            <input type="number" name="triggers.{{i}}.radius" value="{{trig.radius}}" placeholder="{{localize 'pf2e-aztecs-rip-n-tear.radius'}}" />
+            <select name="triggers.{{i}}.targetFilters">
+               <option value="enemies" {{#if (eq trig.targetFilters "enemies")}}selected{{/if}}>{{localize "pf2e-aztecs-rip-n-tear.affectsEnemies"}}</option>
+               <option value="allies" {{#if (eq trig.targetFilters "allies")}}selected{{/if}}>{{localize "pf2e-aztecs-rip-n-tear.affectsAllies"}}</option>
+               <option value="all" {{#if (eq trig.targetFilters "all")}}selected{{/if}}>{{localize "pf2e-aztecs-rip-n-tear.affectsAll"}}</option>
+            </select>
+         </div>
+         {{/if}}
+
+         {{#if (eq trig.type "saving-throw")}}
+         <div class="rnt-input-group">
+            <select name="triggers.{{i}}.saveType" style="flex: 0 0 100px;">
+               <option value="fortitude" {{#if (eq trig.saveType "fortitude")}}selected{{/if}}>{{localize "pf2e-aztecs-rip-n-tear.fortitude"}}</option>
+               <option value="reflex" {{#if (eq trig.saveType "reflex")}}selected{{/if}}>{{localize "pf2e-aztecs-rip-n-tear.reflex"}}</option>
+               <option value="will" {{#if (eq trig.saveType "will")}}selected{{/if}}>{{localize "pf2e-aztecs-rip-n-tear.will"}}</option>
+            </select>
+            <input type="number" name="triggers.{{i}}.dc" value="{{trig.dc}}" placeholder="{{localize 'pf2e-aztecs-rip-n-tear.dc'}}" class="rnt-input-tiny" />
+            <input type="text" name="triggers.{{i}}.rollOptions" value="{{trig.rollOptions}}" placeholder="{{localize 'pf2e-aztecs-rip-n-tear.rollOptionsPh'}}" />
+         </div>
+
+         <label class="rnt-toggle">
+            <input type="checkbox" name="triggers.{{i}}.isBasicSave" {{#if trig.isBasicSave}}checked{{/if}} />
+            <strong>{{localize "pf2e-aztecs-rip-n-tear.basicSavingThrow"}}</strong>
+         </label>
+
+         {{#if trig.isBasicSave}}
+         <div class="rnt-dos-group">
+            <div class="rnt-dos-header">
+               <span>{{localize "pf2e-aztecs-rip-n-tear.basicSaveDamage"}}</span>
+               <a class="rnt-action-link rnt-action-add" data-action="addBasicDamage" data-ti="{{i}}"><i class="fa-solid fa-plus"></i> {{localize "pf2e-aztecs-rip-n-tear.add"}}</a>
+            </div>
+            {{#each trig.basicDamages as |bd bdi|}}
+            <div class="rnt-damage-row">
+               <input type="number" name="triggers.{{i}}.basicDamages.{{bdi}}.diceNum" value="{{bd.diceNum}}" />
+               <span class="rnt-dice-sep">d</span>
+               <select name="triggers.{{i}}.basicDamages.{{bdi}}.diceStep">
+                  <option value="" {{#if (eq bd.diceStep "")}}selected{{/if}}>-</option>
+                  <option value="4" {{#if (eq bd.diceStep "4")}}selected{{/if}}>4</option>
+                  <option value="6" {{#if (eq bd.diceStep "6")}}selected{{/if}}>6</option>
+                  <option value="8" {{#if (eq bd.diceStep "8")}}selected{{/if}}>8</option>
+                  <option value="10" {{#if (eq bd.diceStep "10")}}selected{{/if}}>10</option>
+                  <option value="12" {{#if (eq bd.diceStep "12")}}selected{{/if}}>12</option>
+               </select>
+               <select name="triggers.{{i}}.basicDamages.{{bdi}}.dmgType">
+                  {{#each @root.pf2eDamageTypes}}<option value="{{this.slug}}" {{#if (eq bd.dmgType this.slug)}}selected{{/if}}>{{this.label}}</option>{{/each}}
+               </select>
+               <select name="triggers.{{i}}.basicDamages.{{bdi}}.dmgCategory">
+                  <option value="">{{localize "pf2e-aztecs-rip-n-tear.normal"}}</option>
+                  <option value="persistent" {{#if (eq bd.dmgCategory "persistent")}}selected{{/if}}>{{localize "pf2e-aztecs-rip-n-tear.persistent"}}</option>
+                  <option value="precision" {{#if (eq bd.dmgCategory "precision")}}selected{{/if}}>{{localize "pf2e-aztecs-rip-n-tear.precision"}}</option>
+                  <option value="splash" {{#if (eq bd.dmgCategory "splash")}}selected{{/if}}>{{localize "pf2e-aztecs-rip-n-tear.splash"}}</option>
+               </select>
+               <a class="rnt-repeat-remove" data-action="removeBasicDamage" data-ti="{{i}}" data-bdi="{{bdi}}"><i class="fa-solid fa-trash"></i></a>
+            </div>
+            {{/each}}
+         </div>
+         {{/if}}
+
+         {{#each trig.dosGroups as |group|}}
+         <div class="rnt-dos-group">
+            <div class="rnt-dos-header">
+               {{#if (eq group.key "criticalSuccess")}}<span class="rnt-dos-cs">{{group.label}}</span>{{/if}}
+               {{#if (eq group.key "success")}}<span class="rnt-dos-s">{{group.label}}</span>{{/if}}
+               {{#if (eq group.key "failure")}}<span class="rnt-dos-f">{{group.label}}</span>{{/if}}
+               {{#if (eq group.key "criticalFailure")}}<span class="rnt-dos-cf">{{group.label}}</span>{{/if}}
+               <a class="rnt-action-link rnt-action-add" data-action="addSaveAction" data-ti="{{i}}" data-dos="{{group.key}}"><i class="fa-solid fa-plus"></i> {{localize "pf2e-aztecs-rip-n-tear.addConsequence"}}</a>
+            </div>
+
+            {{#if group.actions.length}}
+               {{#each group.actions as |sa sai|}}
+               <div class="rnt-save-action-row">
+                  <select name="triggers.{{i}}.saveActions.{{group.key}}.{{sai}}.type">
+                     <option value="damage" {{#if (eq sa.type "damage")}}selected{{/if}}>{{localize "pf2e-aztecs-rip-n-tear.damage"}}</option>
+                     <option value="effect" {{#if (eq sa.type "effect")}}selected{{/if}}>{{localize "pf2e-aztecs-rip-n-tear.effect"}}</option>
+                     <option value="condition" {{#if (eq sa.type "condition")}}selected{{/if}}>{{localize "pf2e-aztecs-rip-n-tear.condition"}}</option>
+                     <option value="macro" {{#if (eq sa.type "macro")}}selected{{/if}}>{{localize "pf2e-aztecs-rip-n-tear.macro"}}</option>
+                  </select>
+
+                  <div class="rnt-save-action-fields">
+                     {{#if (eq sa.type "damage")}}
+                     <input type="number" name="triggers.{{i}}.saveActions.{{group.key}}.{{sai}}.diceNum" value="{{sa.diceNum}}" class="rnt-input-tiny" />
+                     <span style="color: var(--rnt-text-muted);">d</span>
+                     <select name="triggers.{{i}}.saveActions.{{group.key}}.{{sai}}.diceStep" class="rnt-input-tiny">
+                        <option value="" {{#if (eq sa.diceStep "")}}selected{{/if}}>-</option>
+                        <option value="4" {{#if (eq sa.diceStep "4")}}selected{{/if}}>4</option>
+                        <option value="6" {{#if (eq sa.diceStep "6")}}selected{{/if}}>6</option>
+                        <option value="8" {{#if (eq sa.diceStep "8")}}selected{{/if}}>8</option>
+                        <option value="10" {{#if (eq sa.diceStep "10")}}selected{{/if}}>10</option>
+                        <option value="12" {{#if (eq sa.diceStep "12")}}selected{{/if}}>12</option>
+                     </select>
+                     <select name="triggers.{{i}}.saveActions.{{group.key}}.{{sai}}.dmgType">
+                        {{#each @root.pf2eDamageTypes}}<option value="{{this.slug}}" {{#if (eq sa.dmgType this.slug)}}selected{{/if}}>{{this.label}}</option>{{/each}}
+                     </select>
+                     <select name="triggers.{{i}}.saveActions.{{group.key}}.{{sai}}.dmgCategory">
+                        <option value="">{{localize "pf2e-aztecs-rip-n-tear.normal"}}</option>
+                        <option value="persistent" {{#if (eq sa.dmgCategory "persistent")}}selected{{/if}}>{{localize "pf2e-aztecs-rip-n-tear.persistent"}}</option>
+                        <option value="precision" {{#if (eq sa.dmgCategory "precision")}}selected{{/if}}>{{localize "pf2e-aztecs-rip-n-tear.precision"}}</option>
+                        <option value="splash" {{#if (eq sa.dmgCategory "splash")}}selected{{/if}}>{{localize "pf2e-aztecs-rip-n-tear.splash"}}</option>
+                     </select>
+                     {{/if}}
+
+                     {{#if (eq sa.type "effect")}}
+                     <div class="effect-entry" style="display: flex; align-items: center; gap: 4px; flex: 1; min-width: 0;">
+                        <img class="effect-icon rnt-repeat-icon" src="{{#if sa.img}}{{sa.img}}{{else}}icons/svg/mystery-man.svg{{/if}}" onerror="this.src='icons/svg/mystery-man.svg';" />
+                        <input type="text" class="rnt-effect-uuid-input" name="triggers.{{i}}.saveActions.{{group.key}}.{{sai}}.uuid" value="{{sa.uuid}}" placeholder="{{localize 'pf2e-aztecs-rip-n-tear.itemUuid'}}" style="flex: 1; min-width: 80px;" />
+                        <input type="hidden" name="triggers.{{i}}.saveActions.{{group.key}}.{{sai}}.name" value="{{sa.name}}" />
+                        <input type="hidden" name="triggers.{{i}}.saveActions.{{group.key}}.{{sai}}.img" value="{{sa.img}}" />
+                        <input type="hidden" name="triggers.{{i}}.saveActions.{{group.key}}.{{sai}}.invalid" value="{{#if sa.invalid}}true{{else}}false{{/if}}" />
+                     </div>
+                     {{/if}}
+
+                     {{#if (eq sa.type "macro")}}
+                     <div class="effect-entry" style="display: flex; align-items: center; gap: 4px; flex: 1; min-width: 0;">
+                        <img class="effect-icon rnt-repeat-icon" src="{{#if sa.img}}{{sa.img}}{{else}}icons/svg/dice-target.svg{{/if}}" onerror="this.src='icons/svg/dice-target.svg';" />
+                        <input type="text" class="rnt-effect-uuid-input" name="triggers.{{i}}.saveActions.{{group.key}}.{{sai}}.uuid" value="{{sa.uuid}}" placeholder="{{localize 'pf2e-aztecs-rip-n-tear.macroUuid'}}" style="flex: 1; min-width: 80px;" />
+                        <input type="hidden" name="triggers.{{i}}.saveActions.{{group.key}}.{{sai}}.name" value="{{sa.name}}" />
+                        <input type="hidden" name="triggers.{{i}}.saveActions.{{group.key}}.{{sai}}.img" value="{{sa.img}}" />
+                        <input type="hidden" name="triggers.{{i}}.saveActions.{{group.key}}.{{sai}}.invalid" value="{{#if sa.invalid}}true{{else}}false{{/if}}" />
+                     </div>
+                     {{/if}}
+
+                     {{#if (eq sa.type "condition")}}
+                     <img class="rnt-repeat-icon" src="systems/pf2e/icons/conditions/{{#if sa.slug}}{{sa.slug}}{{else}}blinded{{/if}}.webp" onerror="this.src='icons/svg/hazard.svg';" />
+                     <select class="rnt-condition-select" name="triggers.{{i}}.saveActions.{{group.key}}.{{sai}}.slug" style="flex: 1;">
+                        {{#each @root.pf2eConditions}}<option value="{{this.slug}}" {{#if (eq sa.slug this.slug)}}selected{{/if}}>{{this.name}}</option>{{/each}}
+                     </select>
+                     <input type="number" name="triggers.{{i}}.saveActions.{{group.key}}.{{sai}}.value" value="{{sa.value}}" placeholder="Val" class="rnt-input-tiny" />
+                     {{/if}}
+                  </div>
+
+                  <a class="rnt-repeat-remove" data-action="removeSaveAction" data-ti="{{i}}" data-dos="{{group.key}}" data-sai="{{sai}}"><i class="fa-solid fa-trash"></i></a>
+               </div>
+               {{/each}}
+            {{else}}
+               <div style="text-align: center; font-size: var(--rnt-font-size-xs); color: var(--rnt-text-subtle); font-style: italic; padding: 4px;">{{localize "pf2e-aztecs-rip-n-tear.noConsequences"}}</div>
+            {{/if}}
+         </div>
+         {{/each}}
+         {{/if}}
+
+         {{#if (eq trig.type "damage")}}
+         <div class="rnt-repeat-list">
+            {{#each trig.damages as |d di|}}
+            <div class="rnt-damage-row">
+               <input type="number" name="triggers.{{i}}.damages.{{di}}.diceNum" value="{{d.diceNum}}" />
+               <span class="rnt-dice-sep">d</span>
+               <select name="triggers.{{i}}.damages.{{di}}.diceStep">
+                  <option value="" {{#if (eq d.diceStep "")}}selected{{/if}}>-</option>
+                  <option value="4" {{#if (eq d.diceStep "4")}}selected{{/if}}>4</option>
+                  <option value="6" {{#if (eq d.diceStep "6")}}selected{{/if}}>6</option>
+                  <option value="8" {{#if (eq d.diceStep "8")}}selected{{/if}}>8</option>
+                  <option value="10" {{#if (eq d.diceStep "10")}}selected{{/if}}>10</option>
+                  <option value="12" {{#if (eq d.diceStep "12")}}selected{{/if}}>12</option>
+               </select>
+               <select name="triggers.{{i}}.damages.{{di}}.dmgType">
+                  {{#each @root.pf2eDamageTypes}}<option value="{{this.slug}}" {{#if (eq d.dmgType this.slug)}}selected{{/if}}>{{this.label}}</option>{{/each}}
+               </select>
+               <select name="triggers.{{i}}.damages.{{di}}.dmgCategory">
+                  <option value="">{{localize "pf2e-aztecs-rip-n-tear.normal"}}</option>
+                  <option value="persistent" {{#if (eq d.dmgCategory "persistent")}}selected{{/if}}>{{localize "pf2e-aztecs-rip-n-tear.persistent"}}</option>
+                  <option value="precision" {{#if (eq d.dmgCategory "precision")}}selected{{/if}}>{{localize "pf2e-aztecs-rip-n-tear.precision"}}</option>
+                  <option value="splash" {{#if (eq d.dmgCategory "splash")}}selected{{/if}}>{{localize "pf2e-aztecs-rip-n-tear.splash"}}</option>
+               </select>
+               <a class="rnt-repeat-remove" data-action="removeTriggerDamage" data-ti="{{i}}" data-di="{{di}}"><i class="fa-solid fa-trash"></i></a>
+            </div>
+            {{/each}}
+            <a class="rnt-action-link rnt-action-add" data-action="addTriggerDamage" data-ti="{{i}}" style="align-self: flex-end;"><i class="fa-solid fa-plus"></i> {{localize "pf2e-aztecs-rip-n-tear.addDamage"}}</a>
+         </div>
+         {{/if}}
+
+         {{#if (eq trig.type "effect")}}
+         <div class="rnt-repeat-row effect-entry">
+            <img class="rnt-repeat-icon effect-icon" src="{{#if trig.img}}{{trig.img}}{{else}}icons/svg/mystery-man.svg{{/if}}" onerror="this.src='icons/svg/mystery-man.svg';" />
+            <input type="text" class="rnt-effect-uuid-input" name="triggers.{{i}}.uuid" value="{{trig.uuid}}" placeholder="{{localize 'pf2e-aztecs-rip-n-tear.compendiumItemUuid'}}" style="flex: 1;" />
+            <div class="rnt-repeat-name effect-name-container">
+               {{#if trig.invalid}}
+               <span class="rnt-invalid"><i class="fa-solid fa-triangle-exclamation"></i> {{localize "pf2e-aztecs-rip-n-tear.invalidEffectShort"}}</span>
+               {{else if trig.name}}
+               <a class="content-link rnt-effect-link" data-uuid="{{trig.uuid}}"><i class="fa-solid fa-suitcase"></i> {{trig.name}}</a>
+               {{else}}
+               <span class="rnt-pending">{{localize "pf2e-aztecs-rip-n-tear.pending"}}</span>
+               {{/if}}
+            </div>
+            <input type="hidden" name="triggers.{{i}}.invalid" value="{{#if trig.invalid}}true{{else}}false{{/if}}" />
+            <input type="hidden" name="triggers.{{i}}.name" value="{{trig.name}}" />
+            <input type="hidden" name="triggers.{{i}}.img" value="{{trig.img}}" />
+         </div>
+         {{/if}}
+
+         {{#if (eq trig.type "macro")}}
+         <div class="rnt-repeat-row effect-entry">
+            <img class="rnt-repeat-icon effect-icon" src="{{#if trig.img}}{{trig.img}}{{else}}icons/svg/dice-target.svg{{/if}}" onerror="this.src='icons/svg/dice-target.svg';" />
+            <input type="text" class="rnt-effect-uuid-input" name="triggers.{{i}}.uuid" value="{{trig.uuid}}" placeholder="{{localize 'pf2e-aztecs-rip-n-tear.macroUuid'}}" style="flex: 1;" />
+            <div class="rnt-repeat-name effect-name-container">
+               {{#if trig.invalid}}
+               <span class="rnt-invalid"><i class="fa-solid fa-triangle-exclamation"></i> {{localize "pf2e-aztecs-rip-n-tear.invalidMacro"}}</span>
+               {{else if trig.name}}
+               <a class="content-link rnt-effect-link" data-uuid="{{trig.uuid}}"><i class="fa-solid fa-code"></i> {{trig.name}}</a>
+               {{else}}
+               <span class="rnt-pending">{{localize "pf2e-aztecs-rip-n-tear.pending"}}</span>
+               {{/if}}
+            </div>
+            <input type="hidden" name="triggers.{{i}}.invalid" value="{{#if trig.invalid}}true{{else}}false{{/if}}" />
+            <input type="hidden" name="triggers.{{i}}.name" value="{{trig.name}}" />
+            <input type="hidden" name="triggers.{{i}}.img" value="{{trig.img}}" />
+         </div>
+         {{/if}}
+
+         {{#if (eq trig.type "condition")}}
+         <div class="rnt-repeat-row">
+            <img class="rnt-repeat-icon" src="systems/pf2e/icons/conditions/{{#if trig.slug}}{{trig.slug}}{{else}}blinded{{/if}}.webp" onerror="this.src='icons/svg/hazard.svg';" />
+            <select class="rnt-condition-select" name="triggers.{{i}}.slug" style="flex: 2;">
+               {{#each @root.pf2eConditions}}<option value="{{this.slug}}" {{#if (eq trig.slug this.slug)}}selected{{/if}}>{{this.name}}</option>{{/each}}
+            </select>
+            {{#if trig.hasValue}}
+            <input type="number" name="triggers.{{i}}.value" value="{{trig.value}}" placeholder="{{localize 'pf2e-aztecs-rip-n-tear.value'}}" class="rnt-input-tiny" />
+            {{else}}
+            <input type="hidden" name="triggers.{{i}}.value" value="1" />
+            {{/if}}
+         </div>
+         {{/if}}
+      </div>
+      {{/each}}
+   </div>
+
+</div>
+<div class="rnt-footer">
+   <button type="button" class="rnt-btn-primary rnt-btn-block" data-action="saveChanges">
+      <i class="fa-solid fa-save"></i> {{localize "pf2e-aztecs-rip-n-tear.save"}}
+   </button>
+</div>
+</form>

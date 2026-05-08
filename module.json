@@ -1,0 +1,32 @@
+{
+   "id": "pf2e-aztecs-rip-n-tear",
+   "title": "PF2e Aztec's Rip & Tear",
+   "description": "Track and automate called shots on specific body parts, track damage reactions and death reactions.",
+   "version": "#{VERSION}#",
+   "compatibility": {
+      "minimum": "13",
+      "verified": "14"
+   },
+   "authors": [
+      {
+         "name": "Aztec"
+      }
+   ],
+   "esmodules": ["scripts/main.mjs"],
+   "styles": ["styles/module.css"],
+   "languages": [
+      {
+         "lang": "en",
+         "name": "English",
+         "path": "languages/en.json"
+      },
+      {
+         "lang": "ru",
+         "name": "Русский",
+         "path": "languages/ru.json"
+      }
+   ],
+   "url": "#{URL}#",
+   "manifest": "#{MANIFEST}#",
+   "download": "#{DOWNLOAD}#"
+}

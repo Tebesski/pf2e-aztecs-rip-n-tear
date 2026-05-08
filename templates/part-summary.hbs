@@ -1,0 +1,102 @@
+<div class="rnt-summary-content">
+   <div class="rnt-summary-grid">
+      <div class="rnt-summary-cell"><i class="fa-solid fa-shield"></i><span class="rnt-summary-label">{{localize "pf2e-aztecs-rip-n-tear.ac"}}</span><span class="rnt-summary-value">{{ac}}</span></div>
+      <div class="rnt-summary-cell"><i class="fa-solid fa-cube"></i><span class="rnt-summary-label">{{localize "pf2e-aztecs-rip-n-tear.hardness"}}</span><span class="rnt-summary-value">{{hardness}}</span></div>
+      <div class="rnt-summary-cell"><i class="fa-solid fa-xmark"></i><span class="rnt-summary-label">{{localize "pf2e-aztecs-rip-n-tear.mult"}}</span><span class="rnt-summary-value">{{multiplier}}x</span></div>
+      <div class="rnt-summary-cell"><i class="fa-solid fa-skull"></i><span class="rnt-summary-label">{{localize "pf2e-aztecs-rip-n-tear.damagesCreature"}}</span><span class="rnt-summary-value">{{#if dealsDamage}}{{localize "pf2e-aztecs-rip-n-tear.yes"}}{{else}}{{localize "pf2e-aztecs-rip-n-tear.no"}}{{/if}}</span></div>
+      {{#if dealsDamage}}
+      <div class="rnt-summary-cell"><i class="fa-solid fa-droplet"></i><span class="rnt-summary-label">{{localize "pf2e-aztecs-rip-n-tear.persistent"}}</span><span class="rnt-summary-value">{{#if persistentDealsDamage}}{{localize "pf2e-aztecs-rip-n-tear.yes"}}{{else}}{{localize "pf2e-aztecs-rip-n-tear.no"}}{{/if}}</span></div>
+      {{/if}}
+      <div class="rnt-summary-cell"><i class="fa-solid fa-heart-circle-plus"></i><span class="rnt-summary-label">{{localize "pf2e-aztecs-rip-n-tear.healRemovesEffects"}}</span><span class="rnt-summary-value">{{#if removeEffectsOnFullHeal}}{{localize "pf2e-aztecs-rip-n-tear.yes"}}{{else}}{{localize "pf2e-aztecs-rip-n-tear.no"}}{{/if}}</span></div>
+   </div>
+
+   {{#if customIWR}}
+   {{#if hasIwr}}
+   <div class="rnt-summary-section">
+      <div class="rnt-summary-mini-title">{{localize "pf2e-aztecs-rip-n-tear.overrideIWR"}}</div>
+      {{#if iwr.immune}}<div class="rnt-summary-line"><strong>{{localize "pf2e-aztecs-rip-n-tear.immunities"}}:</strong> {{iwr.immune}}</div>{{/if}}
+      {{#if iwr.weak}}<div class="rnt-summary-line"><strong>{{localize "pf2e-aztecs-rip-n-tear.weaknesses"}}:</strong> {{iwr.weak}}</div>{{/if}}
+      {{#if iwr.resist}}<div class="rnt-summary-line"><strong>{{localize "pf2e-aztecs-rip-n-tear.resistances"}}:</strong> {{iwr.resist}}</div>{{/if}}
+   </div>
+   {{/if}}
+   {{/if}}
+
+   {{#if acceptedDmgTypes.length}}
+   <div class="rnt-summary-section">
+      <div class="rnt-summary-line"><strong>{{localize "pf2e-aztecs-rip-n-tear.onlyAccepts"}}</strong>
+         {{#each acceptedDmgTypes}}<span class="rnt-summary-tag">{{this}}</span>{{/each}}
+      </div>
+   </div>
+   {{/if}}
+
+   {{#if thresholds.length}}
+   <div class="rnt-summary-section">
+      <div class="rnt-summary-mini-title">
+         <i class="fa-solid fa-layer-group"></i>
+         {{localize "pf2e-aztecs-rip-n-tear.thresholds"}} ({{thresholds.length}})
+      </div>
+      <div class="rnt-summary-thresholds">
+         {{#each thresholds as |t|}}
+         <div class="rnt-summary-threshold">
+            <div class="rnt-summary-threshold-head">
+               <i class="fa-solid fa-heart"></i>
+               <span class="rnt-summary-threshold-hp">{{localize "pf2e-aztecs-rip-n-tear.atHp"}} {{t.hpValue}} {{localize "pf2e-aztecs-rip-n-tear.hp"}}</span>
+               {{#if t.disableAbilities}}
+               <span class="rnt-summary-tag rnt-summary-tag-danger">{{localize "pf2e-aztecs-rip-n-tear.disableAbilities"}}</span>
+               {{/if}}
+            </div>
+            {{#if t.customDescription}}
+            <div class="rnt-summary-threshold-desc">{{t.customDescription}}</div>
+            {{/if}}
+            {{#if t.linkedPartsData.length}}
+            <div class="rnt-summary-threshold-row">
+               <span class="rnt-summary-row-label">{{localize "pf2e-aztecs-rip-n-tear.linkedParts"}}:</span>
+               <span class="rnt-summary-row-value">
+                  {{#each t.linkedPartsData}}<a class="rnt-summary-tag rnt-edit-part" data-part-id="{{this.id}}" style="cursor: pointer;"><i class="fa-solid fa-link"></i> {{this.name}}</a>{{/each}}
+               </span>
+            </div>
+            {{/if}}
+            {{#if t.conditions.length}}
+            <div class="rnt-summary-threshold-row">
+               <span class="rnt-summary-row-label">{{localize "pf2e-aztecs-rip-n-tear.conditions"}}:</span>
+               <span class="rnt-summary-row-value">
+                  {{#each t.conditions}}<span class="rnt-summary-tag">{{this.slug}}{{#if this.hasValue}} {{this.value}}{{/if}}</span>{{/each}}
+               </span>
+            </div>
+            {{/if}}
+            {{#if t.effects.length}}
+            <div class="rnt-summary-threshold-row">
+               <span class="rnt-summary-row-label">{{localize "pf2e-aztecs-rip-n-tear.effects"}}:</span>
+               <span class="rnt-summary-row-value">
+                  {{#each t.effects}}<span class="rnt-summary-tag rnt-summary-tag-img"><img src="{{this.img}}" onerror="this.src='icons/svg/mystery-man.svg';"/>{{this.name}}</span>{{/each}}
+               </span>
+            </div>
+            {{/if}}
+            {{#if t.macros.length}}
+            <div class="rnt-summary-threshold-row">
+               <span class="rnt-summary-row-label">{{localize "pf2e-aztecs-rip-n-tear.macros"}}:</span>
+               <span class="rnt-summary-row-value">
+                  {{#each t.macros}}<span class="rnt-summary-tag rnt-summary-tag-img"><img src="{{this.img}}" onerror="this.src='icons/svg/dice-target.svg';"/>{{this.name}}</span>{{/each}}
+               </span>
+            </div>
+            {{/if}}
+            {{#if t.damages.length}}
+            <div class="rnt-summary-threshold-row">
+               <span class="rnt-summary-row-label">{{localize "pf2e-aztecs-rip-n-tear.damages"}}:</span>
+               <span class="rnt-summary-row-value">
+                  {{#each t.damages}}<span class="rnt-summary-tag">{{this.diceNum}}{{#if this.diceStep}}d{{this.diceStep}}{{/if}} {{this.dmgType}}{{#if this.dmgCategory}} ({{this.dmgCategory}}){{/if}}</span>{{/each}}
+               </span>
+            </div>
+            {{/if}}
+            {{#if t.ruleElements.length}}
+            <div class="rnt-summary-threshold-row">
+               <span class="rnt-summary-row-label">{{localize "pf2e-aztecs-rip-n-tear.ruleElements"}}:</span>
+               <span class="rnt-summary-row-value rnt-summary-text">{{t.ruleElements.length}}</span>
+            </div>
+            {{/if}}
+         </div>
+         {{/each}}
+      </div>
+   </div>
+   {{/if}}
+</div>
