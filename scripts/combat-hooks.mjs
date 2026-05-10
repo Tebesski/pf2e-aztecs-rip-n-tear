@@ -532,7 +532,7 @@ function setupRenderChatMessageHook() {
 }
 
 function setupCombatTurnHook() {
-   Hooks.on("updateCombat", (combat, changed, options, userId) => {
+   Hooks.on("updateCombat", async (combat, changed, options, userId) => {
       if (!game.user.isGM) return
       if (!("turn" in changed) && !("round" in changed)) return
 
@@ -540,19 +540,40 @@ function setupCombatTurnHook() {
       if (currentId) {
          const currentCombatant = combat.combatants.get(currentId)
          if (currentCombatant && currentCombatant.actor) {
+            const parts =
+               currentCombatant.actor.getFlag(MODULE_ID, "parts") || []
+            const m = await import("./mechanics.mjs")
+
+            for (let p of parts) {
+               if (
+                  p.regrowth?.enabled &&
+                  p.hp.value > 0 &&
+                  p.hp.value < p.hp.max
+               ) {
+                  const healAmount = p.regrowth.full
+                     ? p.hp.max
+                     : p.regrowth.amount || 0
+                  if (healAmount > 0) {
+                     await m.applyBodyPartHealing(
+                        currentCombatant.actor,
+                        p.id,
+                        healAmount,
+                     )
+                  }
+               }
+            }
+
             const hotEffects = currentCombatant.actor.items.filter((i) =>
                i.getFlag(MODULE_ID, "isHoT"),
             )
             for (const effect of hotEffects) {
                const hotData = effect.getFlag(MODULE_ID, "hotData")
                if (hotData && hotData.partId && hotData.amount) {
-                  import("./mechanics.mjs").then((m) => {
-                     m.applyBodyPartHealing(
-                        currentCombatant.actor,
-                        hotData.partId,
-                        hotData.amount,
-                     )
-                  })
+                  await m.applyBodyPartHealing(
+                     currentCombatant.actor,
+                     hotData.partId,
+                     hotData.amount,
+                  )
                }
             }
          }

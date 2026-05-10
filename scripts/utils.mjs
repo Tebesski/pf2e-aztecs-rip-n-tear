@@ -20,6 +20,38 @@ export function getBodyPartHpText(part) {
 }
 
 export function getBodyPartHpColor(part) {
-   if (!game.settings.get(MODULE_ID, "useHpText")) return "inherit"
+   const useText = game.settings.get("pf2e-aztecs-rip-n-tear", "useHpText")
+   const usePct = game.settings.get("pf2e-aztecs-rip-n-tear", "usePercentageHp")
+   if (!useText && !usePct) return "inherit"
    return getHpTier(part).color
+}
+
+export function prepareBodyPartDisplay(part, actor, isCalledShot = false) {
+   const usePercentage = game.settings.get(
+      "pf2e-aztecs-rip-n-tear",
+      "usePercentageHp",
+   )
+   const useText = game.settings.get("pf2e-aztecs-rip-n-tear", "useHpText")
+   const showAcDiff = game.settings.get(
+      "pf2e-aztecs-rip-n-tear",
+      "showAcDifference",
+   )
+   const baseAc = actor?.attributes?.ac?.value || 0
+
+   let acDisplay = part.ac
+   if (showAcDiff && baseAc > 0) {
+      const diff = part.ac - baseAc
+      acDisplay = diff >= 0 ? `+${diff}` : `${diff}`
+   }
+
+   let hpDisplay = `${part.hp.value} / ${part.hp.max}`
+   if (usePercentage) {
+      const pct =
+         part.hp.max > 0 ? Math.round((part.hp.value / part.hp.max) * 100) : 0
+      hpDisplay = `HP: ${pct}%`
+   } else if (useText && isCalledShot) {
+      hpDisplay = getBodyPartHpText(part)
+   }
+
+   return { acDisplay, hpDisplay }
 }

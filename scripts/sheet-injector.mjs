@@ -5,7 +5,7 @@ import { ReactionApp } from "./apps/reaction-app.mjs"
 import { DeathReactionApp } from "./apps/death-reaction-app.mjs"
 import { setBodyPartHp } from "./mechanics.mjs"
 import { triggerReaction } from "./reaction-mechanics.mjs"
-import { getBodyPartHpText, getBodyPartHpColor } from "./utils.mjs"
+import { getBodyPartHpColor, prepareBodyPartDisplay } from "./utils.mjs"
 
 const TEMPLATE_BASE = `modules/${MODULE_ID}/templates`
 
@@ -272,6 +272,7 @@ export function injectRipAndTearSection(app, html, data) {
    }
 
    const processedParts = parts.map((p) => {
+      const displayData = prepareBodyPartDisplay(p, app.actor)
       const decorated = {
          ...p,
          hasSpellcastingLinks:
@@ -280,7 +281,7 @@ export function injectRipAndTearSection(app, html, data) {
             p.linkedItems?.includes("ALL_SPELLCASTING"),
          hasAbilityLinks:
             p.linkedItems?.filter((id) => id !== "ALL_SPELLCASTING").length > 0,
-         hpText: getBodyPartHpText(p),
+         hpText: displayData.hpDisplay,
          hpColor: getBodyPartHpColor(p),
          hasIwr: !!(p.iwr?.immune || p.iwr?.weak || p.iwr?.resist),
       }

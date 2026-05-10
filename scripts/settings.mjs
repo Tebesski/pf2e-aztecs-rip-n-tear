@@ -34,32 +34,91 @@ function registerVolumeSlider(key, name) {
 }
 
 export function registerSettings() {
-   registerBoolean("enableCalledShots", "Enable Called Shots", true)
-   registerBoolean("useHpText", "Replace HP numbers with status text", true)
-   registerBoolean(
-      "hideAcFromPlayers",
-      "Hide Body Part Armour Class from Players",
-      true,
+   registerBoolean("enableCalledShots", `${MODULE_ID}.enableCalledShots`, true)
+
+   registerBoolean("hideAcFromPlayers", `${MODULE_ID}.hideAcFromPlayers`, true)
+
+   game.settings.register(MODULE_ID, "showAcDifference", {
+      name: `${MODULE_ID}.showAcDifference`,
+      hint: `${MODULE_ID}.showAcDifferenceHint`,
+      scope: "world",
+      config: true,
+      type: Boolean,
+      default: false,
+   })
+
+   game.settings.register(MODULE_ID, "usePercentageHp", {
+      name: `${MODULE_ID}.usePercentageHp`,
+      hint: `${MODULE_ID}.usePercentageHpHint`,
+      scope: "world",
+      config: true,
+      type: Boolean,
+      default: false,
+      onChange: (value) => {
+         if (value) game.settings.set(MODULE_ID, "useHpText", false)
+      },
+   })
+
+   game.settings.register(MODULE_ID, "useHpText", {
+      name: `${MODULE_ID}.useHpText`,
+      scope: "world",
+      config: true,
+      type: Boolean,
+      default: true,
+      onChange: (value) => {
+         if (value) game.settings.set(MODULE_ID, "usePercentageHp", false)
+      },
+   })
+
+   registerString(
+      "textDestroyed",
+      `${MODULE_ID}.textDestroyedName`,
+      game.i18n.localize(`${MODULE_ID}.textDestroyedDefault`),
+   )
+   registerString(
+      "textMutilated",
+      `${MODULE_ID}.textMutilatedName`,
+      game.i18n.localize(`${MODULE_ID}.textMutilatedDefault`),
+   )
+   registerString(
+      "textSevere",
+      `${MODULE_ID}.textSevereName`,
+      game.i18n.localize(`${MODULE_ID}.textSevereDefault`),
+   )
+   registerString(
+      "textBarely",
+      `${MODULE_ID}.textBarelyName`,
+      game.i18n.localize(`${MODULE_ID}.textBarelyDefault`),
+   )
+   registerString(
+      "textIntact",
+      `${MODULE_ID}.textIntactName`,
+      game.i18n.localize(`${MODULE_ID}.textIntactDefault`),
    )
 
-   registerString("textDestroyed", "Text for 0% HP", "Destroyed")
-   registerString("textMutilated", "Text for 1-25% HP", "Mutilated")
-   registerString("textSevere", "Text for 26-50% HP", "Severely damaged")
-   registerString("textBarely", "Text for 51-99% HP", "Barely damaged")
-   registerString("textIntact", "Text for 100% HP", "Intact")
+   game.settings.register(MODULE_ID, "muteManualHpSfx", {
+      name: `${MODULE_ID}.muteManualHpSfx`,
+      hint: `${MODULE_ID}.muteManualHpSfxHint`,
+      scope: "world",
+      config: true,
+      type: Boolean,
+      default: false,
+   })
 
-   registerBoolean(
-      "promptFreeActions",
-      "Prompt GM for Free Action Reactions",
-      true,
-      "If unchecked, Damage Reactions set as 'Free Action' will trigger automatically without a confirmation dialog.",
+   registerVolumeSlider(
+      SFX_KEYS.deathReaction,
+      `${MODULE_ID}.sfxVolumeDeathReaction`,
    )
-
-   registerVolumeSlider(SFX_KEYS.deathReaction, "SFX Volume: Death Reaction")
-   registerVolumeSlider(SFX_KEYS.damageReaction, "SFX Volume: Damage Reaction")
-   registerVolumeSlider(SFX_KEYS.damage, "SFX Volume: Body Part Damage")
-   registerVolumeSlider(SFX_KEYS.heal, "SFX Volume: Body Part Heal")
-   registerVolumeSlider(SFX_KEYS.destroy, "SFX Volume: Body Part Destroyed")
+   registerVolumeSlider(
+      SFX_KEYS.damageReaction,
+      `${MODULE_ID}.sfxVolumeDamageReaction`,
+   )
+   registerVolumeSlider(SFX_KEYS.damage, `${MODULE_ID}.sfxVolumeBodyPartDamage`)
+   registerVolumeSlider(SFX_KEYS.heal, `${MODULE_ID}.sfxVolumeBodyPartHeal`)
+   registerVolumeSlider(
+      SFX_KEYS.destroy,
+      `${MODULE_ID}.sfxVolumeBodyPartDestroyed`,
+   )
 
    game.settings.register(MODULE_ID, "templates", {
       name: "templates",
@@ -79,6 +138,87 @@ export function registerSettings() {
    })
 }
 
+Hooks.on("renderSettingsConfig", (app, htmlData) => {
+   const html = htmlData instanceof HTMLElement ? htmlData : htmlData[0]
+   if (!html) return
+
+   const updateUI = () => {
+      const hideAcToggle = html.querySelector(
+         `input[name="pf2e-aztecs-rip-n-tear.hideAcFromPlayers"]`,
+      )
+      const showAcDiffInput = html.querySelector(
+         `input[name="pf2e-aztecs-rip-n-tear.showAcDifference"]`,
+      )
+
+      if (hideAcToggle && showAcDiffInput) {
+         const formGroup = showAcDiffInput.closest(".form-group")
+         if (formGroup) {
+            formGroup.style.display = hideAcToggle.checked ? "none" : ""
+         }
+      }
+
+      const useTextToggle = html.querySelector(
+         `input[name="pf2e-aztecs-rip-n-tear.useHpText"]`,
+      )
+      if (useTextToggle) {
+         const isTextEnabled = useTextToggle.checked
+         const textSettings = [
+            "textDestroyed",
+            "textMutilated",
+            "textSevere",
+            "textBarely",
+            "textIntact",
+         ]
+
+         textSettings.forEach((settingName) => {
+            const input = html.querySelector(
+               `input[name="pf2e-aztecs-rip-n-tear.${settingName}"]`,
+            )
+            if (input) {
+               const formGroup = input.closest(".form-group")
+               if (formGroup) {
+                  formGroup.style.display = isTextEnabled ? "" : "none"
+               }
+            }
+         })
+      }
+   }
+
+   updateUI()
+
+   html.addEventListener("change", (e) => {
+      const targetName = e.target.name
+
+      if (targetName === "pf2e-aztecs-rip-n-tear.usePercentageHp") {
+         if (e.target.checked) {
+            const useTextToggle = html.querySelector(
+               `input[name="pf2e-aztecs-rip-n-tear.useHpText"]`,
+            )
+            if (useTextToggle && useTextToggle.checked) {
+               useTextToggle.checked = false
+            }
+         }
+      } else if (targetName === "pf2e-aztecs-rip-n-tear.useHpText") {
+         if (e.target.checked) {
+            const usePctToggle = html.querySelector(
+               `input[name="pf2e-aztecs-rip-n-tear.usePercentageHp"]`,
+            )
+            if (usePctToggle && usePctToggle.checked) {
+               usePctToggle.checked = false
+            }
+         }
+      }
+
+      if (
+         targetName === "pf2e-aztecs-rip-n-tear.hideAcFromPlayers" ||
+         targetName === "pf2e-aztecs-rip-n-tear.usePercentageHp" ||
+         targetName === "pf2e-aztecs-rip-n-tear.useHpText"
+      ) {
+         updateUI()
+      }
+   })
+})
+
 const FormApplicationBase =
    foundry.appv1?.api?.FormApplication ?? globalThis.FormApplication
 
@@ -90,7 +230,7 @@ class ManageTemplatesShim extends FormApplicationBase {
    static get defaultOptions() {
       return foundry.utils.mergeObject(super.defaultOptions, {
          id: "rnt-manage-templates-shim",
-         title: "Manage Templates",
+         title: `${MODULE_ID}.manageTemplates`,
          template: "templates/generic/form.html",
          width: 400,
          height: "auto",

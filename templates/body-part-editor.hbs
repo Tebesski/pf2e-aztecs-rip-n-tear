@@ -53,6 +53,28 @@
    {{!-- ===================== Damage Behaviour ===================== --}}
    <div class="rnt-section">
       <div class="rnt-section-title">{{localize "pf2e-aztecs-rip-n-tear.damageBehaviour"}}</div>
+
+<div class="rnt-field">
+         <label class="rnt-field-label">
+            {{localize "pf2e-aztecs-rip-n-tear.regrowth"}}
+            <i class="fa-solid fa-circle-info rnt-info" data-tooltip="{{localize 'pf2e-aztecs-rip-n-tear.regrowthTooltip'}}"></i>
+         </label>
+         <div class="rnt-field-control">
+            <input type="checkbox" name="regrowth.enabled" onchange="this.closest('.rnt-section').querySelector('.rnt-regrowth-stack').style.display = this.checked ? '' : 'none';" {{checked part.regrowth.enabled}} />
+         </div>
+      </div>
+
+      <div class="rnt-field rnt-field-stack rnt-regrowth-stack" {{#unless part.regrowth.enabled}}style="display: none;"{{/unless}}>
+         <div class="rnt-input-group">
+            <label>
+               <input type="checkbox" name="regrowth.full" onchange="this.closest('.rnt-input-group').querySelector('.rnt-regrowth-amount').style.display = this.checked ? 'none' : '';" {{checked part.regrowth.full}} />
+               {{localize "pf2e-aztecs-rip-n-tear.fullHeal"}}
+               <i class="fa-solid fa-circle-info rnt-info" data-tooltip="{{localize 'pf2e-aztecs-rip-n-tear.fullHealTooltip'}}"></i>
+            </label>
+            <input type="number" class="rnt-regrowth-amount" name="regrowth.amount" value="{{part.regrowth.amount}}" placeholder="{{localize 'pf2e-aztecs-rip-n-tear.regrowthAmount'}}" {{#if part.regrowth.full}}style="display: none;"{{/if}} />
+         </div>
+      </div>
+
       <div class="rnt-field">
          <label class="rnt-field-label">{{localize "pf2e-aztecs-rip-n-tear.dealsDamageToCreature"}}</label>
          <div class="rnt-field-control"><input type="checkbox" name="dealsDamage" {{checked part.dealsDamage}} /></div>

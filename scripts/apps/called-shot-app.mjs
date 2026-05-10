@@ -1,7 +1,7 @@
 const { ApplicationV2, HandlebarsApplicationMixin } = foundry.applications.api
 
 import { MODULE_ID } from "../constants.mjs"
-import { getBodyPartHpText, getBodyPartHpColor } from "../utils.mjs"
+import { prepareBodyPartDisplay, getBodyPartHpColor } from "../utils.mjs"
 
 export class CalledShotTargetApp extends HandlebarsApplicationMixin(
    ApplicationV2,
@@ -51,11 +51,12 @@ export class CalledShotTargetApp extends HandlebarsApplicationMixin(
                const val = p.saves[this.saveType].value
                saveMod = val >= 0 ? `+${val}` : val
             }
+            const displayData = prepareBodyPartDisplay(p, this.actor, true)
             return {
                ...p,
-               hpText: getBodyPartHpText(p),
+               acDisplay: displayData.acDisplay,
+               hpDisplay: displayData.hpDisplay,
                hpColor: getBodyPartHpColor(p),
-               useText,
                isDestroyed,
                checked,
                saveMod,

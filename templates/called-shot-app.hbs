@@ -14,14 +14,14 @@
                {{this.name}}
                {{#if ../isSave}}
                <span class="rnt-called-shot-info">{{../saveType}}: {{this.saveMod}}</span>
-               {{else}}{{#if ../showAc}}
-               <span class="rnt-called-shot-info">{{localize "pf2e-aztecs-rip-n-tear.ac"}}: {{this.ac}}</span>
+            {{else}}{{#if ../showAc}}
+               <span class="rnt-called-shot-info">{{localize "pf2e-aztecs-rip-n-tear.ac"}}: {{this.acDisplay}}</span>
                {{/if}}{{/if}}
             </span>
             <span class="rnt-hp-state" style="color: {{this.hpColor}};">
-               {{#if this.useText}}{{this.hpText}}{{else}}{{this.hp.value}} / {{this.hp.max}}{{/if}}
+               {{this.hpDisplay}}
             </span>
-         </label>
+            </label>
          {{/each}}
       </div>
    </div>

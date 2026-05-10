@@ -1,5 +1,5 @@
 import { MODULE_ID } from "./constants.mjs"
-import { getBodyPartHpText } from "./utils.mjs"
+import { prepareBodyPartDisplay } from "./utils.mjs"
 import { playSfx } from "./sfx.mjs"
 
 export { resolveSfxPath } from "./sfx.mjs"
@@ -112,7 +112,10 @@ export function createParentEffectData(part, threshold) {
    }
 }
 
-async function playPartChangeSfx(part, isDamage) {
+async function playPartChangeSfx(part, isDamage, isManual = false) {
+   const muteManual = game.settings.get(MODULE_ID, "muteManualHpSfx")
+   if (isManual && muteManual) return
+
    if (!isDamage) {
       if (part.sfxHeal) await playSfx(part.sfxHeal, "heal")
       return
@@ -125,9 +128,8 @@ async function playPartChangeSfx(part, isDamage) {
 }
 
 function formatHpState(part) {
-   return game.settings.get(MODULE_ID, "useHpText")
-      ? getBodyPartHpText(part)
-      : `${part.hp.value} / ${part.hp.max}`
+   const displayData = prepareBodyPartDisplay(part, null, true)
+   return displayData.hpDisplay
 }
 
 async function removePersistentEffectsForPart(actor, partId) {
@@ -159,7 +161,7 @@ export async function setBodyPartHp(actor, partId, newHp, isManual = false) {
    }
 
    if (part.hp.value < previousHp) {
-      await playPartChangeSfx(part, true)
+      await playPartChangeSfx(part, true, isManual)
       if (!isManual) {
          ChatMessage.create({
             speaker: ChatMessage.getSpeaker({ actor }),
@@ -171,7 +173,7 @@ export async function setBodyPartHp(actor, partId, newHp, isManual = false) {
          })
       }
    } else if (part.hp.value > previousHp) {
-      await playPartChangeSfx(part, false)
+      await playPartChangeSfx(part, false, isManual)
       if (!isManual) {
          ChatMessage.create({
             speaker: ChatMessage.getSpeaker({ actor }),
@@ -241,7 +243,11 @@ export async function applyBodyPartDamage(
    const acceptedTypes = Array.isArray(part.acceptedDmgTypes)
       ? part.acceptedDmgTypes.filter((t) => t)
       : []
-   if (acceptedTypes.length > 0 && dmgType && !acceptedTypes.includes(dmgType)) {
+   if (
+      acceptedTypes.length > 0 &&
+      dmgType &&
+      !acceptedTypes.includes(dmgType)
+   ) {
       ChatMessage.create({
          speaker: ChatMessage.getSpeaker({ actor }),
          content: `<strong>${part.name}</strong> ignored ${amount} ${dmgType} damage (does not accept this damage type).`,
