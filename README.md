@@ -18,6 +18,8 @@ This module adds body-part damage tracking and automation, damage reactions and 
 - SFX — separate sounds for damage, destroy, and heal events and also an asset pack of royalty free SFX of dismemberment! (yay, violence)
 - Linked abilities/attacks/spells/body parts — when a body part is destroyed, you can disable abilities/attacks/spells
 
+<img width="919" height="993" alt="5" src="https://github.com/user-attachments/assets/536a2b9c-0b6b-4155-80f8-e39991ec1122" />
+
 **You can:**
 
 - Set up Damage Thresholds. Whenever body part's HP reaches a certain Threshold, you can: apply conditions/effects/rule elements; deal damage; execute macros; disable linked abilities
@@ -40,13 +42,20 @@ Reactions that fire when a body part **and/or** the NPC takes damage.
 - Saving Throw triggers also include Basic Saving Throw damage set up
 - Trigger targets: triggerer, self, or radius with ally/enemy/all filters
 
+<img width="368" height="401" alt="2" src="https://github.com/user-attachments/assets/7bac64ca-ed52-4799-9f82-bfba391c1164" />
+
 ### Death Reactions
 
 A single death-trigger configurable per NPC, with optional delay (start/end of turn) and the same trigger system as damage reactions.
 
+<img width="368" height="462" alt="3" src="https://github.com/user-attachments/assets/edc1e975-0f3e-464c-ac25-f31f1034ca06" />
+
 ### Called Shot UI
 
 When attacking an NPC with body parts, a target picker appears that shows each part's HP/AC and routes the attack — including saves — to the chosen part.
+
+<img width="373" height="337" alt="1" src="https://github.com/user-attachments/assets/72494657-0e88-4dd7-a603-aa3140dc412f" />
+<img width="500" height="369" alt="4" src="https://github.com/user-attachments/assets/21631ee8-be20-4f42-9318-91057d6334d3" />
 
 ### Templates
 
