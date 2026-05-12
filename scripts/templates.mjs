@@ -38,16 +38,47 @@ export function getTemplateById(id) {
 export async function applyTemplateToActor(actor, template, mode = "append") {
    if (!actor || !template) return
 
-   const newParts = (template.parts || []).map((p) => ({
-      ...foundry.utils.deepClone(p),
-      id: foundry.utils.randomID(),
-   }))
-   const newReactions = (template.reactions || []).map((r) => ({
-      ...foundry.utils.deepClone(r),
-      id: foundry.utils.randomID(),
-   }))
+   const idMap = new Map()
+
+   const newParts = (template.parts || []).map((p) => {
+      const newId = foundry.utils.randomID()
+      idMap.set(p.id, newId)
+      return {
+         ...foundry.utils.deepClone(p),
+         id: newId,
+      }
+   })
+
+   newParts.forEach((p) => {
+      if (Array.isArray(p.thresholds)) {
+         p.thresholds.forEach((t) => {
+            if (Array.isArray(t.linkedParts)) {
+               t.linkedParts = t.linkedParts.map(
+                  (oldId) => idMap.get(oldId) || oldId,
+               )
+            }
+         })
+      }
+   })
+
+   const newReactions = (template.reactions || []).map((r) => {
+      const clone = {
+         ...foundry.utils.deepClone(r),
+         id: foundry.utils.randomID(),
+      }
+      if (Array.isArray(clone.specificParts)) {
+         clone.specificParts = clone.specificParts.map(
+            (oldId) => idMap.get(oldId) || oldId,
+         )
+      }
+      return clone
+   })
+
    const newDeathReaction = template.deathReaction
-      ? { ...foundry.utils.deepClone(template.deathReaction) }
+      ? {
+           ...foundry.utils.deepClone(template.deathReaction),
+           id: foundry.utils.randomID(),
+        }
       : null
 
    if (mode === "replace") {

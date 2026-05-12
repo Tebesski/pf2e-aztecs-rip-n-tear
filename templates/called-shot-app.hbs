@@ -8,10 +8,10 @@
 
       <div class="rnt-called-shot-list">
          {{#each parts}}
-         <label class="rnt-called-shot-row {{#if this.isDestroyed}}rnt-destroyed{{/if}}">
+         <label class="rnt-called-shot-row {{#if this.isDestroyed}}rnt-destroyed{{/if}}" {{#if this.isHidden}}style="opacity: 0.65;"{{/if}}>
             <input type="radio" name="rnt-part-select" value="{{this.id}}" {{#if this.checked}}checked{{/if}} {{#if this.isDestroyed}}disabled{{/if}}>
             <span class="rnt-called-shot-name">
-               {{this.name}}
+               {{#if this.isHidden}}<i class="fa-solid fa-eye-slash" style="color: var(--rnt-text-muted); opacity: 0.7; margin-right: 4px;" title="Hidden"></i>{{/if}}{{this.name}}
                {{#if ../isSave}}
                <span class="rnt-called-shot-info">{{../saveType}}: {{this.saveMod}}</span>
             {{else}}{{#if ../showAc}}
@@ -27,7 +27,7 @@
    </div>
    <div class="rnt-footer">
       <button type="button" class="rnt-btn-primary rnt-btn-block" data-action="selectPart">
-         <i class="fa-solid fa-bullseye"></i> {{#if isSave}}{{localize "pf2e-aztecs-rip-n-tear.rollSave"}}{{else}}{{localize "pf2e-aztecs-rip-n-tear.calledShot"}}{{/if}}
+         <i class="fa-solid fa-bullseye"></i> {{localize "pf2e-aztecs-rip-n-tear.confirm"}}
       </button>
    </div>
 </div>

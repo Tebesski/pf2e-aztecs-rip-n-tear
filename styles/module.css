@@ -1656,3 +1656,35 @@ a.rnt-link:hover {
    font-size: 0.85em;
    flex: 0 0 auto;
 }
+
+.rnt-apply-damage-btn {
+   width: 1.4rem;
+   height: 1.4rem;
+   min-height: revert;
+   padding: 0;
+   display: inline-flex;
+   justify-content: center;
+   align-items: center;
+   border: 1px solid var(--button-border-color, var(--color-dark-5, gray));
+   border-radius: 4px;
+   background: var(--button-background-color, rgba(0, 0, 0, 0.1));
+   cursor: pointer;
+   color: var(--button-text-color, var(--color-dark-1, #111));
+   transition: 0.5s;
+}
+
+.rnt-apply-damage-btn:hover {
+   background: var(--button-hover-background-color, var(--color-warm-2));
+   color: var(--button-hover-text-color, var(--color-light-1));
+   border-color: var(--button-hover-border-color, var(--color-light-3));
+   box-shadow: 0 0 0 1px var(--button-focus-outline-color, var(--color-warm-2));
+}
+
+.rnt-reaction-targets .target-row.crit-success-row {
+   filter: blur(0.5px) opacity(0.85);
+}
+
+.rnt-reaction-targets .degree.critical-success {
+   color: #008000 !important;
+   text-shadow: 0 0 2px rgba(0, 255, 0, 0.5);
+}

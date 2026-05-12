@@ -1,7 +1,6 @@
 <form autocomplete="off" onsubmit="event.preventDefault();">
 <div class="rnt-scrollable">
 
-   {{!-- ===================== Identity ===================== --}}
    <div class="rnt-identity">
       <div class="rnt-identity-row">
          <div class="rnt-identity-name">
@@ -21,7 +20,6 @@
       </div>
    </div>
 
-   {{!-- ===================== React To Section ===================== --}}
    <div class="rnt-section">
       <div class="rnt-section-title">{{localize "pf2e-aztecs-rip-n-tear.reactsTo"}}</div>
       <div class="rnt-field">
@@ -78,7 +76,6 @@
       </div>
    </div>
 
-   {{!-- ===================== SFX ===================== --}}
    <div class="rnt-section">
       <div class="rnt-section-title">{{localize "pf2e-aztecs-rip-n-tear.sound"}}</div>
       <div class="rnt-sfx-field">
@@ -89,7 +86,6 @@
       </div>
    </div>
 
-   {{!-- ===================== Triggers ===================== --}}
    <div class="rnt-bar-heading">
       <h3>{{localize "pf2e-aztecs-rip-n-tear.triggers"}} <i class="fa-solid fa-circle-info rnt-info" data-tooltip="{{localize 'pf2e-aztecs-rip-n-tear.macrosReceiveTooltip'}}"></i></h3>
       <a class="rnt-action-link rnt-action-add" data-action="addTrigger"><i class="fa-solid fa-plus"></i> {{localize "pf2e-aztecs-rip-n-tear.addTrigger"}}</a>
@@ -104,6 +100,7 @@
                <option value="saving-throw" {{#if (eq trig.type "saving-throw")}}selected{{/if}}>{{localize "pf2e-aztecs-rip-n-tear.savingThrow"}}</option>
                <option value="effect" {{#if (eq trig.type "effect")}}selected{{/if}}>{{localize "pf2e-aztecs-rip-n-tear.typeEffect"}}</option>
                <option value="condition" {{#if (eq trig.type "condition")}}selected{{/if}}>{{localize "pf2e-aztecs-rip-n-tear.typeCondition"}}</option>
+               <option value="rule-element" {{#if (eq trig.type "rule-element")}}selected{{/if}}>Rule Element</option>
                <option value="macro" {{#if (eq trig.type "macro")}}selected{{/if}}>{{localize "pf2e-aztecs-rip-n-tear.executeMacro"}}</option>
             </select>
             <select name="triggers.{{i}}.target" style="flex: 1;">
@@ -134,6 +131,18 @@
             </select>
             <input type="number" name="triggers.{{i}}.dc" value="{{trig.dc}}" placeholder="{{localize 'pf2e-aztecs-rip-n-tear.dc'}}" class="rnt-input-tiny" />
             <input type="text" name="triggers.{{i}}.rollOptions" value="{{trig.rollOptions}}" placeholder="{{localize 'pf2e-aztecs-rip-n-tear.rollOptionsPh'}}" />
+         </div>
+         <div class="rnt-input-group" style="margin-top: 4px;">
+            <select name="triggers.{{i}}.durationUnit" class="rnt-input-tiny" style="flex: 1;">
+               <option value="unlimited" {{#if (eq trig.durationUnit "unlimited")}}selected{{/if}}>Unlimited</option>
+               <option value="rounds" {{#if (eq trig.durationUnit "rounds")}}selected{{/if}}>Rounds</option>
+               <option value="minutes" {{#if (eq trig.durationUnit "minutes")}}selected{{/if}}>Minutes</option>
+            </select>
+            <input type="number" name="triggers.{{i}}.durationValue" value="{{trig.durationValue}}" placeholder="Unlimited" class="rnt-input-tiny" style="flex: 1;" />
+            <select name="triggers.{{i}}.expiry" class="rnt-input-tiny" style="flex: 1.5;">
+               <option value="turn-end" {{#if (eq trig.expiry "turn-end")}}selected{{/if}}>End of Turn</option>
+               <option value="turn-start" {{#if (eq trig.expiry "turn-start")}}selected{{/if}}>Start of Turn</option>
+            </select>
          </div>
 
          <label class="rnt-toggle">
@@ -191,6 +200,7 @@
                      <option value="damage" {{#if (eq sa.type "damage")}}selected{{/if}}>{{localize "pf2e-aztecs-rip-n-tear.damage"}}</option>
                      <option value="effect" {{#if (eq sa.type "effect")}}selected{{/if}}>{{localize "pf2e-aztecs-rip-n-tear.effect"}}</option>
                      <option value="condition" {{#if (eq sa.type "condition")}}selected{{/if}}>{{localize "pf2e-aztecs-rip-n-tear.condition"}}</option>
+                     <option value="rule-element" {{#if (eq sa.type "rule-element")}}selected{{/if}}>Rule Element</option>
                      <option value="macro" {{#if (eq sa.type "macro")}}selected{{/if}}>{{localize "pf2e-aztecs-rip-n-tear.macro"}}</option>
                   </select>
 
@@ -227,6 +237,15 @@
                      </div>
                      {{/if}}
 
+                     {{#if (eq sa.type "rule-element")}}
+                     <div class="effect-entry" style="display: flex; align-items: stretch; gap: 4px; flex: 1; min-width: 0;">
+                        <i class="fa-solid fa-gears rnt-repeat-icon" style="margin-top: 8px;"></i>
+                        <textarea class="rnt-re-json-input" name="triggers.{{i}}.saveActions.{{group.key}}.{{sai}}.json" style="flex: 1; min-height: 40px; font-family: monospace;" placeholder="JSON...">{{sa.json}}</textarea>
+                        <button type="button" class="rnt-btn-icon" data-action="buildRuleElement" data-ti="{{i}}" data-dos="{{group.key}}" data-sai="{{sai}}" style="margin-top: 8px; align-self: flex-start;" data-tooltip="Build Rule Element"><i class="fa-solid fa-hammer"></i></button>
+                        <input type="hidden" name="triggers.{{i}}.saveActions.{{group.key}}.{{sai}}.invalid" value="{{#if sa.invalid}}true{{else}}false{{/if}}" />
+                     </div>
+                     {{/if}}
+
                      {{#if (eq sa.type "macro")}}
                      <div class="effect-entry" style="display: flex; align-items: center; gap: 4px; flex: 1; min-width: 0;">
                         <img class="effect-icon rnt-repeat-icon" src="{{#if sa.img}}{{sa.img}}{{else}}icons/svg/dice-target.svg{{/if}}" onerror="this.src='icons/svg/dice-target.svg';" />
@@ -240,9 +259,9 @@
                      {{#if (eq sa.type "condition")}}
                      <img class="rnt-repeat-icon" src="systems/pf2e/icons/conditions/{{#if sa.slug}}{{sa.slug}}{{else}}blinded{{/if}}.webp" onerror="this.src='icons/svg/hazard.svg';" />
                      <select class="rnt-condition-select" name="triggers.{{i}}.saveActions.{{group.key}}.{{sai}}.slug" style="flex: 1;">
-                        {{#each @root.pf2eConditions}}<option value="{{this.slug}}" {{#if (eq sa.slug this.slug)}}selected{{/if}}>{{this.name}}</option>{{/each}}
+                        {{#each @root.pf2eConditions as |cond|}}<option value="{{cond.slug}}" data-has-value="{{cond.hasValue}}" {{#if (eq sa.slug cond.slug)}}selected{{/if}}>{{cond.name}}</option>{{/each}}
                      </select>
-                     <input type="number" name="triggers.{{i}}.saveActions.{{group.key}}.{{sai}}.value" value="{{sa.value}}" placeholder="{{localize 'pf2e-aztecs-rip-n-tear.valShort'}}" class="rnt-input-tiny" />
+                     <input type="number" name="triggers.{{i}}.saveActions.{{group.key}}.{{sai}}.value" value="{{sa.value}}" placeholder="Val" class="rnt-input-tiny" />
                      {{/if}}
                   </div>
 
@@ -286,6 +305,15 @@
          </div>
          {{/if}}
 
+         {{#if (eq trig.type "rule-element")}}
+         <div class="rnt-repeat-row rnt-repeat-row-stretch re-entry" style="align-items: stretch;">
+            <i class="fa-solid fa-gears rnt-repeat-icon" style="margin-top: 8px;"></i>
+            <textarea class="rnt-re-json-input" name="triggers.{{i}}.json" style="flex: 1; min-height: 60px; font-family: monospace;" placeholder="JSON...">{{trig.json}}</textarea>
+            <button type="button" class="rnt-btn-icon" data-action="buildRuleElement" data-ti="{{i}}" data-is-trigger="true" style="margin-top: 8px; align-self: flex-start;" data-tooltip="Build Rule Element"><i class="fa-solid fa-hammer"></i></button>
+            <input type="hidden" name="triggers.{{i}}.invalid" value="{{#if trig.invalid}}true{{else}}false{{/if}}" />
+         </div>
+         {{/if}}
+
          {{#if (eq trig.type "effect")}}
          <div class="rnt-repeat-row effect-entry">
             <img class="rnt-repeat-icon effect-icon" src="{{#if trig.img}}{{trig.img}}{{else}}icons/svg/mystery-man.svg{{/if}}" onerror="this.src='icons/svg/mystery-man.svg';" />
@@ -302,6 +330,18 @@
             <input type="hidden" name="triggers.{{i}}.invalid" value="{{#if trig.invalid}}true{{else}}false{{/if}}" />
             <input type="hidden" name="triggers.{{i}}.name" value="{{trig.name}}" />
             <input type="hidden" name="triggers.{{i}}.img" value="{{trig.img}}" />
+         </div>
+         <div class="rnt-input-group" style="margin-top: 4px;">
+            <select name="triggers.{{i}}.durationUnit" class="rnt-input-tiny" style="flex: 1;">
+               <option value="unlimited" {{#if (eq trig.durationUnit "unlimited")}}selected{{/if}}>Unlimited</option>
+               <option value="rounds" {{#if (eq trig.durationUnit "rounds")}}selected{{/if}}>Rounds</option>
+               <option value="minutes" {{#if (eq trig.durationUnit "minutes")}}selected{{/if}}>Minutes</option>
+            </select>
+            <input type="number" name="triggers.{{i}}.durationValue" value="{{trig.durationValue}}" placeholder="Unlimited" class="rnt-input-tiny" style="flex: 1;" />
+            <select name="triggers.{{i}}.expiry" class="rnt-input-tiny" style="flex: 1.5;">
+               <option value="turn-end" {{#if (eq trig.expiry "turn-end")}}selected{{/if}}>End of Turn</option>
+               <option value="turn-start" {{#if (eq trig.expiry "turn-start")}}selected{{/if}}>Start of Turn</option>
+            </select>
          </div>
          {{/if}}
 
@@ -328,13 +368,21 @@
          <div class="rnt-repeat-row">
             <img class="rnt-repeat-icon" src="systems/pf2e/icons/conditions/{{#if trig.slug}}{{trig.slug}}{{else}}blinded{{/if}}.webp" onerror="this.src='icons/svg/hazard.svg';" />
             <select class="rnt-condition-select" name="triggers.{{i}}.slug" style="flex: 2;">
-               {{#each @root.pf2eConditions}}<option value="{{this.slug}}" {{#if (eq trig.slug this.slug)}}selected{{/if}}>{{this.name}}</option>{{/each}}
+               {{#each @root.pf2eConditions as |cond|}}<option value="{{cond.slug}}" data-has-value="{{cond.hasValue}}" {{#if (eq trig.slug cond.slug)}}selected{{/if}}>{{cond.name}}</option>{{/each}}
             </select>
-            {{#if trig.hasValue}}
             <input type="number" name="triggers.{{i}}.value" value="{{trig.value}}" placeholder="{{localize 'pf2e-aztecs-rip-n-tear.value'}}" class="rnt-input-tiny" />
-            {{else}}
-            <input type="hidden" name="triggers.{{i}}.value" value="1" />
-            {{/if}}
+         </div>
+         <div class="rnt-input-group" style="margin-top: 4px;">
+            <select name="triggers.{{i}}.durationUnit" class="rnt-input-tiny" style="flex: 1;">
+               <option value="unlimited" {{#if (eq trig.durationUnit "unlimited")}}selected{{/if}}>Unlimited</option>
+               <option value="rounds" {{#if (eq trig.durationUnit "rounds")}}selected{{/if}}>Rounds</option>
+               <option value="minutes" {{#if (eq trig.durationUnit "minutes")}}selected{{/if}}>Minutes</option>
+            </select>
+            <input type="number" name="triggers.{{i}}.durationValue" value="{{trig.durationValue}}" placeholder="Unlimited" class="rnt-input-tiny" style="flex: 1;" />
+            <select name="triggers.{{i}}.expiry" class="rnt-input-tiny" style="flex: 1.5;">
+               <option value="turn-end" {{#if (eq trig.expiry "turn-end")}}selected{{/if}}>End of Turn</option>
+               <option value="turn-start" {{#if (eq trig.expiry "turn-start")}}selected{{/if}}>Start of Turn</option>
+            </select>
          </div>
          {{/if}}
       </div>

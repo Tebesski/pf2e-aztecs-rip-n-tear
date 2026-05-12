@@ -36,6 +36,13 @@ function registerVolumeSlider(key, name) {
 export function registerSettings() {
    registerBoolean("enableCalledShots", `${MODULE_ID}.enableCalledShots`, true)
 
+   registerBoolean(
+      "promptFreeActions",
+      `${MODULE_ID}.promptFreeActions`,
+      true,
+      `${MODULE_ID}.promptFreeActionsHint`,
+   )
+
    registerBoolean("hideAcFromPlayers", `${MODULE_ID}.hideAcFromPlayers`, true)
 
    game.settings.register(MODULE_ID, "showAcDifference", {

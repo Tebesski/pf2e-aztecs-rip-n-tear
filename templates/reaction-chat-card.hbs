@@ -1,0 +1,75 @@
+<div class="pf2e chat-card item-card rnt-reaction-card" data-actor-id="{{actor.id}}" data-reaction-id="{{reaction.id}}">
+    <header class="card-header flexrow">
+        <div class="aztec-icon-wrapper aztec-global-inset-common" style="display: block; flex: 0 0 2.2em; width: 2.2em; min-width: 2.2em; max-width: 2.2em; height: 2.2em; min-height: 2.2em; max-height: 2.2em; margin: 1px 8px 1px 2px; border-radius: 4px; position: relative; box-sizing: border-box;">
+            <img src="{{reaction.img}}" alt="{{reaction.name}}" style="width: 100%; height: 100%; max-width: 100%; max-height: 100%; margin: 0px; padding: 0px; border: none; display: block; object-fit: cover; border-radius: 2px;">
+        </div>
+        <h3 style="color: rgb(50, 50, 50); text-shadow: rgb(0, 0, 0) 0px 0px 1px;">{{reaction.name}}</h3>
+    </header>
+
+    <section class="card-content" style="margin-bottom: 8px;">
+        {{#if hasSave}}
+        <p><strong>Defense:</strong> <span style="text-transform: capitalize;">{{saveType}}</span></p>
+        {{/if}}
+        {{#if evaluatedDamages.length}}
+        <div style="font-weight: 700; padding-bottom: 4px; border-bottom: 1px solid rgba(0,0,0,0.15); margin-bottom: 4px; font-size: 1.05em;">Damage Breakdown</div>
+        <div class="rnt-chat-card-row dice-formula" style="background: transparent; border: none; box-shadow: none; padding: 0; text-align: left;">
+            <ul style="list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px;">
+                {{#each evaluatedDamages}}
+                <li style="display: flex; justify-content: space-between; align-items: center; font-size: 1.15em; font-weight: 600;">
+                    <span class="{{this.dmgType}} damage instance color" data-tooltip="{{this.dmgType}}" style="display: inline-flex; align-items: center; gap: 6px; text-transform: capitalize; padding: 2px 4px;">
+                        {{this.amount}} {{this.dmgType}} <i class="fa-solid {{this.icon}} icon" inert=""></i>
+                        {{#if this.isPersistent}}<span style="font-size: 0.8em; opacity: 0.8;">(Persistent)</span>{{/if}}
+                        {{#if this.isPrecision}}<span style="font-size: 0.8em; opacity: 0.8;">(Precision)</span>{{/if}}
+                        {{#if this.isSplash}}<span style="font-size: 0.8em; opacity: 0.8;">(Splash)</span>{{/if}}
+                    </span>
+                </li>
+                {{/each}}
+            </ul>
+            <div style="margin-top: 4px; border-top: 1px solid rgba(0,0,0,0.1); padding-top: 4px; display: flex; justify-content: flex-end; color: var(--rnt-accent); font-weight: bold; font-size: 1.15em;">
+                Total: {{damageTotal}}
+            </div>
+        </div>
+        {{/if}}
+    </section>
+
+    {{#if targets.length}}
+    <div class="pf2e-toolbelt-target-targetRows rnt-reaction-targets">
+        {{#each targets}}
+        <div class="target-row" data-target-uuid="{{this.uuid}}" data-rolled="false" style="transition: filter 0.3s;">
+            <hr>
+            <div class="target-header">
+                <span class="name">
+                    <i class="fa-solid fa-ghost"></i>
+                    {{this.name}}
+                </span>
+                <span class="controls" data-tooltip-class="pf2e">
+                    {{#if ../hasSave}}
+                    <a class="rnt-reaction-roll-save" data-action="roll-save" data-statistic="{{../saveType}}" data-dc="{{../saveDc}}" data-tooltip="Roll Save">
+                        <i class="save fa-solid fa-person-running"></i>
+                        <i class="fa-solid fa-dice-d20 die"></i>
+                        <span class="degree show hidden" style="cursor: pointer;"></span>
+                    </a>
+                    {{/if}}
+                </span>
+            </div>
+            {{#if ../hasDamage}}
+            <section class="damage-application small hidden" data-target-uuid="{{this.uuid}}">
+                <button type="button" data-action="target-applyDamage" data-multiplier="1" title="Apply full damage">
+                    <i class="fa-solid fa-heart-crack fa-fw"></i>
+                    <span class="label">Damage</span>
+                </button>
+                <button type="button" class="half-damage" data-action="target-applyDamage" data-multiplier="0.5" title="Apply half damage">
+                    <i class="fa-solid fa-heart-crack fa-fw"></i>
+                    <span class="label">Half</span>
+                </button>
+                <button type="button" data-action="target-applyDamage" data-multiplier="2" title="Apply double damage">
+                    <img src="systems/pf2e/icons/damage/double.svg">
+                    <span class="label">Double</span>
+                </button>
+            </section>
+            {{/if}}
+        </div>
+        {{/each}}
+    </div>
+    {{/if}}
+</div>

@@ -129,7 +129,9 @@ async function playPartChangeSfx(part, isDamage, isManual = false) {
 
 function formatHpState(part) {
    const displayData = prepareBodyPartDisplay(part, null, true)
-   return displayData.hpDisplay
+   let display = displayData.hpDisplay || ""
+   if (display.startsWith("HP: ")) display = display.replace("HP: ", "").trim()
+   return display
 }
 
 async function removePersistentEffectsForPart(actor, partId) {
@@ -355,6 +357,15 @@ export async function applyBodyPartDamage(
                rntDmgType: dmgType,
             },
          )
+
+         ChatMessage.create({
+            speaker: ChatMessage.getSpeaker({ actor }),
+            content: game.i18n.format(`${MODULE_ID}.chatCreatureDamageReport`, {
+               actorName: actor.name,
+               amount: creatureDamage,
+               partName: part.name,
+            }),
+         })
       }
    } else if (finalAmount > 0 && !failedRupture) {
       import("./reaction-mechanics.mjs").then((m) => {

@@ -36,12 +36,24 @@ export function prepareBodyPartDisplay(part, actor, isCalledShot = false) {
       "pf2e-aztecs-rip-n-tear",
       "showAcDifference",
    )
-   const baseAc = actor?.attributes?.ac?.value || 0
 
-   let acDisplay = part.ac
-   if (showAcDiff && baseAc > 0) {
-      const diff = part.ac - baseAc
-      acDisplay = diff >= 0 ? `+${diff}` : `${diff}`
+   const baseAc =
+      actor?.system?.attributes?.ac?.value || actor?.attributes?.ac?.value || 0
+
+   let adj = 0
+   if (
+      part.acAdjustment !== undefined &&
+      part.acAdjustment !== null &&
+      part.acAdjustment !== ""
+   ) {
+      adj = Number(part.acAdjustment)
+   } else if (part.ac !== undefined && part.ac !== null) {
+      adj = Number(part.ac) - baseAc
+   }
+
+   let acDisplay = baseAc + adj
+   if (showAcDiff) {
+      acDisplay = adj >= 0 ? `+${adj}` : `${adj}`
    }
 
    let hpDisplay = `${part.hp.value} / ${part.hp.max}`

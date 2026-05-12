@@ -32,36 +32,41 @@ export class CalledShotTargetApp extends HandlebarsApplicationMixin(
    }
 
    async _prepareContext(options) {
-      const useText = game.settings.get(MODULE_ID, "useHpText")
       const hideAc =
          game.settings.get(MODULE_ID, "hideAcFromPlayers") && !game.user.isGM
 
       let hasChecked = false
-      const partsData = this.bodyParts
-         .filter((p) => !p.isHidden)
-         .map((p) => {
-            const isDestroyed = p.hp.value <= 0
-            let checked = false
-            if (!isDestroyed && !hasChecked) {
-               checked = true
-               hasChecked = true
-            }
-            let saveMod = ""
-            if (this.isSave && p.saves && p.saves[this.saveType]) {
-               const val = p.saves[this.saveType].value
-               saveMod = val >= 0 ? `+${val}` : val
-            }
-            const displayData = prepareBodyPartDisplay(p, this.actor, true)
-            return {
-               ...p,
-               acDisplay: displayData.acDisplay,
-               hpDisplay: displayData.hpDisplay,
-               hpColor: getBodyPartHpColor(p),
-               isDestroyed,
-               checked,
-               saveMod,
-            }
-         })
+      const partsData = this.bodyParts.map((p) => {
+         const isDestroyed = p.hp.value <= 0
+         let checked = false
+
+         if (!isDestroyed && !p.isHidden && !hasChecked) {
+            checked = true
+            hasChecked = true
+         }
+
+         let saveMod = ""
+         if (this.isSave && this.saveType && p.saves?.[this.saveType]) {
+            const val = p.saves[this.saveType].value
+            saveMod = val >= 0 ? `+${val}` : val
+         }
+
+         const displayData = prepareBodyPartDisplay(p, this.actor, true)
+         return {
+            ...p,
+            acDisplay: displayData.acDisplay,
+            hpDisplay: displayData.hpDisplay,
+            hpColor: getBodyPartHpColor(p),
+            isDestroyed,
+            isHidden: p.isHidden,
+            checked,
+            saveMod,
+         }
+      })
+
+      if (!hasChecked && partsData.length > 0) {
+         partsData[0].checked = true
+      }
 
       return {
          parts: partsData,
@@ -94,10 +99,10 @@ export class CalledShotTargetApp extends HandlebarsApplicationMixin(
       this.close()
    }
 
-   _onClose(options) {
+   _onClose() {
       if (!this.resolved && this.resolveCallback) {
          this.resolveCallback(null)
       }
-      super._onClose(options)
+      super._onClose()
    }
 }

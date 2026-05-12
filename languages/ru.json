@@ -347,6 +347,11 @@
       "sfxVolumeDamageReaction": "Громкость SFX: Реакция на урон",
       "sfxVolumeBodyPartDamage": "Громкость SFX: Урон части тела",
       "sfxVolumeBodyPartHeal": "Громкость SFX: Лечение части тела",
-      "sfxVolumeBodyPartDestroyed": "Громкость SFX: Уничтожение части тела"
+      "sfxVolumeBodyPartDestroyed": "Громкость SFX: Уничтожение части тела",
+      "chatCreatureDamageReport": "<strong>{actorName}</strong> получает {amount} ед. урона от удара в <strong>{partName}</strong>.",
+      "promptFreeActions": "Подтверждение Бесплатных действий при Реакции на урон.",
+      "promptFreeActionsHint": "Запрашивать подтверждение у ГМа перед срабатыванием реакции на урон за Бесплатное действие.",
+      "acAdjustment": "Корректировка КБ",
+      "acAdjustmentTooltip": "Изменяет базовый КБ существа для этой части тела."
    }
 }

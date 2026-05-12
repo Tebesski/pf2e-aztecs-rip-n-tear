@@ -1,7 +1,6 @@
 <form autocomplete="off" onsubmit="event.preventDefault();">
 <div class="rnt-scrollable">
 
-   {{!-- ===================== Identity (no header) ===================== --}}
    <div class="rnt-identity">
       <div class="rnt-identity-row">
          <div class="rnt-identity-name">
@@ -22,8 +21,11 @@
 
       <div class="rnt-identity-acrow">
          <div class="rnt-identity-acitem">
-            <label>{{localize "pf2e-aztecs-rip-n-tear.ac"}}</label>
-            <input type="number" name="ac" value="{{part.ac}}" />
+            <label>{{localize "pf2e-aztecs-rip-n-tear.acAdjustment"}} <i class="fa-solid fa-circle-info rnt-info" data-tooltip="{{localize 'pf2e-aztecs-rip-n-tear.acAdjustmentTooltip'}}"></i></label>
+            <div style="display: flex; align-items: center; gap: 4px;">
+               <input type="number" class="rnt-ac-adj-input" name="acAdjustment" value="{{part.acAdjustment}}" data-base-ac="{{@root.actor.system.attributes.ac.value}}" data-old-ac="{{part.ac}}" style="max-width: 60px;" />
+               <span style="color: var(--rnt-text-muted); white-space: nowrap; font-weight: 600;" class="rnt-ac-total-display"></span>
+            </div>
          </div>
          <div class="rnt-identity-acitem">
             <label>{{localize "pf2e-aztecs-rip-n-tear.hardness"}}</label>
@@ -50,11 +52,9 @@
       </div>
    </div>
 
-   {{!-- ===================== Damage Behaviour ===================== --}}
    <div class="rnt-section">
       <div class="rnt-section-title">{{localize "pf2e-aztecs-rip-n-tear.damageBehaviour"}}</div>
-
-<div class="rnt-field">
+      <div class="rnt-field">
          <label class="rnt-field-label">
             {{localize "pf2e-aztecs-rip-n-tear.regrowth"}}
             <i class="fa-solid fa-circle-info rnt-info" data-tooltip="{{localize 'pf2e-aztecs-rip-n-tear.regrowthTooltip'}}"></i>
@@ -99,7 +99,6 @@
       </div>
    </div>
 
-   {{!-- ===================== Damage Type Filter ===================== --}}
    <div class="rnt-section">
       <div class="rnt-section-title">{{localize "pf2e-aztecs-rip-n-tear.acceptedDmgTypes"}} <i class="fa-solid fa-circle-info rnt-info" data-tooltip="{{localize 'pf2e-aztecs-rip-n-tear.acceptedDmgTypesTooltip'}}"></i></div>
       <select name="acceptedDmgTypesSelect">
@@ -107,7 +106,7 @@
          {{#each availableAcceptedDmgTypes as |dt|}}
          <option value="{{dt.slug}}">{{dt.label}}</option>
          {{/each}}
-      </select>
+       </select>
       <div class="rnt-chip-list">
          {{#each acceptedDmgTypeChips as |dt|}}
          <span class="rnt-chip">
@@ -119,7 +118,6 @@
       </div>
    </div>
 
-   {{!-- ===================== IWR Override ===================== --}}
    <div class="rnt-section">
       <div class="rnt-section-title">
          <input type="checkbox" name="customIWR" {{checked part.customIWR}} style="margin-right: 6px;">
@@ -165,7 +163,6 @@
       {{/if}}
    </div>
 
-   {{!-- ===================== SFX ===================== --}}
    <div class="rnt-section">
       <div class="rnt-section-title">{{localize "pf2e-aztecs-rip-n-tear.soundEffects"}}</div>
       <div class="rnt-sfx-field">
@@ -188,7 +185,6 @@
       </div>
    </div>
 
-   {{!-- ===================== Linked Abilities ===================== --}}
    <div class="rnt-section">
       <div class="rnt-section-title">
          <span class="rnt-section-title-flex">{{localize "pf2e-aztecs-rip-n-tear.linkedAbilities"}}</span>
@@ -229,7 +225,6 @@
    </div>
    {{/if}}
 
-   {{!-- ===================== Thresholds ===================== --}}
    <div class="rnt-bar-heading">
       <h3><i class="fa-solid fa-layer-group" style="color: var(--rnt-warning);"></i> {{localize "pf2e-aztecs-rip-n-tear.thresholds"}}</h3>
       <a class="rnt-action-link rnt-action-add" data-action="addThreshold"><i class="fa-solid fa-plus"></i> {{localize "pf2e-aztecs-rip-n-tear.addThreshold"}}</a>
@@ -276,7 +271,6 @@
             <div class="rnt-field-control"><input type="text" name="thresholds.{{i}}.customDescription" value="{{t.customDescription}}" placeholder="{{localize 'pf2e-aztecs-rip-n-tear.defaultIfBlank'}}"/></div>
          </div>
 
-         {{!-- Conditions --}}
          <div class="rnt-threshold-subsection">
             <div class="rnt-subsection-title">
                <span class="rnt-section-title-flex">{{localize "pf2e-aztecs-rip-n-tear.conditions"}}</span>
@@ -298,7 +292,6 @@
             {{/each}}
          </div>
 
-         {{!-- Effects --}}
          <div class="rnt-threshold-subsection">
             <div class="rnt-subsection-title">
                <span class="rnt-section-title-flex">{{localize "pf2e-aztecs-rip-n-tear.effects"}}</span>
@@ -325,7 +318,6 @@
             {{/each}}
          </div>
 
-         {{!-- Macros --}}
          <div class="rnt-threshold-subsection">
             <div class="rnt-subsection-title">
                <span class="rnt-section-title-flex">{{localize "pf2e-aztecs-rip-n-tear.macros"}}</span>
@@ -352,7 +344,6 @@
             {{/each}}
          </div>
 
-         {{!-- Rule Elements --}}
          <div class="rnt-threshold-subsection">
             <div class="rnt-subsection-title">
                <span class="rnt-section-title-flex">{{localize "pf2e-aztecs-rip-n-tear.ruleElements"}}</span>
@@ -367,7 +358,6 @@
             {{/each}}
          </div>
 
-         {{!-- Damages --}}
          <div class="rnt-threshold-subsection">
             <div class="rnt-subsection-title">
                <span class="rnt-section-title-flex">{{localize "pf2e-aztecs-rip-n-tear.damages"}}</span>

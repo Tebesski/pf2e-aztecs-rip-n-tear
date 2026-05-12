@@ -1,22 +1,6 @@
 import { MODULE_ID } from "./constants.mjs"
 import { playSfx } from "./sfx.mjs"
 
-const DOS_MAP = {
-   3: "criticalSuccess",
-   2: "success",
-   1: "failure",
-   0: "criticalFailure",
-}
-
-function getDamageRollClass() {
-   return (
-      window.DamageRoll ||
-      game.pf2e?.DamageRoll ||
-      CONFIG.Dice.rolls.find((r) => r.name === "DamageRoll") ||
-      window.Roll
-   )
-}
-
 function buildDamageTags(d) {
    const tags = []
    if (d.dmgType === "bleed") {
@@ -29,33 +13,34 @@ function buildDamageTags(d) {
    return tags
 }
 
-function formatDamagePart(d, dosValue) {
-   const num = d.diceNum || 0
-   const formulaBase = d.diceStep ? `${num}d${d.diceStep}` : `${num}`
-   const tags = buildDamageTags(d)
-   const tagStr = tags.length > 0 ? `[${tags.join(",")}]` : ""
-
-   let finalFormula = formulaBase
-   if (dosValue === 2) finalFormula = `(${formulaBase} * 0.5)`
-   else if (dosValue === 0) finalFormula = `(${formulaBase} * 2)`
-
-   return `${finalFormula}${tagStr}`
-}
-
-function buildMessageData(actor, actorToken, flavor, target = null) {
-   const msgData = {
-      speaker: ChatMessage.getSpeaker({ actor, token: actorToken }),
-      flavor,
-      flags: { pf2e: { context: { type: "damage-roll" } } },
-   }
-   if (target) {
-      msgData.flags.pf2e.target = target
-      msgData.flags.pf2e.context.target = target
-   }
-   return msgData
-}
-
 export function registerReactionHooks() {
+   document.addEventListener(
+      "click",
+      (event) => {
+         const button = event.target.closest(
+            "button[data-action='applyDamage'], button[data-action='target-applyDamage'], button[data-action='applyHealing'], button[data-action='target-applyHealing']",
+         )
+
+         if (button) {
+            const messageElement = button.closest(".chat-message")
+            if (messageElement) {
+               const messageId = messageElement.dataset.messageId
+               const message = game.messages.get(messageId)
+
+               if (message) {
+                  const types = extractDamageTypesFromMessage(message)
+
+                  window.RNT_PENDING_DAMAGE_SOURCE = {
+                     timestamp: Date.now(),
+                     damageTypes: types,
+                  }
+               }
+            }
+         }
+      },
+      { capture: true },
+   )
+
    Hooks.on("preUpdateActor", (actor, updates, options, userId) => {
       if (userId !== game.user.id) return
       const newHp = foundry.utils.getProperty(
@@ -74,6 +59,54 @@ export function registerReactionHooks() {
       }
    })
 
+   function extractDamageTypesFromMessage(message) {
+      const takenDamageTypes = new Set()
+
+      let ctxOpts = message.flags?.pf2e?.context?.options || []
+      if (ctxOpts instanceof Set) ctxOpts = Array.from(ctxOpts)
+      else if (!Array.isArray(ctxOpts) && typeof ctxOpts === "object")
+         ctxOpts = Object.values(ctxOpts)
+      else if (!Array.isArray(ctxOpts)) ctxOpts = []
+
+      ctxOpts.forEach((o) => {
+         if (typeof o === "string") {
+            if (o.startsWith("item:damage:type:"))
+               takenDamageTypes.add(o.split("item:damage:type:")[1])
+            if (o.startsWith("item:damage:category:"))
+               takenDamageTypes.add(o.split("item:damage:category:")[1])
+            if (o.startsWith("damage:type:"))
+               takenDamageTypes.add(o.split("damage:type:")[1])
+         }
+      })
+
+      const rolls = message.rolls || []
+      for (const r of rolls) {
+         let rollOpts = r.options || []
+         if (rollOpts instanceof Set) rollOpts = Array.from(rollOpts)
+         else if (!Array.isArray(rollOpts) && typeof rollOpts === "object")
+            rollOpts = Object.values(rollOpts)
+         else if (!Array.isArray(rollOpts)) rollOpts = []
+
+         rollOpts.forEach((o) => {
+            if (typeof o === "string") {
+               if (o.startsWith("item:damage:type:"))
+                  takenDamageTypes.add(o.split("item:damage:type:")[1])
+               if (o.startsWith("item:damage:category:"))
+                  takenDamageTypes.add(o.split("item:damage:category:")[1])
+               if (o.startsWith("damage:type:"))
+                  takenDamageTypes.add(o.split("damage:type:")[1])
+            }
+         })
+
+         const instances = r.instances || [r]
+         for (const inst of instances) {
+            if (inst.type) takenDamageTypes.add(inst.type)
+            if (inst.category) takenDamageTypes.add(inst.category)
+         }
+      }
+      return takenDamageTypes
+   }
+
    Hooks.on("updateActor", async (actor, updates, options, userId) => {
       if (userId !== game.user.id) return
 
@@ -87,7 +120,7 @@ export function registerReactionHooks() {
          const actorToken = actor.token ?? actor.getActiveTokens()[0]?.document
 
          const pending = window.RNT_PENDING_DAMAGE_SOURCE
-         if (pending && Date.now() - pending.timestamp < 3000) {
+         if (pending && Date.now() - pending.timestamp < 300000) {
             for (const t of pending.damageTypes) takenDamageTypes.add(t)
             window.RNT_PENDING_DAMAGE_SOURCE = null
          } else {
@@ -99,14 +132,57 @@ export function registerReactionHooks() {
                   m.flags?.pf2e?.target?.token
                const matches =
                   tToken === actorToken?.uuid || tToken === actorToken?.id
-               return isDamage && matches && Date.now() - m.timestamp < 2000
+               return isDamage && matches && Date.now() - m.timestamp < 300000
             })
 
-            if (recentDamageMsg && recentDamageMsg.rolls) {
-               for (const roll of recentDamageMsg.rolls) {
-                  const instances = roll.instances || [roll]
+            if (recentDamageMsg) {
+               let ctxOpts = recentDamageMsg.flags?.pf2e?.context?.options || []
+               if (ctxOpts instanceof Set) ctxOpts = Array.from(ctxOpts)
+               else if (!Array.isArray(ctxOpts) && typeof ctxOpts === "object")
+                  ctxOpts = Object.values(ctxOpts)
+               else if (!Array.isArray(ctxOpts)) ctxOpts = []
+
+               ctxOpts.forEach((o) => {
+                  if (typeof o === "string") {
+                     if (o.startsWith("item:damage:type:"))
+                        takenDamageTypes.add(o.split("item:damage:type:")[1])
+                     if (o.startsWith("item:damage:category:"))
+                        takenDamageTypes.add(
+                           o.split("item:damage:category:")[1],
+                        )
+                     if (o.startsWith("damage:type:"))
+                        takenDamageTypes.add(o.split("damage:type:")[1])
+                  }
+               })
+
+               const rolls = recentDamageMsg.rolls || []
+               for (const r of rolls) {
+                  let rollOpts = r.options || []
+                  if (rollOpts instanceof Set) rollOpts = Array.from(rollOpts)
+                  else if (
+                     !Array.isArray(rollOpts) &&
+                     typeof rollOpts === "object"
+                  )
+                     rollOpts = Object.values(rollOpts)
+                  else if (!Array.isArray(rollOpts)) rollOpts = []
+
+                  rollOpts.forEach((o) => {
+                     if (typeof o === "string") {
+                        if (o.startsWith("item:damage:type:"))
+                           takenDamageTypes.add(o.split("item:damage:type:")[1])
+                        if (o.startsWith("item:damage:category:"))
+                           takenDamageTypes.add(
+                              o.split("item:damage:category:")[1],
+                           )
+                        if (o.startsWith("damage:type:"))
+                           takenDamageTypes.add(o.split("damage:type:")[1])
+                     }
+                  })
+
+                  const instances = r.instances || [r]
                   for (const inst of instances) {
                      if (inst.type) takenDamageTypes.add(inst.type)
+                     if (inst.category) takenDamageTypes.add(inst.category)
                   }
                }
             }
@@ -316,7 +392,7 @@ export async function triggerReaction(
       const targets = collectTargets(trigger, actorToken, resolvedTriggerer)
 
       if (targets.length === 0) {
-         if (trigger.type !== "damage") {
+         if (trigger.type !== "damage" && trigger.type !== "saving-throw") {
             if (options.isManual) {
                ui.notifications.warn(
                   `Reaction "${rx.name}" requires a valid target to apply an effect or condition. No targets found.`,
@@ -343,6 +419,7 @@ export async function triggerReaction(
          actorToken,
          targets,
          resolvedTriggerer,
+         options,
       )
    }
 }
@@ -394,51 +471,148 @@ async function executeTrigger(
    actorToken,
    targets,
    resolvedTriggerer,
+   options = {},
 ) {
    if (trigger.type === "saving-throw") {
-      await runSavingThrowTrigger(
-         trigger,
-         rx,
-         actor,
-         actorToken,
-         targets,
-         resolvedTriggerer,
-      )
+      await createReactionChatCard(actor, rx, trigger, targets, options)
    } else if (trigger.type === "damage" && trigger.damages?.length > 0) {
-      await runDamageTrigger(trigger, rx, actor, actorToken, targets)
-   } else if (trigger.type === "effect" && trigger.uuid) {
-      const triggererNames = targets.map((t) => t.name).join(", ")
-      for (const t of targets) {
-         if (!t.actor) continue
-         const item = await fromUuid(trigger.uuid)
-         if (item && item.type === "effect") {
-            await t.actor.createEmbeddedDocuments("Item", [item.toObject()])
-            ChatMessage.create({
-               speaker: ChatMessage.getSpeaker({ actor }),
-               content: `<strong>${rx.name}</strong> applied ${item.name} to ${triggererNames}.`,
-            })
+      const PF2eDamageRoll =
+         window.DamageRoll ||
+         game.pf2e?.DamageRoll ||
+         CONFIG.Dice.rolls.find((r) => r.name === "DamageRoll") ||
+         window.Roll
+      if (!PF2eDamageRoll) return
+
+      const parts = trigger.damages.map((d) => {
+         const num = d.diceNum || 0
+         const formula = d.diceStep ? `${num}d${d.diceStep}` : `${num}`
+         const tags = []
+         if (d.dmgType === "bleed") tags.push("persistent", "bleed")
+         else {
+            if (d.dmgCategory === "persistent") tags.push("persistent")
+            else if (d.dmgCategory) tags.push(d.dmgCategory)
+            if (d.dmgType) tags.push(d.dmgType)
          }
+         const tagStr = tags.length > 0 ? `[${tags.join(",")}]` : ""
+         return `${formula}${tagStr}`
+      })
+
+      const roll = new PF2eDamageRoll(parts.join(","))
+      await roll.evaluate()
+
+      const triggererNames =
+         targets.length > 0
+            ? targets.map((t) => t.name).join(", ")
+            : "no valid target"
+      const flavorText =
+         targets.length > 0
+            ? `<strong>${rx.name}</strong> triggered against ${triggererNames}!`
+            : `<strong>${rx.name}</strong> triggered!`
+
+      let targetData = null
+      if (
+         targets.length > 0 &&
+         (trigger.target === "triggerer" || trigger.target === "self")
+      ) {
+         const tDoc = targets[0]
+         if (tDoc) targetData = { actor: tDoc.actor?.uuid, token: tDoc.uuid }
       }
-   } else if (trigger.type === "condition" && trigger.slug) {
+
+      await roll.toMessage({
+         speaker: ChatMessage.getSpeaker({ actor, token: actorToken }),
+         flavor: flavorText,
+         flags: {
+            pf2e: { context: { type: "damage-roll", target: targetData } },
+         },
+      })
+   } else if (
+      trigger.type === "effect" ||
+      trigger.type === "condition" ||
+      trigger.type === "rule-element"
+   ) {
       const triggererNames = targets.map((t) => t.name).join(", ")
+      const prefix = options.isDeath ? "Death Reaction" : "Damage Reaction"
+      const sourceName = actor.name || "Unknown"
+      const sourceImg = actor.img || "systems/pf2e/icons/actions/Reaction.webp"
+
       for (const t of targets) {
          if (!t.actor) continue
-         const conditionBase = game.pf2e.ConditionManager.getCondition(
-            trigger.slug,
-         )
-         if (!conditionBase) continue
-         const conditionData = conditionBase.toObject()
-         if (trigger.value > 1) {
-            conditionData.system.value = {
-               isValued: true,
-               value: trigger.value,
+
+         let baseName = `${sourceName}: ${prefix}`
+         let finalName = baseName
+         let counter = 1
+
+         while (t.actor.items.some((i) => i.name === finalName)) {
+            finalName = `${baseName} (${++counter})`
+         }
+
+         const dVal = parseInt(trigger.durationValue)
+         const dUnit = trigger.durationUnit || "unlimited"
+         const durationData =
+            !isNaN(dVal) && dVal > 0 && dUnit !== "unlimited"
+               ? {
+                    value: dVal,
+                    unit: dUnit,
+                    expiry: trigger.expiry || "turn-end",
+                 }
+               : { value: -1, unit: "unlimited" }
+
+         const effectData = {
+            name: finalName,
+            type: "effect",
+            img: sourceImg,
+            system: {
+               description: { value: `Applied by ${rx.name}` },
+               duration: durationData,
+               rules: [],
+            },
+         }
+
+         if (trigger.type === "condition" && trigger.slug) {
+            const conditionBase = game.pf2e.ConditionManager.getCondition(
+               trigger.slug,
+            )
+            if (conditionBase) {
+               effectData.system.rules.push({
+                  key: "GrantItem",
+                  uuid: conditionBase.sourceId || conditionBase.uuid,
+                  onDeleteActions: { grantee: "restrict" },
+                  alterations:
+                     trigger.value > 1
+                        ? [
+                             {
+                                mode: "override",
+                                property: "badge-value",
+                                value: trigger.value,
+                             },
+                          ]
+                        : [],
+               })
+            }
+         } else if (trigger.type === "effect" && trigger.uuid) {
+            effectData.system.rules.push({
+               key: "GrantItem",
+               uuid: trigger.uuid,
+               onDeleteActions: { grantee: "restrict" },
+            })
+         } else if (trigger.type === "rule-element" && trigger.json) {
+            try {
+               effectData.system.rules.push(JSON.parse(trigger.json))
+            } catch (e) {
+               console.error(
+                  "Rip & Tear | Invalid Rule Element JSON in reaction",
+                  e,
+               )
             }
          }
-         await t.actor.createEmbeddedDocuments("Item", [conditionData])
-         ChatMessage.create({
-            speaker: ChatMessage.getSpeaker({ actor }),
-            content: `<strong>${rx.name}</strong> applied condition to ${triggererNames}.`,
-         })
+
+         if (effectData.system.rules.length > 0) {
+            await t.actor.createEmbeddedDocuments("Item", [effectData])
+            ChatMessage.create({
+               speaker: ChatMessage.getSpeaker({ actor }),
+               content: `<strong>${rx.name}</strong> applied consequence to ${triggererNames}.`,
+            })
+         }
       }
    } else if (trigger.type === "macro" && trigger.uuid) {
       const triggererNames = targets.map((t) => t.name).join(", ")
@@ -458,173 +632,125 @@ async function executeTrigger(
    }
 }
 
-async function runSavingThrowTrigger(
-   trigger,
-   rx,
+export async function createReactionChatCard(
    actor,
-   actorToken,
+   reaction,
+   trigger,
    targets,
-   resolvedTriggerer,
+   options = {},
 ) {
    const saveType = trigger.saveType || "reflex"
-   const dc = parseInt(trigger.dc) || 15
-   const opts = trigger.rollOptions
-      ? trigger.rollOptions
-           .split(",")
-           .map((s) => s.trim())
-           .filter((s) => s)
-      : []
+   const saveDc = parseInt(trigger.dc) || 15
+   const dmgList = trigger.isBasicSave ? trigger.basicDamages : trigger.damages
+   const hasDamage = dmgList && dmgList.length > 0
 
-   for (const tDoc of targets) {
-      if (!tDoc.actor) continue
+   let damageFormula = ""
+   let damageTotal = 0
+   let evaluatedDamages = []
 
-      Array.from(game.user.targets).forEach((t) =>
-         t.setTarget(false, { releaseOthers: false }),
-      )
-      if (tDoc.object) {
-         tDoc.object.setTarget(true, { releaseOthers: false })
-      }
-
-      let save = null
-      try {
-         save = await tDoc.actor.saves[saveType].roll({
-            dc: { value: dc },
-            extraRollOptions: opts,
-            createMessage: true,
+   if (hasDamage && dmgList && dmgList.length > 0) {
+      const PF2eDamageRoll =
+         window.DamageRoll ||
+         game.pf2e?.DamageRoll ||
+         CONFIG.Dice.rolls.find((r) => r.name === "DamageRoll") ||
+         window.Roll
+      if (PF2eDamageRoll) {
+         const parts = dmgList.map((d) => {
+            const num = d.diceNum || 0
+            const formula = d.diceStep ? `${num}d${d.diceStep}` : `${num}`
+            const tags = []
+            if (d.dmgType === "bleed") tags.push("persistent", "bleed")
+            else {
+               if (d.dmgCategory === "persistent") tags.push("persistent")
+               else if (d.dmgCategory) tags.push(d.dmgCategory)
+               if (d.dmgType) tags.push(d.dmgType)
+            }
+            const tagStr = tags.length > 0 ? `[${tags.join(",")}]` : ""
+            return `${formula}${tagStr}`
          })
-      } catch (err) {
-         console.error("Rip & Tear | Saving Throw roll failed", err)
-         continue
-      }
-      if (!save) continue
 
-      const dosValue = save.degreeOfSuccess?.value ?? save.degreeOfSuccess
-      if (dosValue === undefined || dosValue === null) continue
-
-      if (
-         trigger.isBasicSave &&
-         trigger.basicDamages?.length > 0 &&
-         dosValue !== 3
-      ) {
-         const PF2eDamageRoll = getDamageRollClass()
-         if (PF2eDamageRoll) {
-            const parts = trigger.basicDamages.map((d) =>
-               formatDamagePart(d, dosValue),
-            )
+         if (parts.length > 0) {
             const roll = new PF2eDamageRoll(parts.join(","))
             await roll.evaluate()
+            damageFormula = roll.formula
+            damageTotal = roll.total
 
-            const target = tDoc.actor
-               ? { actor: tDoc.actor.uuid, token: tDoc.uuid }
-               : null
-            await roll.toMessage(
-               buildMessageData(
-                  actor,
-                  actorToken,
-                  `<strong>${rx.name}</strong> basic save consequence against ${tDoc.name}!`,
-                  target,
-               ),
-            )
+            const iconMap = {
+               acid: "fa-flask",
+               bleed: "fa-droplet",
+               bludgeoning: "fa-hammer",
+               cold: "fa-snowflake",
+               electricity: "fa-bolt",
+               fire: "fa-fire",
+               force: "fa-sparkles",
+               mental: "fa-brain",
+               piercing: "fa-bow-arrow",
+               poison: "fa-vial",
+               slashing: "fa-axe",
+               sonic: "fa-wave-square",
+               vitality: "fa-sun",
+               void: "fa-skull",
+               spirit: "fa-ghost",
+               holy: "fa-cross",
+               unholy: "fa-pentagram",
+               untyped: "fa-burst",
+            }
+
+            const instances = roll.instances || [roll]
+            for (const inst of instances) {
+               const dType = inst.type || "untyped"
+               const cat = inst.category || ""
+               evaluatedDamages.push({
+                  amount: inst.total,
+                  dmgType: dType,
+                  icon: iconMap[dType] || "fa-burst",
+                  isPersistent: cat === "persistent",
+                  isPrecision: cat === "precision",
+                  isSplash: cat === "splash",
+               })
+            }
          }
       }
-
-      const dosKey = DOS_MAP[dosValue]
-      const matchingActions = trigger.saveActions?.[dosKey] || []
-
-      for (const action of matchingActions) {
-         await runSaveAction(action, rx, actor, actorToken, tDoc)
-      }
    }
-}
 
-async function runSaveAction(action, rx, actor, actorToken, tDoc) {
-   if (action.type === "damage") {
-      const PF2eDamageRoll = getDamageRollClass()
-      if (!PF2eDamageRoll) return
+   const targetData = (targets || []).map((t) => ({
+      uuid: t.document ? t.document.uuid : t.uuid,
+      name: t.name,
+   }))
 
-      const num = action.diceNum || 0
-      const formula = action.diceStep ? `${num}d${action.diceStep}` : `${num}`
-      const tags = buildDamageTags(action)
-      const tagStr = tags.length > 0 ? `[${tags.join(",")}]` : ""
-      const roll = new PF2eDamageRoll(`${formula}${tagStr}`)
-      await roll.evaluate()
-
-      const target = tDoc.actor
-         ? { actor: tDoc.actor.uuid, token: tDoc.uuid }
-         : null
-      await roll.toMessage(
-         buildMessageData(
-            actor,
-            actorToken,
-            `<strong>${rx.name}</strong> consequence against ${tDoc.name}!`,
-            target,
-         ),
-      )
-   } else if (action.type === "effect" && action.uuid) {
-      const item = await fromUuid(action.uuid)
-      if (item && item.type === "effect") {
-         await tDoc.actor.createEmbeddedDocuments("Item", [item.toObject()])
-         ChatMessage.create({
-            speaker: ChatMessage.getSpeaker({ actor }),
-            content: `<strong>${rx.name}</strong> applied ${item.name} to ${tDoc.name}.`,
-         })
-      }
-   } else if (action.type === "condition" && action.slug) {
-      const conditionBase = game.pf2e.ConditionManager.getCondition(action.slug)
-      if (!conditionBase) return
-      const conditionData = conditionBase.toObject()
-      if (action.value > 1) {
-         conditionData.system.value = { isValued: true, value: action.value }
-      }
-      await tDoc.actor.createEmbeddedDocuments("Item", [conditionData])
-      ChatMessage.create({
-         speaker: ChatMessage.getSpeaker({ actor }),
-         content: `<strong>${rx.name}</strong> applied condition to ${tDoc.name}.`,
-      })
-   } else if (action.type === "macro" && action.uuid) {
-      const macro = await fromUuid(action.uuid)
-      if (macro && macro.documentName === "Macro") {
-         macro.execute({ actor, reaction: rx, targets: [tDoc] })
-         ChatMessage.create({
-            speaker: ChatMessage.getSpeaker({ actor }),
-            content: `<strong>${rx.name}</strong> executed macro <em>${macro.name}</em> against ${tDoc.name}.`,
-         })
-      }
+   const templateData = {
+      actor: { id: actor.id, name: actor.name },
+      reaction: {
+         id: reaction.id,
+         name: reaction.name,
+         img: reaction.img || "icons/svg/explosion.svg",
+      },
+      hasSave: true,
+      saveType,
+      saveDc,
+      hasDamage,
+      evaluatedDamages,
+      damageTotal,
+      targets: targetData,
    }
-}
 
-async function runDamageTrigger(trigger, rx, actor, actorToken, targets) {
-   const PF2eDamageRoll = getDamageRollClass()
-   if (!PF2eDamageRoll) return
+   const content = await renderTemplate(
+      `modules/${MODULE_ID}/templates/reaction-chat-card.hbs`,
+      templateData,
+   )
 
-   const parts = trigger.damages.map((d) => {
-      const num = d.diceNum || 0
-      const formula = d.diceStep ? `${num}d${d.diceStep}` : `${num}`
-      const tags = buildDamageTags(d)
-      const tagStr = tags.length > 0 ? `[${tags.join(",")}]` : ""
-      return `${formula}${tagStr}`
+   await ChatMessage.create({
+      speaker: ChatMessage.getSpeaker({ actor }),
+      content: content,
+      flags: {
+         [MODULE_ID]: {
+            isReactionCard: true,
+            reactionData: reaction,
+            triggerData: trigger,
+            damages: evaluatedDamages,
+            totalDamage: damageTotal,
+            isDeathReaction: options.isDeath || false,
+         },
+      },
    })
-
-   const roll = new PF2eDamageRoll(parts.join(","))
-   await roll.evaluate()
-
-   const triggererNames =
-      targets.length > 0
-         ? targets.map((t) => t.name).join(", ")
-         : "no valid target"
-   const flavorText =
-      targets.length > 0
-         ? `<strong>${rx.name}</strong> triggered against ${triggererNames}!`
-         : `<strong>${rx.name}</strong> triggered!`
-
-   let target = null
-   if (
-      targets.length > 0 &&
-      (trigger.target === "triggerer" || trigger.target === "self")
-   ) {
-      const tDoc = targets[0]
-      if (tDoc) target = { actor: tDoc.actor?.uuid, token: tDoc.uuid }
-   }
-
-   await roll.toMessage(buildMessageData(actor, actorToken, flavorText, target))
 }

@@ -1,4 +1,5 @@
 const { ApplicationV2, HandlebarsApplicationMixin } = foundry.applications.api
+import { RuleElementApp } from "./rule-element-app.mjs"
 
 import {
    MODULE_ID,
@@ -118,7 +119,10 @@ async function handleEffectUuidChange(ev) {
       if (nameEl)
          nameEl.innerHTML = `<span style="color: darkred; font-weight: bold;"><i class="fa-solid fa-triangle-exclamation"></i> Invalid Item</span>`
       setField('input[name$=".invalid"]', "true")
-      setField('input[name$=".name"]', game.i18n.localize("pf2e-aztecs-rip-n-tear.invalidItem"))
+      setField(
+         'input[name$=".name"]',
+         game.i18n.localize("pf2e-aztecs-rip-n-tear.invalidItem"),
+      )
       setField('input[name$=".img"]', "icons/svg/hazard.svg")
       ui.notifications.warn(
          "The provided UUID does not exist, or is not an Effect/Macro.",
@@ -159,6 +163,7 @@ export class DeathReactionApp extends HandlebarsApplicationMixin(
          previewSfx: this._onPreviewSfx,
          addSaveAction: this._onAddSaveAction,
          removeSaveAction: this._onRemoveSaveAction,
+         buildRuleElement: this._onBuildRuleElement,
       },
    }
 
@@ -208,11 +213,7 @@ export class DeathReactionApp extends HandlebarsApplicationMixin(
    static async _onSaveChanges(event, target) {
       await this._saveCurrentState()
       captureActorSheetScroll(this.actor)
-      await this.actor.setFlag(
-         MODULE_ID,
-         "deathReaction",
-         this.workingReaction,
-      )
+      await this.actor.setFlag(MODULE_ID, "deathReaction", this.workingReaction)
       this.close()
    }
 
@@ -224,7 +225,11 @@ export class DeathReactionApp extends HandlebarsApplicationMixin(
    _restoreScrollPos() {
       const restore = () => {
          const form = this.element?.querySelector(".rnt-scrollable")
-         if (form && form.isConnected && window.RNT_DEATH_REACTION_SCROLL !== undefined) {
+         if (
+            form &&
+            form.isConnected &&
+            window.RNT_DEATH_REACTION_SCROLL !== undefined
+         ) {
             form.scrollTop = window.RNT_DEATH_REACTION_SCROLL
          }
       }
@@ -272,9 +277,56 @@ export class DeathReactionApp extends HandlebarsApplicationMixin(
          })
       })
 
-      this.element
-         .querySelectorAll(".rnt-condition-select")
-         .forEach((el) => el.addEventListener("change", reRenderOnChange))
+      this.element.querySelectorAll(".rnt-re-json-input").forEach((el) => {
+         el.addEventListener("change", async (ev) => {
+            const val = ev.currentTarget.value
+            const parent = ev.currentTarget.closest(".re-entry, .effect-entry")
+
+            if (!parent) return
+
+            try {
+               if (val.trim() === "") throw new Error("Empty")
+               JSON.parse(val)
+               const invalidInput = parent.querySelector(
+                  'input[name$=".invalid"]',
+               )
+               if (invalidInput) invalidInput.value = "false"
+               ev.currentTarget.style.borderColor = "green"
+            } catch (e) {
+               const invalidInput = parent.querySelector(
+                  'input[name$=".invalid"]',
+               )
+               if (invalidInput) invalidInput.value = "true"
+               ev.currentTarget.style.borderColor = "red"
+               ui.notifications.warn("Invalid Rule Element JSON.")
+            }
+            await this._saveCurrentState()
+         })
+      })
+
+      this.element.querySelectorAll(".rnt-condition-select").forEach((sel) => {
+         const toggleValInput = () => {
+            const opt = sel.options[sel.selectedIndex]
+            const needsVal = opt && opt.dataset.hasValue === "true"
+
+            const row = sel.closest(".rnt-repeat-row, .rnt-save-action-fields")
+            const valInput = row?.querySelector(
+               'input[type="number"][name$=".value"]',
+            )
+
+            if (valInput) {
+               valInput.style.display = needsVal ? "" : "none"
+               if (!needsVal) valInput.value = 1
+            }
+         }
+
+         sel.addEventListener("change", (e) => {
+            toggleValInput()
+            reRenderOnChange()
+         })
+
+         toggleValInput()
+      })
    }
 
    static async _onAddTrigger(event, target) {
@@ -344,7 +396,11 @@ export class DeathReactionApp extends HandlebarsApplicationMixin(
       const trig = this.workingReaction.triggers[ti]
       if (!trig) return
       trig.type = "saving-throw"
-      if (!trig.saveActions || typeof trig.saveActions !== "object" || Array.isArray(trig.saveActions))
+      if (
+         !trig.saveActions ||
+         typeof trig.saveActions !== "object" ||
+         Array.isArray(trig.saveActions)
+      )
          trig.saveActions = {
             criticalSuccess: [],
             success: [],
@@ -370,8 +426,39 @@ export class DeathReactionApp extends HandlebarsApplicationMixin(
       this.render()
    }
 
+   static async _onBuildRuleElement(event, target) {
+      const ti = parseInt(target.dataset.ti, 10)
+      const dos = target.dataset.dos
+      const sai = parseInt(target.dataset.sai, 10)
+      const isTrigger = target.dataset.isTrigger === "true"
+
+      new RuleElementApp({
+         actor: this.actor,
+         callback: async (jsonString) => {
+            await this._saveCurrentState()
+            if (isTrigger) {
+               this.workingReaction.triggers[ti].json = jsonString
+               this.workingReaction.triggers[ti].invalid = false
+            } else {
+               this.workingReaction.triggers[ti].saveActions[dos][sai].json =
+                  jsonString
+               this.workingReaction.triggers[ti].saveActions[dos][sai].invalid =
+                  false
+            }
+            this._saveScrollPos()
+            this.render()
+         },
+      }).render(true)
+   }
+
    static async _onPickFile(event, target) {
-      const input = target.closest(".rnt-sfx-field, .rnt-field-control, .rnt-sfx-row, .flexrow, .form-fields")?.querySelector("input[type='text']") || target.previousElementSibling
+      const input =
+         target
+            .closest(
+               ".rnt-sfx-field, .rnt-field-control, .rnt-sfx-row, .flexrow, .form-fields",
+            )
+            ?.querySelector("input[type='text']") ||
+         target.previousElementSibling
       new FilePicker({
          type: "audio",
          current: input.value,
@@ -382,7 +469,13 @@ export class DeathReactionApp extends HandlebarsApplicationMixin(
    }
 
    static async _onPreviewSfx(event, target) {
-      const input = target.closest(".rnt-sfx-field, .rnt-field-control, .rnt-sfx-row, .flexrow, .form-fields")?.querySelector("input[type='text']") || target.previousElementSibling.previousElementSibling
+      const input =
+         target
+            .closest(
+               ".rnt-sfx-field, .rnt-field-control, .rnt-sfx-row, .flexrow, .form-fields",
+            )
+            ?.querySelector("input[type='text']") ||
+         target.previousElementSibling.previousElementSibling
       if (input.value) await playSfx(input.value, "deathReaction", true)
    }
 }

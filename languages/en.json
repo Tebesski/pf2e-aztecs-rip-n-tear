@@ -347,6 +347,11 @@
       "sfxVolumeDamageReaction": "SFX Volume: Damage Reaction",
       "sfxVolumeBodyPartDamage": "SFX Volume: Body Part Damage",
       "sfxVolumeBodyPartHeal": "SFX Volume: Body Part Heal",
-      "sfxVolumeBodyPartDestroyed": "SFX Volume: Body Part Destroyed"
+      "sfxVolumeBodyPartDestroyed": "SFX Volume: Body Part Destroyed",
+      "chatCreatureDamageReport": "<strong>{actorName}</strong> took {amount} damage from a blow to their <strong>{partName}</strong>.",
+      "promptFreeActions": "Prompt for Free Actions",
+      "promptFreeActionsHint": "Ask GM for confirmation before triggering Free Action damage reactions.",
+      "acAdjustment": "AC Adjustment",
+      "acAdjustmentTooltip": "Adjusts the creature's base AC for this body part."
    }
 }

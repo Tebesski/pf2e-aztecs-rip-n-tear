@@ -1,6 +1,6 @@
 import { MODULE_ID } from "./constants.mjs"
 
-const FORMAT_VERSION = 1
+const FORMAT_VERSION = 2
 
 export function safeFilename(base, ext = "json") {
    const cleaned =
@@ -19,15 +19,81 @@ function cleanPart(p) {
    out.linkedItems = []
    out.linkedEntries = []
    out.linkedSpells = []
+
    if (out.hp && typeof out.hp === "object") {
       out.hp.value = out.hp.max
    }
+
+   if (!out.saves) {
+      out.saves = {
+         fortitude: { enabled: false, value: 0 },
+         reflex: { enabled: false, value: 0 },
+         will: { enabled: false, value: 0 },
+      }
+   }
+
+   if (out.acAdjustment === undefined) {
+      out.acAdjustment = ""
+   }
+
    if (Array.isArray(out.thresholds)) {
       out.thresholds = out.thresholds.map((t) => {
          const tt = foundry.utils.deepClone(t)
          delete tt.linkedPartsData
+         if (!tt.ruleElements) tt.ruleElements = []
          return tt
       })
+   } else {
+      out.thresholds = []
+   }
+
+   return out
+}
+
+function _migrateReactionSchema(out) {
+   if (!out.actionType) out.actionType = "reaction"
+   if (out.minDamage === undefined) out.minDamage = 0
+
+   if (Array.isArray(out.triggers)) {
+      out.triggers.forEach((trig) => {
+         if (trig.durationValue === undefined) trig.durationValue = 1
+         if (!trig.durationUnit) trig.durationUnit = "unlimited"
+         if (!trig.expiry) trig.expiry = "turn-end"
+
+         if (trig.saveActions) {
+            const dosKeys = [
+               "criticalSuccess",
+               "success",
+               "failure",
+               "criticalFailure",
+            ]
+            dosKeys.forEach((key) => {
+               if (Array.isArray(trig.saveActions[key])) {
+                  trig.saveActions[key].forEach((act) => {
+                     delete act.durationValue
+                     delete act.durationUnit
+                     delete act.expiry
+
+                     if (act.type === "rule-element" && !act.json) {
+                        act.json = "{}"
+                        act.invalid = false
+                     }
+                  })
+               } else {
+                  trig.saveActions[key] = []
+               }
+            })
+         } else {
+            trig.saveActions = {
+               criticalSuccess: [],
+               success: [],
+               failure: [],
+               criticalFailure: [],
+            }
+         }
+      })
+   } else {
+      out.triggers = []
    }
    return out
 }
@@ -35,13 +101,13 @@ function cleanPart(p) {
 function cleanReaction(r) {
    const out = foundry.utils.deepClone(r)
    out.id = foundry.utils.randomID()
-   return out
+   return _migrateReactionSchema(out)
 }
 
 function cleanDeathReaction(d) {
    const out = foundry.utils.deepClone(d)
    if (out.id !== undefined) out.id = foundry.utils.randomID()
-   return out
+   return _migrateReactionSchema(out)
 }
 
 export function buildElementExport(kind, data) {

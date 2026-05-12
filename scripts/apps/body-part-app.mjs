@@ -106,24 +106,33 @@ export class DamageBodyPartApp extends HandlebarsApplicationMixin(
       }
    }
 
-   _saveScrollPos() {
-      const scrollable = this.element?.querySelector(".rnt-scrollable")
-      if (scrollable) this._savedScrollPos = scrollable.scrollTop
-   }
-
    _onRender(context, options) {
       super._onRender(context, options)
-      if (this._savedScrollPos !== undefined) {
-         const restore = () => {
-            const scrollable = this.element?.querySelector(".rnt-scrollable")
-            if (scrollable && scrollable.isConnected) {
-               scrollable.scrollTop = this._savedScrollPos
-            }
+
+      const html = this.element
+      const acInputs = html.querySelectorAll(".rnt-ac-adj-input")
+
+      acInputs.forEach((input) => {
+         const display = input.nextElementSibling
+         if (!display || !display.classList.contains("rnt-ac-total-display"))
+            return
+
+         const baseAc = Number(input.dataset.baseAc) || 0
+         const oldAc =
+            input.dataset.oldAc !== "" ? Number(input.dataset.oldAc) : NaN
+
+         if (input.value === "" && !isNaN(oldAc)) {
+            input.value = oldAc - baseAc
          }
-         restore()
-         requestAnimationFrame(() => requestAnimationFrame(restore))
-         setTimeout(restore, 50)
-      }
+
+         const updateDisplay = () => {
+            const adj = Number(input.value) || 0
+            display.textContent = ` = ${baseAc + adj} AC`
+         }
+
+         input.addEventListener("input", updateDisplay)
+         updateDisplay()
+      })
    }
 
    static async _onAddDamage(event, target) {
@@ -378,6 +387,7 @@ export class BodyPartApp extends HandlebarsApplicationMixin(ApplicationV2) {
       )
 
       return {
+         actor: this.actor,
          part,
          parts: allParts,
          linkedItemsData,
@@ -399,6 +409,31 @@ export class BodyPartApp extends HandlebarsApplicationMixin(ApplicationV2) {
 
    _onRender(context, options) {
       super._onRender(context, options)
+
+      const html = this.element
+      const acInputs = html.querySelectorAll(".rnt-ac-adj-input")
+
+      acInputs.forEach((input) => {
+         const display = input.nextElementSibling
+         if (!display || !display.classList.contains("rnt-ac-total-display"))
+            return
+
+         const baseAc = Number(input.dataset.baseAc) || 0
+         const oldAc =
+            input.dataset.oldAc !== "" ? Number(input.dataset.oldAc) : NaN
+
+         if (input.value === "" && !isNaN(oldAc)) {
+            input.value = oldAc - baseAc
+         }
+
+         const updateDisplay = () => {
+            const adj = Number(input.value) || 0
+            display.textContent = ` = ${baseAc + adj} AC`
+         }
+
+         input.addEventListener("input", updateDisplay)
+         updateDisplay()
+      })
 
       if (this._savedScrollPos !== undefined) {
          const restore = () => {
