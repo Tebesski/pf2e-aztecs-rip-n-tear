@@ -152,11 +152,10 @@ function setupSavingThrowHook(originalCheckRoll) {
                (p) =>
                   (!p.isHidden ||
                      game.user.role >= CONST.USER_ROLES.ASSISTANT) &&
-                  p.hp.value > 0 &&
                   p.saves?.[saveType]?.enabled,
             )
 
-            if (validPartsWithSave.length > 0) {
+            if (validPartsWithSave.some((p) => p.hp.value > 0)) {
                return new Promise((resolve) => {
                   new CalledShotTargetApp({
                      actor: rollActor,
@@ -211,13 +210,12 @@ function setupSavingThrowHook(originalCheckRoll) {
          const targetTokenDoc = getTargetDoc(context.target.token)
          const parts = targetTokenDoc?.actor?.getFlag(MODULE_ID, "parts") || []
          const validParts = parts.filter(
-            (p) =>
-               (!p.isHidden || game.user.role >= CONST.USER_ROLES.ASSISTANT) &&
-               p.hp.value > 0,
+            (p) => !p.isHidden || game.user.role >= CONST.USER_ROLES.ASSISTANT,
          )
+
          if (
             parts.length > 0 &&
-            validParts.length > 0 &&
+            validParts.some((p) => p.hp.value > 0) &&
             !context.rntCalledShotResolved
          ) {
             return new Promise((resolve) => {

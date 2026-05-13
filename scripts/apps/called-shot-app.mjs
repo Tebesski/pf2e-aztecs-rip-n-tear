@@ -65,7 +65,8 @@ export class CalledShotTargetApp extends HandlebarsApplicationMixin(
       })
 
       if (!hasChecked && partsData.length > 0) {
-         partsData[0].checked = true
+         const firstValid = partsData.find((p) => !p.isDestroyed)
+         if (firstValid) firstValid.checked = true
       }
 
       return {
