@@ -245,24 +245,30 @@ export class BodyPartApp extends HandlebarsApplicationMixin(ApplicationV2) {
       const baseFort = this.actor.saves?.fortitude?.mod || 0
       const baseRef = this.actor.saves?.reflex?.mod || 0
       const baseWill = this.actor.saves?.will?.mod || 0
+
       if (!part.saves) {
          part.saves = {
-            fortitude: { enabled: false, value: baseFort + 2 },
-            reflex: { enabled: false, value: baseRef + 2 },
-            will: { enabled: false, value: baseWill + 2 },
+            fortitude: { enabled: false, adjustment: 0 },
+            reflex: { enabled: false, adjustment: 0 },
+            will: { enabled: false, adjustment: 0 },
          }
       } else {
-         part.saves.fortitude = part.saves.fortitude || {
-            enabled: false,
-            value: baseFort + 2,
-         }
-         part.saves.reflex = part.saves.reflex || {
-            enabled: false,
-            value: baseRef + 2,
-         }
-         part.saves.will = part.saves.will || {
-            enabled: false,
-            value: baseWill + 2,
+         for (const k of ["fortitude", "reflex", "will"]) {
+            part.saves[k] = part.saves[k] || { enabled: false, adjustment: 0 }
+
+            if (
+               part.saves[k].adjustment === undefined &&
+               part.saves[k].value !== undefined
+            ) {
+               const base =
+                  k === "fortitude"
+                     ? baseFort
+                     : k === "reflex"
+                       ? baseRef
+                       : baseWill
+               part.saves[k].adjustment = part.saves[k].value - base
+            }
+            part.saves[k].adjustment = part.saves[k].adjustment || 0
          }
       }
 
@@ -476,21 +482,45 @@ export class BodyPartApp extends HandlebarsApplicationMixin(ApplicationV2) {
                   ".rnt-save-inline, .rnt-save-row",
                )
                const numInput = wrapper?.querySelector('input[type="number"]')
+               const display = wrapper?.querySelector(".rnt-save-total-display")
+
                if (numInput && wrapper) {
                   if (e.target.checked) {
                      wrapper.classList.add("rnt-save-active")
                      const currentVal = parseInt(numInput.value, 10)
-                     if (!currentVal || isNaN(currentVal)) {
-                        const saveType = e.target.name.split(".")[1]
-                        const baseMod = this.actor.saves?.[saveType]?.mod || 0
-                        numInput.value = baseMod + 2
-                     }
+                     if (isNaN(currentVal)) numInput.value = 0
+                     numInput.dispatchEvent(new Event("input")) // Trigger total update
                   } else {
                      wrapper.classList.remove("rnt-save-active")
+                     if (display) display.textContent = "" // Clear the display string
                   }
                }
             })
          })
+
+      this.element.querySelectorAll(".rnt-save-adj-input").forEach((input) => {
+         const display = input.nextElementSibling
+         if (!display || !display.classList.contains("rnt-save-total-display"))
+            return
+
+         const baseSave = Number(input.dataset.baseSave) || 0
+         const wrapper = input.closest(".rnt-save-inline, .rnt-save-row")
+         const cb = wrapper?.querySelector('input[type="checkbox"]')
+
+         const updateDisplay = () => {
+            if (cb && !cb.checked) {
+               display.textContent = ""
+               return
+            }
+
+            const adj = Number(input.value) || 0
+            const total = baseSave + adj
+            display.textContent = ` = ${total >= 0 ? "+" : ""}${total}`
+         }
+
+         input.addEventListener("input", updateDisplay)
+         updateDisplay() // Initialize properly on load
+      })
 
       this.element.addEventListener("click", async (ev) => {
          const effectLink = ev.target.closest(".rnt-effect-link")
@@ -765,14 +795,15 @@ export class BodyPartApp extends HandlebarsApplicationMixin(ApplicationV2) {
          for (const k of ["fortitude", "reflex", "will"]) {
             updatedPart.saves[k] = updatedPart.saves[k] || {}
             updatedPart.saves[k].enabled = !!updatedPart.saves[k].enabled
-            const num = parseInt(updatedPart.saves[k].value)
-            updatedPart.saves[k].value = isNaN(num) ? 0 : num
+            const num = parseInt(updatedPart.saves[k].adjustment)
+            updatedPart.saves[k].adjustment = isNaN(num) ? 0 : num
+            delete updatedPart.saves[k].value // Cleanup old format
          }
       } else {
          updatedPart.saves = currentPart.saves || {
-            fortitude: { enabled: false, value: 0 },
-            reflex: { enabled: false, value: 0 },
-            will: { enabled: false, value: 0 },
+            fortitude: { enabled: false, adjustment: 0 },
+            reflex: { enabled: false, adjustment: 0 },
+            will: { enabled: false, adjustment: 0 },
          }
       }
 

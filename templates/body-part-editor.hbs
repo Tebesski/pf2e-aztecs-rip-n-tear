@@ -33,21 +33,24 @@
          </div>
       </div>
 
-      <div class="rnt-saves-inline">
-         <div class="rnt-save-inline {{#if part.saves.fortitude.enabled}}rnt-save-active{{/if}}">
+   <div class="rnt-saves-inline">
+         <div class="rnt-save-inline {{#if part.saves.fortitude.enabled}}rnt-save-active{{/if}}" style="display: flex; align-items: center; gap: 4px;">
             <input type="checkbox" name="saves.fortitude.enabled" {{checked part.saves.fortitude.enabled}}>
             <label>Fortitude</label>
-            <input type="number" name="saves.fortitude.value" value="{{part.saves.fortitude.value}}">
+            <input type="number" class="rnt-save-adj-input" name="saves.fortitude.adjustment" value="{{part.saves.fortitude.adjustment}}" data-base-save="{{@root.actor.saves.fortitude.mod}}" style="max-width: 50px;">
+            <span class="rnt-save-total-display" style="color: var(--rnt-text-muted); font-weight: 600;"></span>
          </div>
-         <div class="rnt-save-inline {{#if part.saves.reflex.enabled}}rnt-save-active{{/if}}">
+         <div class="rnt-save-inline {{#if part.saves.reflex.enabled}}rnt-save-active{{/if}}" style="display: flex; align-items: center; gap: 4px;">
             <input type="checkbox" name="saves.reflex.enabled" {{checked part.saves.reflex.enabled}}>
             <label>Reflex</label>
-            <input type="number" name="saves.reflex.value" value="{{part.saves.reflex.value}}">
+            <input type="number" class="rnt-save-adj-input" name="saves.reflex.adjustment" value="{{part.saves.reflex.adjustment}}" data-base-save="{{@root.actor.saves.reflex.mod}}" style="max-width: 50px;">
+            <span class="rnt-save-total-display" style="color: var(--rnt-text-muted); font-weight: 600;"></span>
          </div>
-         <div class="rnt-save-inline {{#if part.saves.will.enabled}}rnt-save-active{{/if}}">
+         <div class="rnt-save-inline {{#if part.saves.will.enabled}}rnt-save-active{{/if}}" style="display: flex; align-items: center; gap: 4px;">
             <input type="checkbox" name="saves.will.enabled" {{checked part.saves.will.enabled}}>
             <label>Will</label>
-            <input type="number" name="saves.will.value" value="{{part.saves.will.value}}">
+            <input type="number" class="rnt-save-adj-input" name="saves.will.adjustment" value="{{part.saves.will.adjustment}}" data-base-save="{{@root.actor.saves.will.mod}}" style="max-width: 50px;">
+            <span class="rnt-save-total-display" style="color: var(--rnt-text-muted); font-weight: 600;"></span>
          </div>
       </div>
    </div>

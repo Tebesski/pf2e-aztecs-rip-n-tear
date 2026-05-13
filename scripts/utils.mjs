@@ -67,3 +67,16 @@ export function prepareBodyPartDisplay(part, actor, isCalledShot = false) {
 
    return { acDisplay, hpDisplay }
 }
+
+export function getBodyPartSaveMod(part, actor, saveType) {
+   if (!saveType || !part.saves?.[saveType]) return ""
+   const baseMod = actor?.saves?.[saveType]?.mod || 0
+   let adj = part.saves[saveType].adjustment
+
+   if (adj === undefined && part.saves[saveType].value !== undefined) {
+      adj = part.saves[saveType].value - baseMod
+   }
+
+   const val = baseMod + (adj || 0)
+   return val >= 0 ? `+${val}` : `${val}`
+}

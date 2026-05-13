@@ -165,17 +165,21 @@ function setupSavingThrowHook(originalCheckRoll) {
                      resolve: async (result) => {
                         context.rntSaveResolved = true
                         if (result && result.type === "part") {
-                           const partMod = result.part.saves[saveType].value
-                           const baseMod =
-                              check.modifiers?.reduce(
-                                 (sum, m) => sum + (m.modifier || 0),
-                                 0,
-                              ) || 0
-                           const diff = partMod - baseMod
+                           let diff = result.part.saves[saveType].adjustment
+
+                           if (
+                              diff === undefined &&
+                              result.part.saves[saveType].value !== undefined
+                           ) {
+                              diff =
+                                 result.part.saves[saveType].value -
+                                 (rollActor?.saves?.[saveType]?.mod || 0)
+                           }
+                           diff = diff || 0
 
                            const rntMod = new game.pf2e.Modifier({
                               slug: "rnt-body-part-save",
-                              label: `${result.part.name} Save`,
+                              label: `${result.part.name} Save Adj`,
                               modifier: diff,
                               type: "untyped",
                            })
