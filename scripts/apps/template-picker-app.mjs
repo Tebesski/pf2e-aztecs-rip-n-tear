@@ -245,33 +245,29 @@ export class TemplatePickerApp extends HandlebarsApplicationMixin(
          this.actor.getFlag(MODULE_ID, "deathReaction")
       let mode = "append"
       if (hasExisting) {
-         const choice = await new Promise((resolve) => {
-            new Dialog(
+         const choice = await foundry.applications.api.DialogV2.wait({
+            window: {
+               title: game.i18n.localize(`${MODULE_ID}.tplExistingTitle`),
+            },
+            content: `<p>${game.i18n.localize(`${MODULE_ID}.tplExistingPrompt`)}</p>`,
+            buttons: [
                {
-                  title: game.i18n.localize(`${MODULE_ID}.tplExistingTitle`),
-                  content: `<p>${game.i18n.localize(`${MODULE_ID}.tplExistingPrompt`)}</p>`,
-                  buttons: {
-                     append: {
-                        icon: '<i class="fa-solid fa-plus"></i>',
-                        label: game.i18n.localize(`${MODULE_ID}.tplAppend`),
-                        callback: () => resolve("append"),
-                     },
-                     replace: {
-                        icon: '<i class="fa-solid fa-arrow-rotate-left"></i>',
-                        label: game.i18n.localize(`${MODULE_ID}.tplReplace`),
-                        callback: () => resolve("replace"),
-                     },
-                     cancel: {
-                        icon: '<i class="fa-solid fa-xmark"></i>',
-                        label: game.i18n.localize(`${MODULE_ID}.cancel`),
-                        callback: () => resolve(null),
-                     },
-                  },
-                  default: "append",
-                  close: () => resolve(null),
+                  action: "append",
+                  icon: "fa-solid fa-plus",
+                  label: game.i18n.localize(`${MODULE_ID}.tplAppend`),
                },
-               { width: 460 },
-            ).render(true)
+               {
+                  action: "replace",
+                  icon: "fa-solid fa-arrow-rotate-left",
+                  label: game.i18n.localize(`${MODULE_ID}.tplReplace`),
+               },
+               {
+                  action: "cancel",
+                  icon: "fa-solid fa-xmark",
+                  label: game.i18n.localize(`${MODULE_ID}.cancel`),
+               },
+            ],
+            default: "append",
          })
          if (!choice) return
          mode = choice

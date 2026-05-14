@@ -226,29 +226,16 @@ Hooks.on("renderSettingsConfig", (app, htmlData) => {
    })
 })
 
-const FormApplicationBase =
-   foundry.appv1?.api?.FormApplication ?? globalThis.FormApplication
-
-class ManageTemplatesShim extends FormApplicationBase {
-   constructor(...args) {
-      super(...args)
+class ManageTemplatesShim extends foundry.applications.api.ApplicationV2 {
+   static DEFAULT_OPTIONS = {
+      id: "rnt-manage-templates-shim",
+      window: { title: `${MODULE_ID}.manageTemplates` },
    }
 
-   static get defaultOptions() {
-      return foundry.utils.mergeObject(super.defaultOptions, {
-         id: "rnt-manage-templates-shim",
-         title: `${MODULE_ID}.manageTemplates`,
-         template: "templates/generic/form.html",
-         width: 400,
-         height: "auto",
-         popOut: false,
+   render(force, options) {
+      import("./apps/manage-templates-app.mjs").then((m) => {
+         new m.ManageTemplatesApp().render(true)
       })
+      return this
    }
-
-   async _render(force, options) {
-      const m = await import("./apps/manage-templates-app.mjs")
-      new m.ManageTemplatesApp().render(true)
-   }
-
-   async _updateObject() {}
 }

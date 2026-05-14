@@ -461,8 +461,8 @@ export class TemplateBuilderApp extends HandlebarsApplicationMixin(
       const all = getAllTemplates()
       const tpl = all.find((t) => t.id === id)
       if (!tpl) return
-      const confirmed = await Dialog.confirm({
-         title: game.i18n.localize(`${MODULE_ID}.rewriteTemplate`),
+      const confirmed = await foundry.applications.api.DialogV2.confirm({
+         window: { title: game.i18n.localize(`${MODULE_ID}.rewriteTemplate`) },
          content: `<p>${game.i18n.format(`${MODULE_ID}.rewriteTemplateConfirm`, { name: tpl.name })}</p>`,
       })
       if (!confirmed) return
@@ -483,8 +483,8 @@ export class TemplateBuilderApp extends HandlebarsApplicationMixin(
       const all = getAllTemplates()
       const tpl = all.find((t) => t.id === id)
       if (!tpl) return
-      const confirmed = await Dialog.confirm({
-         title: game.i18n.localize(`${MODULE_ID}.removeTemplate`),
+      const confirmed = await foundry.applications.api.DialogV2.confirm({
+         window: { title: game.i18n.localize(`${MODULE_ID}.removeTemplate`) },
          content: `<p>${game.i18n.format(`${MODULE_ID}.removeTemplateConfirm`, { name: tpl.name })}</p>`,
       })
       if (!confirmed) return

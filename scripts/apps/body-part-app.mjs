@@ -150,7 +150,9 @@ export class DamageBodyPartApp extends HandlebarsApplicationMixin(
 
    static async _onApplyDamage(event, target) {
       const form = this.element.querySelector("form")
-      const formData = new FormDataExtended(form)
+      const FDClass =
+         foundry.applications?.ux?.FormDataExtended ?? FormDataExtended
+      const formData = new FDClass(form)
       const data = foundry.utils.expandObject(formData.object)
 
       const ignoreHardness = parseInt(data.ignoreHardness) || 0
@@ -489,10 +491,10 @@ export class BodyPartApp extends HandlebarsApplicationMixin(ApplicationV2) {
                      wrapper.classList.add("rnt-save-active")
                      const currentVal = parseInt(numInput.value, 10)
                      if (isNaN(currentVal)) numInput.value = 0
-                     numInput.dispatchEvent(new Event("input")) // Trigger total update
+                     numInput.dispatchEvent(new Event("input"))
                   } else {
                      wrapper.classList.remove("rnt-save-active")
-                     if (display) display.textContent = "" // Clear the display string
+                     if (display) display.textContent = ""
                   }
                }
             })
@@ -519,7 +521,7 @@ export class BodyPartApp extends HandlebarsApplicationMixin(ApplicationV2) {
          }
 
          input.addEventListener("input", updateDisplay)
-         updateDisplay() // Initialize properly on load
+         updateDisplay()
       })
 
       this.element.addEventListener("click", async (ev) => {
@@ -763,7 +765,9 @@ export class BodyPartApp extends HandlebarsApplicationMixin(ApplicationV2) {
    async _saveCurrentState() {
       const form = this.element.querySelector("form")
       if (!form) return
-      const formData = new FormDataExtended(form)
+      const FDClass =
+         foundry.applications?.ux?.FormDataExtended ?? FormDataExtended
+      const formData = new FDClass(form)
       const updatedPart = foundry.utils.expandObject(formData.object)
 
       const index = this.workingParts.findIndex((p) => p.id === this.partId)
@@ -797,7 +801,7 @@ export class BodyPartApp extends HandlebarsApplicationMixin(ApplicationV2) {
             updatedPart.saves[k].enabled = !!updatedPart.saves[k].enabled
             const num = parseInt(updatedPart.saves[k].adjustment)
             updatedPart.saves[k].adjustment = isNaN(num) ? 0 : num
-            delete updatedPart.saves[k].value // Cleanup old format
+            delete updatedPart.saves[k].value
          }
       } else {
          updatedPart.saves = currentPart.saves || {
@@ -917,7 +921,9 @@ export class BodyPartApp extends HandlebarsApplicationMixin(ApplicationV2) {
          )
          ?.querySelector("input[type='text']")
       if (!input) return
-      const fp = new FilePicker({
+      const FPClass =
+         foundry.applications?.apps?.FilePicker?.implementation ?? FilePicker
+      const fp = new FPClass({
          type: "audio",
          current: input.value,
          callback: async (path) => {

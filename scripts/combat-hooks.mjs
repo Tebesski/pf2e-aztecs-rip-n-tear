@@ -692,25 +692,18 @@ function setupRenderChatMessageHook() {
                   }
 
                   if (row.dataset.rolled === "true") {
-                     new Dialog({
-                        title: "Reroll Save",
+                     foundry.applications.api.DialogV2.wait({
+                        window: { title: "Reroll Save" },
                         content: `<p>How would you like to reroll?</p>`,
-                        buttons: {
-                           new: {
-                              label: "Keep New",
-                              callback: () => rollSave("new"),
-                           },
-                           lower: {
-                              label: "Keep Lower",
-                              callback: () => rollSave("lower"),
-                           },
-                           higher: {
-                              label: "Keep Higher",
-                              callback: () => rollSave("higher"),
-                           },
-                           cancel: { label: "Cancel" },
-                        },
-                     }).render(true)
+                        buttons: [
+                           { action: "new", label: "Keep New" },
+                           { action: "lower", label: "Keep Lower" },
+                           { action: "higher", label: "Keep Higher" },
+                           { action: "cancel", label: "Cancel" },
+                        ],
+                     }).then((choice) => {
+                        if (choice && choice !== "cancel") rollSave(choice)
+                     })
                   } else {
                      rollSave()
                   }

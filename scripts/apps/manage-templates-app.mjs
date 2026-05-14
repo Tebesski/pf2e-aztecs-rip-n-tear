@@ -120,8 +120,8 @@ export class ManageTemplatesApp extends HandlebarsApplicationMixin(
       const id = target.dataset.id
       const tpl = getAllTemplates().find((t) => t.id === id)
       if (!tpl) return
-      const confirmed = await Dialog.confirm({
-         title: game.i18n.localize(`${MODULE_ID}.removeTemplate`),
+      const confirmed = await foundry.applications.api.DialogV2.confirm({
+         window: { title: game.i18n.localize(`${MODULE_ID}.removeTemplate`) },
          content: `<p>${game.i18n.format(`${MODULE_ID}.removeTemplateConfirm`, { name: tpl.name })}</p>`,
       })
       if (!confirmed) return
@@ -144,8 +144,8 @@ export class ManageTemplatesApp extends HandlebarsApplicationMixin(
 
    static async _onRemoveSelected() {
       if (!this.selected.size) return
-      const confirmed = await Dialog.confirm({
-         title: game.i18n.localize(`${MODULE_ID}.removeTemplate`),
+      const confirmed = await foundry.applications.api.DialogV2.confirm({
+         window: { title: game.i18n.localize(`${MODULE_ID}.removeTemplate`) },
          content: `<p>${game.i18n.format(`${MODULE_ID}.removeTemplatesConfirmCount`, { count: this.selected.size })}</p>`,
       })
       if (!confirmed) return

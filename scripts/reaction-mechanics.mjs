@@ -259,19 +259,21 @@ export async function evaluateReactions(
       if (rx.actionType === "free") {
          const promptFree = game.settings.get(MODULE_ID, "promptFreeActions")
          if (promptFree) {
-            Dialog.confirm({
-               title: `Trigger Free Action: ${rx.name}?`,
+            foundry.applications.api.DialogV2.confirm({
+               window: { title: `Trigger Free Action: ${rx.name}?` },
                content: `<p><strong>${actor.name}</strong> took ${damageTaken} damage to ${sourceText}. Trigger free action <strong>${rx.name}</strong>?${reqTypes}</p>`,
-               yes: () => triggerReaction(actor, rx),
+            }).then((confirmed) => {
+               if (confirmed) triggerReaction(actor, rx)
             })
          } else {
             triggerReaction(actor, rx)
          }
       } else {
-         Dialog.confirm({
-            title: `Trigger Reaction: ${rx.name}?`,
+         foundry.applications.api.DialogV2.confirm({
+            window: { title: `Trigger Reaction: ${rx.name}?` },
             content: `<p><strong>${actor.name}</strong> took ${damageTaken} damage to ${sourceText}. Trigger reaction <strong>${rx.name}</strong>?${reqTypes}</p>`,
-            yes: () => triggerReaction(actor, rx),
+         }).then((confirmed) => {
+            if (confirmed) triggerReaction(actor, rx)
          })
       }
    }
@@ -284,49 +286,49 @@ export async function evaluateDeathReaction(actor) {
    const effectName = `Death Reaction Used: ${dr.name}`
    if (actor.items.some((i) => i.name === effectName)) return
 
-   Dialog.confirm({
-      title: `Trigger Death Reaction: ${dr.name}?`,
+   foundry.applications.api.DialogV2.confirm({
+      window: { title: `Trigger Death Reaction: ${dr.name}?` },
       content: `<p><strong>${actor.name}</strong> has reached 0 HP. Trigger death reaction <strong>${dr.name}</strong>?</p>`,
-      yes: async () => {
-         const effectData = {
-            name: effectName,
-            type: "effect",
-            img: "systems/pf2e/icons/actions/Passive.webp",
-            system: {
-               description: { value: "This death reaction has been used." },
-            },
-            flags: { [MODULE_ID]: { isDeathReactionEffect: true } },
-         }
-         await actor.createEmbeddedDocuments("Item", [effectData])
+   }).then(async (confirmed) => {
+      if (!confirmed) return
+      const effectData = {
+         name: effectName,
+         type: "effect",
+         img: "systems/pf2e/icons/actions/Passive.webp",
+         system: {
+            description: { value: "This death reaction has been used." },
+         },
+         flags: { [MODULE_ID]: { isDeathReactionEffect: true } },
+      }
+      await actor.createEmbeddedDocuments("Item", [effectData])
 
-         if (dr.useDelay) {
-            const delayedData = {
-               name: `Delayed Death: ${dr.name}`,
-               type: "effect",
-               img: "icons/svg/skull.svg",
-               system: {
-                  duration: {
-                     value: dr.delayRounds || 1,
-                     unit: "rounds",
-                     expiry: dr.expiry || "turn-end",
-                  },
-                  description: {
-                     value: "Triggering death reaction upon expiration.",
-                  },
+      if (dr.useDelay) {
+         const delayedData = {
+            name: `Delayed Death: ${dr.name}`,
+            type: "effect",
+            img: "icons/svg/skull.svg",
+            system: {
+               duration: {
+                  value: dr.delayRounds || 1,
+                  unit: "rounds",
+                  expiry: dr.expiry || "turn-end",
                },
-               flags: {
-                  [MODULE_ID]: { isDelayedDeath: true, deathReactionData: dr },
+               description: {
+                  value: "Triggering death reaction upon expiration.",
                },
-            }
-            await actor.createEmbeddedDocuments("Item", [delayedData])
-            ChatMessage.create({
-               speaker: ChatMessage.getSpeaker({ actor }),
-               content: `<strong>${actor.name}</strong> initiated a delayed death reaction: <em>${dr.name}</em>.`,
-            })
-         } else {
-            triggerReaction(actor, dr, null, { isDeath: true })
+            },
+            flags: {
+               [MODULE_ID]: { isDelayedDeath: true, deathReactionData: dr },
+            },
          }
-      },
+         await actor.createEmbeddedDocuments("Item", [delayedData])
+         ChatMessage.create({
+            speaker: ChatMessage.getSpeaker({ actor }),
+            content: `<strong>${actor.name}</strong> initiated a delayed death reaction: <em>${dr.name}</em>.`,
+         })
+      } else {
+         triggerReaction(actor, dr, null, { isDeath: true })
+      }
    })
 }
 
@@ -734,7 +736,9 @@ export async function createReactionChatCard(
       targets: targetData,
    }
 
-   const content = await renderTemplate(
+   const renderTpl =
+      foundry.applications?.handlebars?.renderTemplate ?? renderTemplate
+   const content = await renderTpl(
       `modules/${MODULE_ID}/templates/reaction-chat-card.hbs`,
       templateData,
    )

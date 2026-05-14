@@ -125,7 +125,9 @@ export class DamageBodyPartApp extends HandlebarsApplicationMixin(
 
    static async _onApplyDamage(event, target) {
       const form = this.element.querySelector("form")
-      const formData = new FormDataExtended(form)
+      const FDClass =
+         foundry.applications?.ux?.FormDataExtended ?? FormDataExtended
+      const formData = new FDClass(form)
       const data = foundry.utils.expandObject(formData.object)
 
       const ignoreHardness = parseInt(data.ignoreHardness) || 0
@@ -547,7 +549,9 @@ export class BodyPartApp extends HandlebarsApplicationMixin(ApplicationV2) {
 
    static async _onPickFile(event, target) {
       const input = target.closest(".form-fields").querySelector("input")
-      const fp = new FilePicker({
+      const FPClass =
+         foundry.applications?.apps?.FilePicker?.implementation ?? FilePicker
+      const fp = new FPClass({
          type: "audio",
          current: input.value,
          callback: async (path) => {
@@ -564,7 +568,8 @@ export class BodyPartApp extends HandlebarsApplicationMixin(ApplicationV2) {
       if (!path) return
       const resolvedPath = await resolveSfxPath(path)
       if (resolvedPath) {
-         AudioHelper.play({ src: resolvedPath, volume: 0.8 }, false)
+         const AH = foundry.audio?.AudioHelper ?? AudioHelper
+         AH.play({ src: resolvedPath, volume: 0.8 }, false)
       } else {
          ui.notifications.warn(
             "No audio files found matching that path or wildcard.",

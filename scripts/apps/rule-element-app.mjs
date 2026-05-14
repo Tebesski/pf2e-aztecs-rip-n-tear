@@ -116,7 +116,9 @@ export class RuleElementApp extends HandlebarsApplicationMixin(ApplicationV2) {
 
    static async _onSaveRuleElement(event, target) {
       const form = this.element.querySelector("form")
-      const formData = new FormDataExtended(form)
+      const FDClass =
+         foundry.applications?.ux?.FormDataExtended ?? FormDataExtended
+      const formData = new FDClass(form)
       const data = formData.object
       let json = {}
       const cat = this.currentCategory

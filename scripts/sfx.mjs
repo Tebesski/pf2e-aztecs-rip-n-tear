@@ -18,7 +18,9 @@ export async function resolveSfxPath(path) {
    const dir = segments.join("/") || ""
 
    try {
-      const result = await FilePicker.browse(source, dir)
+      const FPClass =
+         foundry.applications?.apps?.FilePicker?.implementation ?? FilePicker
+      const result = await FPClass.browse(source, dir)
       let regexStr = "^" + pattern.replace(/\./g, "\\.").replace(/\*/g, ".*")
       regexStr += pattern.includes(".") ? "$" : "\\.[^.]+$"
       const regex = new RegExp(regexStr, "i")
@@ -49,7 +51,8 @@ export async function playSfx(path, type, broadcast = true) {
    if (!resolved) return
    const volume = getSfxVolume(type)
    if (volume <= 0) return
-   AudioHelper.play({ src: resolved, volume }, broadcast)
+   const AH = foundry.audio?.AudioHelper ?? AudioHelper
+   AH.play({ src: resolved, volume }, broadcast)
 }
 
 const FIELD_TO_TYPE = {

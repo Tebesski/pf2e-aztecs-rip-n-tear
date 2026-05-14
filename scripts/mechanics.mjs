@@ -156,7 +156,7 @@ export async function setBodyPartHp(actor, partId, newHp, isManual = false) {
    if (!part) return
 
    const previousHp = part.hp.value
-   part.hp.value = Math.clamped(newHp, 0, part.hp.max)
+   part.hp.value = Math.clamp(newHp, 0, part.hp.max)
 
    if (part.hp.value <= 0 && previousHp > 0) {
       await removePersistentEffectsForPart(actor, part.id)

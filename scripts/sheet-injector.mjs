@@ -157,7 +157,7 @@ export function injectRipAndTearSection(app, html, data) {
    if (!app.rntDeleteHooked && app.element && app.element[0]) {
       app.element[0].addEventListener(
          "click",
-         (ev) => {
+         async (ev) => {
             const target = ev.target.closest('[data-action="delete-item"]')
             if (!target) return
 
@@ -175,42 +175,42 @@ export function injectRipAndTearSection(app, html, data) {
                   game.i18n.localize(`${MODULE_ID}.unknownItem`)
                const partId = item.getFlag(MODULE_ID, "partId")
 
-               new Dialog(
-                  {
+               const choice = await foundry.applications.api.DialogV2.wait({
+                  window: {
                      title: game.i18n.localize(
                         `${MODULE_ID}.lockedEffectTitle`,
                      ),
-                     content: `<p>${game.i18n.format(`${MODULE_ID}.lockedEffectChoiceContent`, { partName })}</p>`,
-                     buttons: {
-                        heal: {
-                           icon: '<i class="fa-solid fa-heart-circle-plus"></i>',
-                           label: game.i18n.localize(
-                              `${MODULE_ID}.healBodyPart`,
-                           ),
-                           callback: () => {
-                              if (!partId) return
-                              new HealBodyPartApp({
-                                 actor: app.actor,
-                                 partId,
-                              }).render(true)
-                           },
-                        },
-                        remove: {
-                           icon: '<i class="fa-solid fa-trash"></i>',
-                           label: game.i18n.localize(
-                              `${MODULE_ID}.removeEffect`,
-                           ),
-                           callback: () => item.delete(),
-                        },
-                        cancel: {
-                           icon: '<i class="fa-solid fa-xmark"></i>',
-                           label: game.i18n.localize(`${MODULE_ID}.cancel`),
-                        },
-                     },
-                     default: "cancel",
                   },
-                  { width: 520 },
-               ).render(true)
+                  content: `<p>${game.i18n.format(`${MODULE_ID}.lockedEffectChoiceContent`, { partName })}</p>`,
+                  buttons: [
+                     {
+                        action: "heal",
+                        icon: "fa-solid fa-heart-circle-plus",
+                        label: game.i18n.localize(`${MODULE_ID}.healBodyPart`),
+                     },
+                     {
+                        action: "remove",
+                        icon: "fa-solid fa-trash",
+                        label: game.i18n.localize(`${MODULE_ID}.removeEffect`),
+                     },
+                     {
+                        action: "cancel",
+                        icon: "fa-solid fa-xmark",
+                        label: game.i18n.localize(`${MODULE_ID}.cancel`),
+                     },
+                  ],
+                  default: "cancel",
+               })
+
+               if (choice === "heal") {
+                  if (!partId) return
+                  new HealBodyPartApp({
+                     actor: app.actor,
+                     partId,
+                  }).render(true)
+               } else if (choice === "remove") {
+                  item.delete()
+               }
             }
          },
          true,
@@ -310,26 +310,27 @@ export function injectRipAndTearSection(app, html, data) {
 
    ;(async () => {
       try {
+         const renderTpl = foundry.applications.handlebars.renderTemplate
          for (const p of processedParts) {
-            p.summaryHtml = await renderTemplate(
+            p.summaryHtml = await renderTpl(
                `${TEMPLATE_BASE}/part-summary.hbs`,
                p,
             )
          }
          for (const rx of reactions) {
-            rx.summaryHtml = await renderTemplate(
+            rx.summaryHtml = await renderTpl(
                `${TEMPLATE_BASE}/reaction-summary.hbs`,
                rx,
             )
          }
          if (deathReaction) {
-            deathReaction.summaryHtml = await renderTemplate(
+            deathReaction.summaryHtml = await renderTpl(
                `${TEMPLATE_BASE}/death-reaction-summary.hbs`,
                deathReaction,
             )
          }
 
-         const markup = await renderTemplate(
+         const markup = await renderTpl(
             `${TEMPLATE_BASE}/npc-sheet-section.hbs`,
             {
                actor: app.actor,
@@ -338,7 +339,6 @@ export function injectRipAndTearSection(app, html, data) {
                deathReaction,
             },
          )
-
          const $appRoot = html.closest(".app, .application")
          if ($appRoot.length) {
             $appRoot[0].dataset.rntActorUuid = app.actor.uuid
@@ -484,19 +484,19 @@ function activateRipAndTearListeners(app, container) {
       await app.actor.setFlag(MODULE_ID, "parts", parts)
    })
 
-   bindClick(container, ".rnt-delete-part", (ev) => {
+   bindClick(container, ".rnt-delete-part", async (ev) => {
       ev.preventDefault()
       const partId = getClosestItemId(ev.currentTarget)
-      Dialog.confirm({
-         title: "Delete Body Part",
+      const confirmed = await foundry.applications.api.DialogV2.confirm({
+         window: { title: "Delete Body Part" },
          content: `<p>Are you sure you want to remove this body part entirely?</p>`,
-         yes: async () => {
-            let parts = app.actor.getFlag(MODULE_ID, "parts") || []
-            parts = parts.filter((p) => p.id !== partId)
-            captureActorSheetScroll(app.actor)
-            await app.actor.setFlag(MODULE_ID, "parts", parts)
-         },
       })
+      if (confirmed) {
+         let parts = app.actor.getFlag(MODULE_ID, "parts") || []
+         parts = parts.filter((p) => p.id !== partId)
+         captureActorSheetScroll(app.actor)
+         await app.actor.setFlag(MODULE_ID, "parts", parts)
+      }
    })
 
    bindClick(container, ".rnt-item-row", (ev) => {
@@ -600,21 +600,21 @@ function activateRipAndTearListeners(app, container) {
       await app.actor.setFlag(MODULE_ID, "reactions", reactions)
    })
 
-   bindClick(container, ".rnt-delete-reaction", (ev) => {
+   bindClick(container, ".rnt-delete-reaction", async (ev) => {
       ev.preventDefault()
       const reactionId =
          ev.currentTarget.dataset.reactionId ||
          ev.currentTarget.closest(".item").dataset.reactionId
-      Dialog.confirm({
-         title: "Delete Reaction",
+      const confirmed = await foundry.applications.api.DialogV2.confirm({
+         window: { title: "Delete Reaction" },
          content: `<p>Are you sure you want to remove this damage reaction?</p>`,
-         yes: async () => {
-            let reactions = app.actor.getFlag(MODULE_ID, "reactions") || []
-            reactions = reactions.filter((r) => r.id !== reactionId)
-            captureActorSheetScroll(app.actor)
-            await app.actor.setFlag(MODULE_ID, "reactions", reactions)
-         },
       })
+      if (confirmed) {
+         let reactions = app.actor.getFlag(MODULE_ID, "reactions") || []
+         reactions = reactions.filter((r) => r.id !== reactionId)
+         captureActorSheetScroll(app.actor)
+         await app.actor.setFlag(MODULE_ID, "reactions", reactions)
+      }
    })
 
    bindClick(container, ".rnt-toggle-reaction", async (ev) => {
@@ -633,7 +633,7 @@ function activateRipAndTearListeners(app, container) {
       }
    })
 
-   bindClick(container, ".rnt-trigger-reaction", (ev) => {
+   bindClick(container, ".rnt-trigger-reaction", async (ev) => {
       ev.preventDefault()
       const reactionId =
          ev.currentTarget.dataset.reactionId ||
@@ -645,15 +645,14 @@ function activateRipAndTearListeners(app, container) {
          ui.notifications.warn("Cannot manually trigger a disabled reaction.")
          return
       }
-      Dialog.confirm({
-         title: `Trigger Reaction: ${rx.name}?`,
+      const confirmed = await foundry.applications.api.DialogV2.confirm({
+         window: { title: `Trigger Reaction: ${rx.name}?` },
          content: `<p>Are you sure you want to manually trigger the <strong>${rx.name}</strong> reaction?</p>`,
-         yes: () => {
-            const manualTarget =
-               Array.from(game.user.targets)[0]?.document || null
-            triggerReaction(app.actor, rx, manualTarget, { isManual: true })
-         },
       })
+      if (confirmed) {
+         const manualTarget = Array.from(game.user.targets)[0]?.document || null
+         triggerReaction(app.actor, rx, manualTarget, { isManual: true })
+      }
    })
 
    bindClick(container, ".rnt-add-death-reaction", async (ev) => {
@@ -676,16 +675,18 @@ function activateRipAndTearListeners(app, container) {
       new DeathReactionApp({ actor: app.actor }).render(true)
    })
 
-   bindClick(container, ".rnt-delete-death-reaction", (ev) => {
+   bindClick(container, ".rnt-delete-death-reaction", async (ev) => {
       ev.preventDefault()
-      Dialog.confirm({
-         title: game.i18n.localize(`${MODULE_ID}.removeDeathReaction`),
-         content: `<p>${game.i18n.localize(`${MODULE_ID}.removeDeathReactionPrompt`)}</p>`,
-         yes: async () => {
-            captureActorSheetScroll(app.actor)
-            await app.actor.unsetFlag(MODULE_ID, "deathReaction")
+      const confirmed = await foundry.applications.api.DialogV2.confirm({
+         window: {
+            title: game.i18n.localize(`${MODULE_ID}.removeDeathReaction`),
          },
+         content: `<p>${game.i18n.localize(`${MODULE_ID}.removeDeathReactionPrompt`)}</p>`,
       })
+      if (confirmed) {
+         captureActorSheetScroll(app.actor)
+         await app.actor.unsetFlag(MODULE_ID, "deathReaction")
+      }
    })
 
    bindClick(container, ".rnt-toggle-death-reaction", async (ev) => {
@@ -700,7 +701,7 @@ function activateRipAndTearListeners(app, container) {
       }
    })
 
-   bindClick(container, ".rnt-trigger-death-reaction", (ev) => {
+   bindClick(container, ".rnt-trigger-death-reaction", async (ev) => {
       ev.preventDefault()
       const deathReaction = app.actor.getFlag(MODULE_ID, "deathReaction")
       if (!deathReaction) return
@@ -710,18 +711,17 @@ function activateRipAndTearListeners(app, container) {
          )
          return
       }
-      Dialog.confirm({
-         title: `Trigger Death Reaction: ${deathReaction.name}?`,
+      const confirmed = await foundry.applications.api.DialogV2.confirm({
+         window: { title: `Trigger Death Reaction: ${deathReaction.name}?` },
          content: `<p>Are you sure you want to manually trigger the <strong>${deathReaction.name}</strong> reaction?</p>`,
-         yes: () => {
-            const manualTarget =
-               Array.from(game.user.targets)[0]?.document || null
-            triggerReaction(app.actor, deathReaction, manualTarget, {
-               isManual: true,
-               isDeath: true,
-            })
-         },
       })
+      if (confirmed) {
+         const manualTarget = Array.from(game.user.targets)[0]?.document || null
+         triggerReaction(app.actor, deathReaction, manualTarget, {
+            isManual: true,
+            isDeath: true,
+         })
+      }
    })
 
    bindClick(container, ".rnt-export-part", async (ev) => {

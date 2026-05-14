@@ -201,7 +201,9 @@ export class DeathReactionApp extends HandlebarsApplicationMixin(
    async _saveCurrentState() {
       const form = this.element.querySelector("form")
       if (!form) return
-      const formData = new FormDataExtended(form)
+      const FDClass =
+         foundry.applications?.ux?.FormDataExtended ?? FormDataExtended
+      const formData = new FDClass(form)
       const data = foundry.utils.expandObject(formData.object)
 
       data.useDelay = !!data.useDelay
@@ -459,7 +461,9 @@ export class DeathReactionApp extends HandlebarsApplicationMixin(
             )
             ?.querySelector("input[type='text']") ||
          target.previousElementSibling
-      new FilePicker({
+      const FPClass =
+         foundry.applications?.apps?.FilePicker?.implementation ?? FilePicker
+      new FPClass({
          type: "audio",
          current: input.value,
          callback: (path) => {

@@ -136,8 +136,9 @@ export function buildTemplateExport(template) {
 
 export function downloadJson(payload, filename) {
    const json = JSON.stringify(payload, null, 2)
-   if (typeof saveDataToFile === "function") {
-      saveDataToFile(json, "application/json", filename)
+   const saveFn = foundry.utils?.saveDataToFile ?? globalThis.saveDataToFile
+   if (typeof saveFn === "function") {
+      saveFn(json, "application/json", filename)
    } else {
       const blob = new Blob([json], { type: "application/json" })
       const url = URL.createObjectURL(blob)
