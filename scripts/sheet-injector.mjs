@@ -271,8 +271,64 @@ export function injectRipAndTearSection(app, html, data) {
       return t
    }
 
+   const formatStr = (str) => {
+      if (!str) return ""
+      return str
+         .split(",")
+         .map((s) =>
+            s
+               .trim()
+               .split(" ")
+               .map((w) =>
+                  w
+                     .split("-")
+                     .map((p) => p.charAt(0).toUpperCase() + p.slice(1))
+                     .join(" "),
+               )
+               .join(" "),
+         )
+         .join(", ")
+   }
+
    const processedParts = parts.map((p) => {
       const displayData = prepareBodyPartDisplay(p, app.actor)
+
+      let immStr = "",
+         immExcStr = ""
+      let wkStr = "",
+         wkExcStr = ""
+      let resStr = "",
+         resExcStr = ""
+
+      if (p.customIWR && p.iwr) {
+         immStr = formatStr(p.iwr.immune)
+         immExcStr = formatStr(p.iwr.immuneExc)
+         wkStr = formatStr(p.iwr.weak)
+         wkExcStr = formatStr(p.iwr.weakExc)
+         resStr = formatStr(p.iwr.resist)
+         resExcStr = formatStr(p.iwr.resistExc)
+      } else {
+         const mapSys = (list) => {
+            if (!list) return { m: "", e: "" }
+            const ms = [],
+               es = []
+            for (const x of list) {
+               ms.push(x.type + (x.value ? ` ${x.value}` : ""))
+               if (x.exceptions) es.push(...x.exceptions)
+            }
+            return { m: formatStr(ms.join(", ")), e: formatStr(es.join(", ")) }
+         }
+         const i = mapSys(app.actor.system.attributes.immunities)
+         immStr = i.m
+         immExcStr = i.e
+         const w = mapSys(app.actor.system.attributes.weaknesses)
+         wkStr = w.m
+         wkExcStr = w.e
+         const r = mapSys(app.actor.system.attributes.resistances)
+         resStr = r.m
+         resExcStr = r.e
+      }
+
       const decorated = {
          ...p,
          hasSpellcastingLinks:
@@ -283,7 +339,13 @@ export function injectRipAndTearSection(app, html, data) {
             p.linkedItems?.filter((id) => id !== "ALL_SPELLCASTING").length > 0,
          hpText: displayData.hpDisplay,
          hpColor: getBodyPartHpColor(p),
-         hasIwr: !!(p.iwr?.immune || p.iwr?.weak || p.iwr?.resist),
+         iwrImmune: immStr,
+         iwrImmuneExc: immExcStr,
+         iwrWeak: wkStr,
+         iwrWeakExc: wkExcStr,
+         iwrResist: resStr,
+         iwrResistExc: resExcStr,
+         hasIwr: !!(immStr || wkStr || resStr),
       }
       if (decorated.thresholds) {
          decorated.thresholds = decorated.thresholds.map((t) => ({

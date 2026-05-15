@@ -15,23 +15,50 @@ import { SpellcastingConfigApp } from "./spellcasting-config-app.mjs"
 
 const TEMPLATE_BASE = `modules/${MODULE_ID}/templates`
 
-function describeIwrLine(parts, fallback) {
-   if (parts && parts.length) return parts
-   return fallback
+function formatIwrStr(str) {
+   if (!str) return ""
+   return str
+      .split(",")
+      .map((s) => {
+         return s
+            .trim()
+            .split(" ")
+            .map((part) => {
+               if (!part) return ""
+               return part
+                  .split("-")
+                  .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+                  .join(" ")
+            })
+            .join(" ")
+      })
+      .join(", ")
 }
 
 function getActorIwrFallback(actor) {
-   const immune =
-      actor.system.attributes.immunities?.map((x) => x.type).join(", ") || ""
-   const weak =
-      actor.system.attributes.weaknesses
-         ?.map((x) => `${x.type} ${x.value}`)
-         .join(", ") || ""
-   const resist =
-      actor.system.attributes.resistances
-         ?.map((x) => `${x.type} ${x.value}`)
-         .join(", ") || ""
-   return { immune, weak, resist }
+   const mapSys = (list) => {
+      if (!list) return { main: "", exc: "" }
+      const ms = [],
+         es = []
+      for (const x of list) {
+         ms.push(x.type + (x.value ? ` ${x.value}` : ""))
+         if (x.exceptions) es.push(...x.exceptions)
+      }
+      return { main: ms.join(", "), exc: es.join(", ") }
+   }
+
+   const imm = mapSys(actor.system.attributes.immunities)
+   const wk = mapSys(actor.system.attributes.weaknesses)
+   const res = mapSys(actor.system.attributes.resistances)
+
+   return {
+      immune: imm.main,
+      immuneExc: imm.exc,
+      weak: wk.main,
+      weakExc: wk.exc,
+      resist: res.main,
+      resistExc: res.exc,
+   }
 }
 
 export class DamageBodyPartApp extends HandlebarsApplicationMixin(
@@ -45,6 +72,7 @@ export class DamageBodyPartApp extends HandlebarsApplicationMixin(
          options.initialDamages && options.initialDamages.length
             ? options.initialDamages
             : [{ amount: 1, dmgType: "slashing", dmgCategory: "" }]
+      this.rollOptions = new Set(options.rollOptions || [])
    }
 
    static DEFAULT_OPTIONS = {
@@ -83,24 +111,43 @@ export class DamageBodyPartApp extends HandlebarsApplicationMixin(
 
       const fallback = getActorIwrFallback(this.actor)
       const noneText = game.i18n.localize(`${MODULE_ID}.none`)
-      const iwrImmune = describeIwrLine(
-         part.customIWR && part.iwr?.immune ? part.iwr.immune : fallback.immune,
-         noneText,
-      )
-      const iwrWeak = describeIwrLine(
-         part.customIWR && part.iwr?.weak ? part.iwr.weak : fallback.weak,
-         noneText,
-      )
-      const iwrResist = describeIwrLine(
-         part.customIWR && part.iwr?.resist ? part.iwr.resist : fallback.resist,
-         noneText,
-      )
+
+      const rawImmune =
+         part.customIWR && part.iwr?.immune ? part.iwr.immune : fallback.immune
+      const rawWeak =
+         part.customIWR && part.iwr?.weak ? part.iwr.weak : fallback.weak
+      const rawResist =
+         part.customIWR && part.iwr?.resist ? part.iwr.resist : fallback.resist
+
+      const rawImmuneExc =
+         part.customIWR && part.iwr?.immuneExc
+            ? part.iwr.immuneExc
+            : fallback.immuneExc
+      const rawWeakExc =
+         part.customIWR && part.iwr?.weakExc
+            ? part.iwr.weakExc
+            : fallback.weakExc
+      const rawResistExc =
+         part.customIWR && part.iwr?.resistExc
+            ? part.iwr.resistExc
+            : fallback.resistExc
+
+      const iwrImmune = formatIwrStr(rawImmune) || noneText
+      const iwrWeak = formatIwrStr(rawWeak) || noneText
+      const iwrResist = formatIwrStr(rawResist) || noneText
+
+      const iwrImmuneExc = formatIwrStr(rawImmuneExc)
+      const iwrWeakExc = formatIwrStr(rawWeakExc)
+      const iwrResistExc = formatIwrStr(rawResistExc)
 
       return {
          part,
          iwrImmune,
+         iwrImmuneExc,
          iwrWeak,
+         iwrWeakExc,
          iwrResist,
+         iwrResistExc,
          damages: this.damages,
          pf2eDamageTypes: buildPf2eDamageTypes(),
       }
@@ -177,6 +224,7 @@ export class DamageBodyPartApp extends HandlebarsApplicationMixin(
             d.dmgCategory,
             ignoreHardness,
             ignoreAllHardness,
+            this.rollOptions,
          )
       }
       this.close()
@@ -218,6 +266,9 @@ export class BodyPartApp extends HandlebarsApplicationMixin(ApplicationV2) {
          removeImmunity: this._onRemoveImmunity,
          removeWeakness: this._onRemoveWeakness,
          removeResistance: this._onRemoveResistance,
+         removeImmuneExc: this._onRemoveImmuneExc,
+         removeWeakExc: this._onRemoveWeakExc,
+         removeResistExc: this._onRemoveResistExc,
          removeAcceptedDmgType: this._onRemoveAcceptedDmgType,
       },
    }
@@ -242,7 +293,12 @@ export class BodyPartApp extends HandlebarsApplicationMixin(ApplicationV2) {
       part.thresholds = part.thresholds || []
 
       const fallback = getActorIwrFallback(this.actor)
-      part.iwr = part.iwr || fallback
+      part.iwr = part.iwr || {
+         ...fallback,
+         immuneExc: "",
+         weakExc: "",
+         resistExc: "",
+      }
 
       const baseFort = this.actor.saves?.fortitude?.mod || 0
       const baseRef = this.actor.saves?.reflex?.mod || 0
@@ -278,25 +334,73 @@ export class BodyPartApp extends HandlebarsApplicationMixin(ApplicationV2) {
       const pf2eIWRTypes = buildPf2eIwrTypes()
       const pf2eDamageTypes = buildPf2eDamageTypes()
 
+      if (!pf2eIWRTypes.find((t) => t.slug === "all-damage")) {
+         pf2eIWRTypes.unshift({
+            slug: "all-damage",
+            label:
+               game.i18n.localize("pf2e-aztecs-rip-n-tear.allDamage") ||
+               "All Damage",
+         })
+      }
+
       const parseIWR = (str) => {
          if (!str) return []
          return str
             .split(",")
             .map((s) => {
-               const strings = s.trim().toLowerCase().split(" ")
+               let exceptions = []
+               let mainPart = s
+               if (s.includes(" except ")) {
+                  const splitExc = s.split(" except ")
+                  mainPart = splitExc[0]
+                  exceptions = splitExc[1]
+                     .trim()
+                     .split(" ")
+                     .filter((e) => e)
+               }
+               const strings = mainPart
+                  .trim()
+                  .toLowerCase()
+                  .split(" ")
+                  .filter((x) => x)
                const type = strings[0]
                const value = parseInt(strings[1]) || null
                if (!type) return null
                const found = pf2eIWRTypes.find((x) => x.slug === type)
-               return { type, value, label: found ? found.label : type }
+               let label = found ? found.label : type
+               if (exceptions.length) {
+                  const excLabels = exceptions.map(
+                     (e) => pf2eIWRTypes.find((x) => x.slug === e)?.label || e,
+                  )
+                  label += ` (except ${excLabels.join(", ")})`
+               }
+               if (value) label += ` ${value}`
+               return { type, value, exceptions, label, raw: s.trim() }
             })
             .filter((x) => x)
+      }
+
+      const parseExceptions = (str) => {
+         if (!str) return []
+         return str
+            .split(",")
+            .map((s) => {
+               const raw = s.trim()
+               const found = pf2eIWRTypes.find(
+                  (x) => x.slug === raw.toLowerCase(),
+               )
+               return { label: found ? found.label : raw, raw: raw }
+            })
+            .filter((x) => x.raw)
       }
 
       part.iwrData = {
          immune: parseIWR(part.iwr.immune),
          weak: parseIWR(part.iwr.weak),
          resist: parseIWR(part.iwr.resist),
+         immuneExc: parseExceptions(part.iwr.immuneExc),
+         weakExc: parseExceptions(part.iwr.weakExc),
+         resistExc: parseExceptions(part.iwr.resistExc),
       }
 
       part.acceptedDmgTypes = Array.isArray(part.acceptedDmgTypes)
@@ -691,71 +795,50 @@ export class BodyPartApp extends HandlebarsApplicationMixin(ApplicationV2) {
             }
          })
 
-      this.element
-         .querySelector("#rnt-immune-select")
-         ?.addEventListener("change", async (ev) => {
-            const val = ev.currentTarget.value
-            if (!val) return
-            await this._saveCurrentState()
-            const part = this.workingParts.find((p) => p.id === this.partId)
-            if (!part.iwr) part.iwr = { immune: "", weak: "", resist: "" }
-            const arr = part.iwr.immune
-               ? part.iwr.immune
-                    .split(",")
-                    .map((s) => s.trim())
-                    .filter((s) => s)
-               : []
-            if (!arr.includes(val)) arr.push(val)
-            part.iwr.immune = arr.join(", ")
-            this._saveScrollPos()
-            this.render()
-         })
+      const setupIWRSelect = (id, field) => {
+         this.element
+            .querySelector(id)
+            ?.addEventListener("change", async (ev) => {
+               const val = ev.currentTarget.value
+               if (!val) return
+               let valNum = ""
+               if (field === "weak" || field === "resist") {
+                  valNum =
+                     this.element.querySelector(`#rnt-${field}-value`)?.value ||
+                     "5"
+               }
+               await this._saveCurrentState()
+               const parts = this._getParts()
+               const part = parts.find((p) => p.id === this.partId)
+               if (!part.iwr) part.iwr = {}
+               let arr = part.iwr[field]
+                  ? part.iwr[field]
+                       .split(",")
+                       .map((s) => s.trim())
+                       .filter((s) => s)
+                  : []
 
-      this.element
-         .querySelector("#rnt-weak-select")
-         ?.addEventListener("change", async (ev) => {
-            const val = ev.currentTarget.value
-            if (!val) return
-            const valInput = this.element.querySelector("#rnt-weak-value")
-            const num = parseInt(valInput?.value) || 5
-            await this._saveCurrentState()
-            const part = this.workingParts.find((p) => p.id === this.partId)
-            if (!part.iwr) part.iwr = { immune: "", weak: "", resist: "" }
-            let arr = part.iwr.weak
-               ? part.iwr.weak
-                    .split(",")
-                    .map((s) => s.trim())
-                    .filter((s) => s)
-               : []
-            arr = arr.filter((s) => !s.startsWith(val + " "))
-            arr.push(`${val} ${num}`)
-            part.iwr.weak = arr.join(", ")
-            this._saveScrollPos()
-            this.render()
-         })
+               let str = val
+               if (valNum) str += ` ${valNum}`
 
-      this.element
-         .querySelector("#rnt-resist-select")
-         ?.addEventListener("change", async (ev) => {
-            const val = ev.currentTarget.value
-            if (!val) return
-            const valInput = this.element.querySelector("#rnt-resist-value")
-            const num = parseInt(valInput?.value) || 5
-            await this._saveCurrentState()
-            const part = this.workingParts.find((p) => p.id === this.partId)
-            if (!part.iwr) part.iwr = { immune: "", weak: "", resist: "" }
-            let arr = part.iwr.resist
-               ? part.iwr.resist
-                    .split(",")
-                    .map((s) => s.trim())
-                    .filter((s) => s)
-               : []
-            arr = arr.filter((s) => !s.startsWith(val + " "))
-            arr.push(`${val} ${num}`)
-            part.iwr.resist = arr.join(", ")
-            this._saveScrollPos()
-            this.render()
-         })
+               if (!arr.includes(str)) arr.push(str)
+               part.iwr[field] = arr.join(", ")
+               await this.actor.setFlag(
+                  "pf2e-aztecs-rip-n-tear",
+                  "parts",
+                  parts,
+               )
+               this._saveScrollPos()
+               this.render()
+            })
+      }
+
+      setupIWRSelect("#rnt-immune-select", "immune")
+      setupIWRSelect("#rnt-weak-select", "weak")
+      setupIWRSelect("#rnt-resist-select", "resist")
+      setupIWRSelect("#rnt-immune-exc-select", "immuneExc")
+      setupIWRSelect("#rnt-weak-exc-select", "weakExc")
+      setupIWRSelect("#rnt-resist-exc-select", "resistExc")
    }
 
    _getParts() {
@@ -824,11 +907,17 @@ export class BodyPartApp extends HandlebarsApplicationMixin(ApplicationV2) {
          updatedPart.iwr.immune = asString(updatedPart.iwr.immune)
          updatedPart.iwr.weak = asString(updatedPart.iwr.weak)
          updatedPart.iwr.resist = asString(updatedPart.iwr.resist)
+         updatedPart.iwr.immuneExc = asString(updatedPart.iwr.immuneExc)
+         updatedPart.iwr.weakExc = asString(updatedPart.iwr.weakExc)
+         updatedPart.iwr.resistExc = asString(updatedPart.iwr.resistExc)
       } else {
          updatedPart.iwr = currentPart.iwr || {
             immune: "",
             weak: "",
             resist: "",
+            immuneExc: "",
+            weakExc: "",
+            resistExc: "",
          }
       }
 
@@ -948,27 +1037,111 @@ export class BodyPartApp extends HandlebarsApplicationMixin(ApplicationV2) {
    }
 
    static async _onRemoveImmunity(event, target) {
-      const type = target.dataset.type
+      const raw = target.dataset.raw
       await this._saveCurrentState()
-      const part = this.workingParts.find((p) => p.id === this.partId)
+      const parts = this._getParts()
+      const part = parts.find((p) => p.id === this.partId)
       let arr = part.iwr?.immune
          ? part.iwr.immune
               .split(",")
               .map((s) => s.trim())
               .filter((s) => s)
          : []
-      arr = arr.filter((s) => s !== type)
+      arr = arr.filter((s) => s !== raw)
       part.iwr.immune = arr.join(", ")
+      await this.actor.setFlag("pf2e-aztecs-rip-n-tear", "parts", parts)
       this._saveScrollPos()
       this.render()
    }
 
    static async _onRemoveWeakness(event, target) {
-      await this._removeValuedIwr.call(this, "weak", target.dataset.type)
+      const raw = target.dataset.raw
+      await this._saveCurrentState()
+      const parts = this._getParts()
+      const part = parts.find((p) => p.id === this.partId)
+      let arr = part.iwr?.weak
+         ? part.iwr.weak
+              .split(",")
+              .map((s) => s.trim())
+              .filter((s) => s)
+         : []
+      arr = arr.filter((s) => s !== raw)
+      part.iwr.weak = arr.join(", ")
+      await this.actor.setFlag("pf2e-aztecs-rip-n-tear", "parts", parts)
+      this._saveScrollPos()
+      this.render()
    }
 
    static async _onRemoveResistance(event, target) {
-      await this._removeValuedIwr.call(this, "resist", target.dataset.type)
+      const raw = target.dataset.raw
+      await this._saveCurrentState()
+      const parts = this._getParts()
+      const part = parts.find((p) => p.id === this.partId)
+      let arr = part.iwr?.resist
+         ? part.iwr.resist
+              .split(",")
+              .map((s) => s.trim())
+              .filter((s) => s)
+         : []
+      arr = arr.filter((s) => s !== raw)
+      part.iwr.resist = arr.join(", ")
+      await this.actor.setFlag("pf2e-aztecs-rip-n-tear", "parts", parts)
+      this._saveScrollPos()
+      this.render()
+   }
+
+   static async _onRemoveImmuneExc(event, target) {
+      const raw = target.dataset.raw
+      await this._saveCurrentState()
+      const parts = this._getParts()
+      const part = parts.find((p) => p.id === this.partId)
+      let arr = part.iwr?.immuneExc
+         ? part.iwr.immuneExc
+              .split(",")
+              .map((s) => s.trim())
+              .filter((s) => s)
+         : []
+      arr = arr.filter((s) => s !== raw)
+      part.iwr.immuneExc = arr.join(", ")
+      await this.actor.setFlag("pf2e-aztecs-rip-n-tear", "parts", parts)
+      this._saveScrollPos()
+      this.render()
+   }
+
+   static async _onRemoveWeakExc(event, target) {
+      const raw = target.dataset.raw
+      await this._saveCurrentState()
+      const parts = this._getParts()
+      const part = parts.find((p) => p.id === this.partId)
+      let arr = part.iwr?.weakExc
+         ? part.iwr.weakExc
+              .split(",")
+              .map((s) => s.trim())
+              .filter((s) => s)
+         : []
+      arr = arr.filter((s) => s !== raw)
+      part.iwr.weakExc = arr.join(", ")
+      await this.actor.setFlag("pf2e-aztecs-rip-n-tear", "parts", parts)
+      this._saveScrollPos()
+      this.render()
+   }
+
+   static async _onRemoveResistExc(event, target) {
+      const raw = target.dataset.raw
+      await this._saveCurrentState()
+      const parts = this._getParts()
+      const part = parts.find((p) => p.id === this.partId)
+      let arr = part.iwr?.resistExc
+         ? part.iwr.resistExc
+              .split(",")
+              .map((s) => s.trim())
+              .filter((s) => s)
+         : []
+      arr = arr.filter((s) => s !== raw)
+      part.iwr.resistExc = arr.join(", ")
+      await this.actor.setFlag("pf2e-aztecs-rip-n-tear", "parts", parts)
+      this._saveScrollPos()
+      this.render()
    }
 
    static async _onRemoveAcceptedDmgType(event, target) {
@@ -977,21 +1150,6 @@ export class BodyPartApp extends HandlebarsApplicationMixin(ApplicationV2) {
       const part = this.workingParts.find((p) => p.id === this.partId)
       if (!part.acceptedDmgTypes) part.acceptedDmgTypes = []
       part.acceptedDmgTypes = part.acceptedDmgTypes.filter((t) => t !== slug)
-      this._saveScrollPos()
-      this.render()
-   }
-
-   async _removeValuedIwr(field, type) {
-      await this._saveCurrentState()
-      const part = this.workingParts.find((p) => p.id === this.partId)
-      let arr = part.iwr?.[field]
-         ? part.iwr[field]
-              .split(",")
-              .map((s) => s.trim())
-              .filter((s) => s)
-         : []
-      arr = arr.filter((s) => !s.startsWith(type + " "))
-      part.iwr[field] = arr.join(", ")
       this._saveScrollPos()
       this.render()
    }

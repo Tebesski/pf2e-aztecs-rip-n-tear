@@ -64,7 +64,7 @@
             <option value="" disabled selected>{{localize "pf2e-aztecs-rip-n-tear.addDmgType"}}</option>
             {{#each pf2eDamageTypes as |dt|}}<option value="{{dt.slug}}">{{dt.label}}</option>{{/each}}
          </select>
-         <div class="rnt-chip-list">
+<div class="rnt-chip-list">
             {{#each rxDamageTypes as |dt i|}}
             <span class="rnt-chip">
                {{dt.label}}
@@ -74,15 +74,47 @@
             {{/each}}
          </div>
       </div>
+
+      <details class="rnt-accordion" style="margin-top: 8px;">
+         <summary class="rnt-accordion-header" style="cursor: pointer; font-weight: bold; margin-bottom: 4px;">{{localize "pf2e-aztecs-rip-n-tear.conditionals"}}</summary>
+         <div class="rnt-accordion-body" style="padding-top: 8px; border-top: 1px solid var(--rnt-border);">
+            <div class="rnt-field">
+               <label class="rnt-field-label">{{localize "pf2e-aztecs-rip-n-tear.onlyMelee"}}</label>
+               <div class="rnt-field-control">
+                  <input type="checkbox" name="conditionals.onlyMelee" {{checked rx.conditionals.onlyMelee}} />
+               </div>
+            </div>
+            <div class="rnt-field">
+               <label class="rnt-field-label">{{localize "pf2e-aztecs-rip-n-tear.onlyUnarmed"}}</label>
+               <div class="rnt-field-control"><input type="checkbox" name="conditionals.onlyUnarmed" {{checked rx.conditionals.onlyUnarmed}} /></div>
+            </div>
+            <div class="rnt-field">
+               <label class="rnt-field-label">{{localize "pf2e-aztecs-rip-n-tear.onlyMagical"}}</label>
+               <div class="rnt-field-control"><input type="checkbox" name="conditionals.onlyMagical" {{checked rx.conditionals.onlyMagical}} onchange="if(this.checked) this.form.querySelector('[name=\'conditionals.onlyPhysical\']').checked = false;" /></div>
+            </div>
+            <div class="rnt-field">
+               <label class="rnt-field-label">{{localize "pf2e-aztecs-rip-n-tear.onlyPhysical"}}</label>
+               <div class="rnt-field-control"><input type="checkbox" name="conditionals.onlyPhysical" {{checked rx.conditionals.onlyPhysical}} onchange="if(this.checked) this.form.querySelector('[name=\'conditionals.onlyMagical\']').checked = false;" /></div>
+            </div>
+            <div class="rnt-field">
+               <label class="rnt-field-label">{{localize "pf2e-aztecs-rip-n-tear.requiredRollOptions"}}</label>
+               <div class="rnt-field-control"><input type="text" name="conditionals.requiredRollOptions" value="{{rx.conditionals.requiredRollOptions}}" placeholder="{{localize 'pf2e-aztecs-rip-n-tear.requiredRollOptionsPh'}}" /></div>
+            </div>
+         </div>
+      </details>
    </div>
 
-   <div class="rnt-section">
+<div class="rnt-section">
       <div class="rnt-section-title">{{localize "pf2e-aztecs-rip-n-tear.sound"}}</div>
       <div class="rnt-sfx-field">
          <label>{{localize "pf2e-aztecs-rip-n-tear.sfxTrigger"}}</label>
          <input type="text" name="sfxTrigger" value="{{rx.sfxTrigger}}" placeholder="path/to/sound.ogg" />
          <button type="button" class="rnt-btn-icon" data-action="pickFile"><i class="fa-solid fa-folder-open"></i></button>
          <button type="button" class="rnt-btn-icon" data-action="previewSfx"><i class="fa-solid fa-play"></i></button>
+      </div>
+      <div class="rnt-field" style="margin-top: 4px;">
+         <label class="rnt-field-label">{{localize "pf2e-aztecs-rip-n-tear.playSfxNoTarget"}}</label>
+         <div class="rnt-field-control"><input type="checkbox" name="playSfxNoTarget" {{checked rx.playSfxNoTarget}} /></div>
       </div>
    </div>
 
@@ -108,6 +140,9 @@
                <option value="self" {{#if (eq trig.target "self")}}selected{{/if}}>{{localize "pf2e-aztecs-rip-n-tear.self"}}</option>
                <option value="aura" {{#if (eq trig.target "aura")}}selected{{/if}}>{{localize "pf2e-aztecs-rip-n-tear.aura"}}</option>
             </select>
+            {{#if (eq trig.target "triggerer")}}
+            <input type="number" name="triggers.{{i}}.triggererDistance" value="{{trig.triggererDistance}}" placeholder="{{localize 'pf2e-aztecs-rip-n-tear.distance5ft'}}" style="flex: 0 0 60px;" />
+            {{/if}}
             <a class="rnt-threshold-remove" data-action="removeTrigger" data-index="{{i}}" data-tooltip="{{localize 'pf2e-aztecs-rip-n-tear.removeTrigger'}}"><i class="fa-solid fa-trash"></i></a>
          </div>
 

@@ -71,6 +71,14 @@ function extractDamageFromMessage(message) {
    let totalDamage = 0
    const rolls = message.rolls || []
 
+   const rollOptions = new Set(message.flags?.pf2e?.context?.options || [])
+   const content = message.content || message.flavor || ""
+
+   const materialMatches = content.matchAll(/data-material="([^"]+)"/g)
+   for (const m of materialMatches) rollOptions.add(`item:material:${m[1]}`)
+   const traitMatches = content.matchAll(/data-trait="([^"]+)"/g)
+   for (const m of traitMatches) rollOptions.add(`item:trait:${m[1]}`)
+
    for (let r of rolls) {
       if (typeof r === "string") {
          try {
@@ -81,6 +89,8 @@ function extractDamageFromMessage(message) {
       }
 
       const rollOpts = r.options ? Array.from(r.options) : []
+      rollOpts.forEach((o) => rollOptions.add(o))
+
       const isSplashRoll =
          rollOpts.includes("splash") ||
          rollOpts.includes("trait:splash") ||
@@ -114,7 +124,7 @@ function extractDamageFromMessage(message) {
          }
       }
    }
-   return { damages, totalDamage }
+   return { damages, totalDamage, rollOptions: Array.from(rollOptions) }
 }
 
 function setupSavingThrowHook(originalCheckRoll) {
@@ -362,11 +372,13 @@ function setupPreCreateChatMessageHook() {
             if (part) partName = part.name
          }
 
-         const { damages, totalDamage } = extractDamageFromMessage(message)
+         const { damages, totalDamage, rollOptions } =
+            extractDamageFromMessage(message)
 
          const updateData = {
             [`flags.${MODULE_ID}.damages`]: damages,
             [`flags.${MODULE_ID}.totalDamage`]: totalDamage,
+            [`flags.${MODULE_ID}.rollOptions`]: rollOptions,
          }
 
          if (targetDoc) {
@@ -937,8 +949,19 @@ function setupRenderChatMessageHook() {
 
                      const currentMessage =
                         game.messages.get(message.id) || message
-                     const { damages } =
+                     const { damages, rollOptions } =
                         extractDamageFromMessage(currentMessage)
+
+                     const domMats = msgDom.querySelectorAll("[data-material]")
+                     domMats.forEach((el) =>
+                        rollOptions.push(
+                           `item:material:${el.dataset.material}`,
+                        ),
+                     )
+                     const domTraits = msgDom.querySelectorAll("[data-trait]")
+                     domTraits.forEach((el) =>
+                        rollOptions.push(`item:trait:${el.dataset.trait}`),
+                     )
 
                      if (!damages.length) {
                         ui.notifications.warn(
@@ -1038,6 +1061,7 @@ function setupRenderChatMessageHook() {
                            actor: tDoc.actor,
                            partId: selectedPartId,
                            initialDamages: finalDamages,
+                           rollOptions: rollOptions,
                         }).render(true)
                      }
 
@@ -1120,7 +1144,17 @@ function setupRenderChatMessageHook() {
                e.stopPropagation()
 
                const currentMessage = game.messages.get(message.id) || message
-               const { damages } = extractDamageFromMessage(currentMessage)
+               const { damages, rollOptions } =
+                  extractDamageFromMessage(currentMessage)
+
+               const domMats = msgDom.querySelectorAll("[data-material]")
+               domMats.forEach((el) =>
+                  rollOptions.push(`item:material:${el.dataset.material}`),
+               )
+               const domTraits = msgDom.querySelectorAll("[data-trait]")
+               domTraits.forEach((el) =>
+                  rollOptions.push(`item:trait:${el.dataset.trait}`),
+               )
 
                if (!damages.length) {
                   ui.notifications.warn(
@@ -1139,6 +1173,7 @@ function setupRenderChatMessageHook() {
                         dmgType: fd.dmgType,
                         dmgCategory: fd.category,
                      })),
+                     rollOptions: rollOptions,
                   }).render(true)
                }
 

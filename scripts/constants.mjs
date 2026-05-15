@@ -185,6 +185,20 @@ export const PF2E_IWR_TYPES = [
    "wounded",
 ]
 
+export const PHYSICAL_TYPES = ["bludgeoning", "piercing", "slashing", "bleed"]
+export const ENERGY_TYPES = [
+   "acid",
+   "cold",
+   "electricity",
+   "fire",
+   "sonic",
+   "force",
+   "vitality",
+   "void",
+   "positive",
+   "negative",
+]
+
 export function buildPf2eConditions() {
    return PF2E_CONDITION_SLUGS.map((slug) => ({
       slug,
@@ -198,12 +212,23 @@ export function buildPf2eDamageTypes() {
       CONFIG.PF2E?.damageTypes ||
       CONFIG.PF2E?.damageTraits ||
       PF2E_BASE_DAMAGE_TYPES
-   return Object.entries(rawTypes)
+   const types = Object.entries(rawTypes)
       .map(([slug, label]) => ({
          slug,
          label: typeof label === "string" ? game.i18n.localize(label) : slug,
       }))
       .sort((a, b) => a.label.localeCompare(b.label))
+
+   if (!types.find((t) => t.slug === "all-damage")) {
+      types.unshift({
+         slug: "all-damage",
+         label:
+            game.i18n.localize("pf2e-aztecs-rip-n-tear.allDamage") ||
+            "All Damage",
+      })
+   }
+
+   return types
 }
 
 export function buildPf2eIwrTypes() {

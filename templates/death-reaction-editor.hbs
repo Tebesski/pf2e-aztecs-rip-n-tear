@@ -30,13 +30,17 @@
       {{/if}}
    </div>
 
-   <div class="rnt-section">
+<div class="rnt-section">
       <div class="rnt-section-title">{{localize "pf2e-aztecs-rip-n-tear.sound"}}</div>
       <div class="rnt-sfx-field">
          <label>{{localize "pf2e-aztecs-rip-n-tear.sfxTrigger"}}</label>
          <input type="text" name="sfxTrigger" value="{{dr.sfxTrigger}}" placeholder="path/to/sound.ogg" />
          <button type="button" class="rnt-btn-icon" data-action="pickFile"><i class="fa-solid fa-folder-open"></i></button>
          <button type="button" class="rnt-btn-icon" data-action="previewSfx"><i class="fa-solid fa-play"></i></button>
+      </div>
+      <div class="rnt-field" style="margin-top: 4px;">
+         <label class="rnt-field-label">{{localize "pf2e-aztecs-rip-n-tear.playSfxNoTarget"}}</label>
+         <div class="rnt-field-control"><input type="checkbox" name="playSfxNoTarget" {{checked dr.playSfxNoTarget}} /></div>
       </div>
    </div>
 
@@ -62,6 +66,9 @@
                <option value="self" {{#if (eq trig.target "self")}}selected{{/if}}>{{localize "pf2e-aztecs-rip-n-tear.self"}}</option>
                <option value="aura" {{#if (eq trig.target "aura")}}selected{{/if}}>{{localize "pf2e-aztecs-rip-n-tear.aura"}}</option>
             </select>
+            {{#if (eq trig.target "triggerer")}}
+            <input type="number" name="triggers.{{i}}.triggererDistance" value="{{trig.triggererDistance}}" placeholder="{{localize 'pf2e-aztecs-rip-n-tear.distance5ft'}}" style="flex: 0 0 60px;" />
+            {{/if}}
             <a class="rnt-threshold-remove" data-action="removeTrigger" data-index="{{i}}" data-tooltip="{{localize 'pf2e-aztecs-rip-n-tear.removeTrigger'}}"><i class="fa-solid fa-trash"></i></a>
          </div>
 

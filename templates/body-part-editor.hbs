@@ -126,42 +126,69 @@
          <input type="checkbox" name="customIWR" {{checked part.customIWR}} style="margin-right: 6px;">
          <span>{{localize "pf2e-aztecs-rip-n-tear.overrideIWR"}}</span>
       </div>
-      {{#if part.customIWR}}
+{{#if part.customIWR}}
       <div class="rnt-field rnt-field-stack">
          <label class="rnt-field-label">{{localize "pf2e-aztecs-rip-n-tear.immunities"}}</label>
          <select id="rnt-immune-select"><option value="" disabled selected>{{localize "pf2e-aztecs-rip-n-tear.addImmunity"}}</option>{{#each pf2eIWRTypes}}<option value="{{this.slug}}">{{this.label}}</option>{{/each}}</select>
          <div class="rnt-chip-list">
             {{#each part.iwrData.immune}}
-            <span class="rnt-chip">{{this.label}}<a class="rnt-chip-remove" data-action="removeImmunity" data-type="{{this.type}}"><i class="fa-solid fa-times"></i></a></span>
+            <span class="rnt-chip">{{this.label}}<a class="rnt-chip-remove" data-action="removeImmunity" data-raw="{{this.raw}}"><i class="fa-solid fa-times"></i></a></span>
             {{/each}}
          </div>
+         
+         <select id="rnt-immune-exc-select" style="margin-top: 4px;"><option value="" disabled selected>{{localize "pf2e-aztecs-rip-n-tear.addException"}}</option>{{#each pf2eIWRTypes}}<option value="{{this.slug}}">{{this.label}}</option>{{/each}}</select>
+         <div class="rnt-chip-list">
+            {{#each part.iwrData.immuneExc}}
+            <span class="rnt-chip">{{this.label}}<a class="rnt-chip-remove" data-action="removeImmuneExc" data-raw="{{this.raw}}"><i class="fa-solid fa-times"></i></a></span>
+            {{/each}}
+         </div>
+
          <input type="hidden" name="iwr.immune" value="{{part.iwr.immune}}" />
+         <input type="hidden" name="iwr.immuneExc" value="{{part.iwr.immuneExc}}" />
       </div>
       <div class="rnt-field rnt-field-stack">
          <label class="rnt-field-label">{{localize "pf2e-aztecs-rip-n-tear.weaknesses"}}</label>
          <div class="rnt-input-group">
             <select id="rnt-weak-select"><option value="" disabled selected>{{localize "pf2e-aztecs-rip-n-tear.addWeakness"}}</option>{{#each pf2eIWRTypes}}<option value="{{this.slug}}">{{this.label}}</option>{{/each}}</select>
-            <input type="number" id="rnt-weak-value" value="5" placeholder="{{localize 'pf2e-aztecs-rip-n-tear.valShort'}}" />
+            <input type="number" id="rnt-weak-value" value="5" placeholder="{{localize 'pf2e-aztecs-rip-n-tear.valShort'}}" style="flex: 0 0 50px;" />
          </div>
          <div class="rnt-chip-list">
             {{#each part.iwrData.weak}}
-            <span class="rnt-chip">{{this.label}} {{this.value}}<a class="rnt-chip-remove" data-action="removeWeakness" data-type="{{this.type}}"><i class="fa-solid fa-times"></i></a></span>
+            <span class="rnt-chip">{{this.label}}<a class="rnt-chip-remove" data-action="removeWeakness" data-raw="{{this.raw}}"><i class="fa-solid fa-times"></i></a></span>
             {{/each}}
          </div>
+
+         <select id="rnt-weak-exc-select" style="margin-top: 4px;"><option value="" disabled selected>{{localize "pf2e-aztecs-rip-n-tear.addException"}}</option>{{#each pf2eIWRTypes}}<option value="{{this.slug}}">{{this.label}}</option>{{/each}}</select>
+         <div class="rnt-chip-list">
+            {{#each part.iwrData.weakExc}}
+            <span class="rnt-chip">{{this.label}}<a class="rnt-chip-remove" data-action="removeWeakExc" data-raw="{{this.raw}}"><i class="fa-solid fa-times"></i></a></span>
+            {{/each}}
+         </div>
+
          <input type="hidden" name="iwr.weak" value="{{part.iwr.weak}}" />
+         <input type="hidden" name="iwr.weakExc" value="{{part.iwr.weakExc}}" />
       </div>
       <div class="rnt-field rnt-field-stack">
          <label class="rnt-field-label">{{localize "pf2e-aztecs-rip-n-tear.resistances"}}</label>
          <div class="rnt-input-group">
             <select id="rnt-resist-select"><option value="" disabled selected>{{localize "pf2e-aztecs-rip-n-tear.addResistance"}}</option>{{#each pf2eIWRTypes}}<option value="{{this.slug}}">{{this.label}}</option>{{/each}}</select>
-            <input type="number" id="rnt-resist-value" value="5" placeholder="{{localize 'pf2e-aztecs-rip-n-tear.valShort'}}" />
+            <input type="number" id="rnt-resist-value" value="5" placeholder="{{localize 'pf2e-aztecs-rip-n-tear.valShort'}}" style="flex: 0 0 50px;" />
          </div>
          <div class="rnt-chip-list">
             {{#each part.iwrData.resist}}
-            <span class="rnt-chip">{{this.label}} {{this.value}}<a class="rnt-chip-remove" data-action="removeResistance" data-type="{{this.type}}"><i class="fa-solid fa-times"></i></a></span>
+            <span class="rnt-chip">{{this.label}}<a class="rnt-chip-remove" data-action="removeResistance" data-raw="{{this.raw}}"><i class="fa-solid fa-times"></i></a></span>
             {{/each}}
          </div>
+
+         <select id="rnt-resist-exc-select" style="margin-top: 4px;"><option value="" disabled selected>{{localize "pf2e-aztecs-rip-n-tear.addException"}}</option>{{#each pf2eIWRTypes}}<option value="{{this.slug}}">{{this.label}}</option>{{/each}}</select>
+         <div class="rnt-chip-list">
+            {{#each part.iwrData.resistExc}}
+            <span class="rnt-chip">{{this.label}}<a class="rnt-chip-remove" data-action="removeResistExc" data-raw="{{this.raw}}"><i class="fa-solid fa-times"></i></a></span>
+            {{/each}}
+         </div>
+
          <input type="hidden" name="iwr.resist" value="{{part.iwr.resist}}" />
+         <input type="hidden" name="iwr.resistExc" value="{{part.iwr.resistExc}}" />
       </div>
       {{/if}}
    </div>

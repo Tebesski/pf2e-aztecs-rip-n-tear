@@ -352,6 +352,19 @@
       "promptFreeActions": "Подтверждение Бесплатных действий при Реакции на урон.",
       "promptFreeActionsHint": "Запрашивать подтверждение у ГМа перед срабатыванием реакции на урон за Бесплатное действие.",
       "acAdjustment": "Корректировка КБ",
-      "acAdjustmentTooltip": "Изменяет базовый КБ существа для этой части тела."
+      "acAdjustmentTooltip": "Изменяет базовый КБ существа для этой части тела.",
+      "exceptions": "Исключения",
+      "addException": "Добавить исключение",
+      "allDamage": "Весь урон",
+      "playSfxNoTarget": "Воспроизводить SFX, даже если нет целей",
+      "persistentDmg": "DoT действует на NPC",
+      "conditionals": "Условия",
+      "onlyMelee": "Только ближний бой",
+      "onlyUnarmed": "Только безоружные атаки",
+      "onlyMagical": "Только магический",
+      "onlyPhysical": "Только физический",
+      "requiredRollOptions": "Только при наличии опций броска",
+      "requiredRollOptionsPh": "напр., item:material:silver, trip, orc",
+      "distance5ft": "5 футов"
    }
 }

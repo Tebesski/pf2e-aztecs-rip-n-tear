@@ -28,11 +28,12 @@ export function registerReactionHooks() {
                const message = game.messages.get(messageId)
 
                if (message) {
-                  const types = extractDamageTypesFromMessage(message)
+                  const data = extractDamageDataFromMessage(message)
 
                   window.RNT_PENDING_DAMAGE_SOURCE = {
                      timestamp: Date.now(),
-                     damageTypes: types,
+                     damageTypes: data.damageTypes,
+                     rollOptions: data.rollOptions,
                   }
                }
             }
@@ -59,8 +60,9 @@ export function registerReactionHooks() {
       }
    })
 
-   function extractDamageTypesFromMessage(message) {
+   function extractDamageDataFromMessage(message) {
       const takenDamageTypes = new Set()
+      const takenRollOptions = new Set()
 
       let ctxOpts = message.flags?.pf2e?.context?.options || []
       if (ctxOpts instanceof Set) ctxOpts = Array.from(ctxOpts)
@@ -70,6 +72,7 @@ export function registerReactionHooks() {
 
       ctxOpts.forEach((o) => {
          if (typeof o === "string") {
+            takenRollOptions.add(o.toLowerCase())
             if (o.startsWith("item:damage:type:"))
                takenDamageTypes.add(o.split("item:damage:type:")[1])
             if (o.startsWith("item:damage:category:"))
@@ -89,6 +92,7 @@ export function registerReactionHooks() {
 
          rollOpts.forEach((o) => {
             if (typeof o === "string") {
+               takenRollOptions.add(o.toLowerCase())
                if (o.startsWith("item:damage:type:"))
                   takenDamageTypes.add(o.split("item:damage:type:")[1])
                if (o.startsWith("item:damage:category:"))
@@ -104,7 +108,7 @@ export function registerReactionHooks() {
             if (inst.category) takenDamageTypes.add(inst.category)
          }
       }
-      return takenDamageTypes
+      return { damageTypes: takenDamageTypes, rollOptions: takenRollOptions }
    }
 
    Hooks.on("updateActor", async (actor, updates, options, userId) => {
@@ -117,11 +121,14 @@ export function registerReactionHooks() {
          const partId = options.rntPartId || null
 
          const takenDamageTypes = new Set()
+         const takenRollOptions = new Set()
          const actorToken = actor.token ?? actor.getActiveTokens()[0]?.document
+         let isAdjacent = false
 
          const pending = window.RNT_PENDING_DAMAGE_SOURCE
          if (pending && Date.now() - pending.timestamp < 300000) {
             for (const t of pending.damageTypes) takenDamageTypes.add(t)
+            for (const o of pending.rollOptions) takenRollOptions.add(o)
             window.RNT_PENDING_DAMAGE_SOURCE = null
          } else {
             const messages = Array.from(game.messages.contents).reverse()
@@ -136,53 +143,44 @@ export function registerReactionHooks() {
             })
 
             if (recentDamageMsg) {
-               let ctxOpts = recentDamageMsg.flags?.pf2e?.context?.options || []
-               if (ctxOpts instanceof Set) ctxOpts = Array.from(ctxOpts)
-               else if (!Array.isArray(ctxOpts) && typeof ctxOpts === "object")
-                  ctxOpts = Object.values(ctxOpts)
-               else if (!Array.isArray(ctxOpts)) ctxOpts = []
+               const data = extractDamageDataFromMessage(recentDamageMsg)
+               for (const t of data.damageTypes) takenDamageTypes.add(t)
+               for (const o of data.rollOptions) takenRollOptions.add(o)
 
-               ctxOpts.forEach((o) => {
-                  if (typeof o === "string") {
-                     if (o.startsWith("item:damage:type:"))
-                        takenDamageTypes.add(o.split("item:damage:type:")[1])
-                     if (o.startsWith("item:damage:category:"))
-                        takenDamageTypes.add(
-                           o.split("item:damage:category:")[1],
-                        )
-                     if (o.startsWith("damage:type:"))
-                        takenDamageTypes.add(o.split("damage:type:")[1])
-                  }
-               })
-
-               const rolls = recentDamageMsg.rolls || []
-               for (const r of rolls) {
-                  let rollOpts = r.options || []
-                  if (rollOpts instanceof Set) rollOpts = Array.from(rollOpts)
-                  else if (
-                     !Array.isArray(rollOpts) &&
-                     typeof rollOpts === "object"
+               let attackerToken = null
+               const speakerTokenId = recentDamageMsg.speaker?.token
+               if (speakerTokenId && canvas?.scene) {
+                  attackerToken = canvas.scene.tokens.get(speakerTokenId)
+               }
+               if (
+                  !attackerToken &&
+                  recentDamageMsg.speaker?.actor &&
+                  canvas?.scene
+               ) {
+                  attackerToken = canvas.scene.tokens.find(
+                     (t) => t.actor?.id === recentDamageMsg.speaker.actor,
                   )
-                     rollOpts = Object.values(rollOpts)
-                  else if (!Array.isArray(rollOpts)) rollOpts = []
+               }
 
-                  rollOpts.forEach((o) => {
-                     if (typeof o === "string") {
-                        if (o.startsWith("item:damage:type:"))
-                           takenDamageTypes.add(o.split("item:damage:type:")[1])
-                        if (o.startsWith("item:damage:category:"))
-                           takenDamageTypes.add(
-                              o.split("item:damage:category:")[1],
-                           )
-                        if (o.startsWith("damage:type:"))
-                           takenDamageTypes.add(o.split("damage:type:")[1])
+               if (attackerToken && actorToken) {
+                  const sourceToken =
+                     attackerToken.object ||
+                     canvas.tokens?.get(attackerToken.id)
+                  const targetToken =
+                     actorToken.object || canvas.tokens?.get(actorToken.id)
+                  if (sourceToken && targetToken) {
+                     let dist
+                     if (typeof sourceToken.distanceTo === "function") {
+                        dist = sourceToken.distanceTo(targetToken)
+                     } else {
+                        const dx = targetToken.x - sourceToken.x
+                        const dy = targetToken.y - sourceToken.y
+                        dist =
+                           (Math.sqrt(dx * dx + dy * dy) /
+                              canvas.dimensions.size) *
+                           canvas.dimensions.distance
                      }
-                  })
-
-                  const instances = r.instances || [r]
-                  for (const inst of instances) {
-                     if (inst.type) takenDamageTypes.add(inst.type)
-                     if (inst.category) takenDamageTypes.add(inst.category)
+                     isAdjacent = dist <= 5
                   }
                }
             }
@@ -194,8 +192,10 @@ export function registerReactionHooks() {
             actor,
             damageTaken,
             takenDamageTypes,
+            takenRollOptions,
             damageSource,
             partId,
+            isAdjacent,
          )
       }
 
@@ -217,6 +217,7 @@ export async function evaluateReactions(
    actor,
    damageTaken,
    takenDamageTypes,
+   takenRollOptions,
    damageSource = "creature",
    damagedPartId = null,
 ) {
@@ -246,8 +247,64 @@ export async function evaluateReactions(
          if (!hasMatchingType) continue
       }
 
+      if (rx.conditionals) {
+         const opts = takenRollOptions || new Set()
+         const {
+            onlyMelee,
+            onlyUnarmed,
+            onlyMagical,
+            onlyPhysical,
+            requiredRollOptions,
+         } = rx.conditionals
+
+         if (onlyMelee) {
+            const hasMelee =
+               opts.has("melee") ||
+               opts.has("item:trait:melee") ||
+               opts.has("trait:melee")
+            if (!hasMelee) continue
+         }
+
+         if (onlyUnarmed) {
+            const hasUnarmed =
+               opts.has("unarmed") ||
+               opts.has("item:trait:unarmed") ||
+               opts.has("trait:unarmed")
+            if (!hasUnarmed) continue
+         }
+
+         if (onlyMagical) {
+            const hasMagical =
+               opts.has("magical") ||
+               opts.has("item:trait:magical") ||
+               opts.has("trait:magical")
+            if (!hasMagical) continue
+         }
+
+         if (onlyPhysical) {
+            const hasMagical =
+               opts.has("magical") ||
+               opts.has("item:trait:magical") ||
+               opts.has("trait:magical")
+            if (hasMagical) continue
+         }
+
+         if (requiredRollOptions) {
+            const reqs = requiredRollOptions
+               .split(",")
+               .map((s) => s.trim().toLowerCase())
+               .filter((s) => s)
+            const hasAll = reqs.every(
+               (r) =>
+                  opts.has(r) ||
+                  opts.has(`item:trait:${r}`) ||
+                  opts.has(`trait:${r}`),
+            )
+            if (!hasAll) continue
+         }
+      }
+
       const effectName = `Reaction Used: ${rx.name}`
-      if (actor.items.some((i) => i.name === effectName)) continue
 
       const reqTypes =
          rx.damageTypes && rx.damageTypes.length > 0
@@ -354,11 +411,6 @@ export async function triggerReaction(
       await actor.createEmbeddedDocuments("Item", [effectData])
    }
 
-   if (rx.sfxTrigger) {
-      const sfxType = options.isDeath ? "deathReaction" : "damageReaction"
-      await playSfx(rx.sfxTrigger, sfxType)
-   }
-
    const actorToken = actor.token ?? actor.getActiveTokens()[0]?.document
 
    let resolvedTriggerer = manualTriggerer
@@ -390,8 +442,27 @@ export async function triggerReaction(
       }
    }
 
+   if (rx.sfxTrigger) {
+      let hasAnyTargets = false
+      for (const trigger of rx.triggers) {
+         const targets = collectTargets(trigger, actorToken, resolvedTriggerer)
+         if (trigger.target === "triggerer" && targets.length === 0) continue
+         if (targets.length > 0) {
+            hasAnyTargets = true
+            break
+         }
+      }
+
+      if (hasAnyTargets || rx.playSfxNoTarget) {
+         const sfxType = options.isDeath ? "deathReaction" : "damageReaction"
+         await playSfx(rx.sfxTrigger, sfxType)
+      }
+   }
+
    for (const trigger of rx.triggers) {
       const targets = collectTargets(trigger, actorToken, resolvedTriggerer)
+
+      if (trigger.target === "triggerer" && targets.length === 0) continue
 
       if (targets.length === 0) {
          if (trigger.type !== "damage" && trigger.type !== "saving-throw") {
@@ -429,7 +500,56 @@ export async function triggerReaction(
 function collectTargets(trigger, actorToken, resolvedTriggerer) {
    const targets = []
    if (trigger.target === "triggerer") {
-      if (resolvedTriggerer) targets.push(resolvedTriggerer)
+      if (resolvedTriggerer) {
+         let dist = 5
+         if (
+            trigger.triggererDistance !== undefined &&
+            trigger.triggererDistance !== null &&
+            trigger.triggererDistance !== ""
+         ) {
+            dist = parseFloat(trigger.triggererDistance)
+         }
+
+         let actualDist = Infinity
+         const sourceToken =
+            actorToken?.object || canvas.tokens?.get(actorToken?.id)
+         const targetToken =
+            resolvedTriggerer?.object ||
+            canvas.tokens?.get(resolvedTriggerer?.id) ||
+            resolvedTriggerer
+
+         if (sourceToken && targetToken) {
+            if (typeof sourceToken.distanceTo === "function") {
+               actualDist = sourceToken.distanceTo(targetToken)
+            } else {
+               const boundsA = sourceToken.bounds
+               const boundsB = targetToken.bounds
+               if (boundsA && boundsB) {
+                  const dx = Math.max(
+                     0,
+                     boundsA.left - boundsB.right,
+                     boundsB.left - boundsA.right,
+                  )
+                  const dy = Math.max(
+                     0,
+                     boundsA.top - boundsB.bottom,
+                     boundsB.top - boundsA.bottom,
+                  )
+                  actualDist =
+                     (Math.max(dx, dy) / canvas.dimensions.size) *
+                     canvas.dimensions.distance
+               } else {
+                  const dx = targetToken.x - sourceToken.x
+                  const dy = targetToken.y - sourceToken.y
+                  actualDist =
+                     (Math.sqrt(dx * dx + dy * dy) / canvas.dimensions.size) *
+                     canvas.dimensions.distance
+               }
+            }
+         }
+
+         if (actualDist <= dist) targets.push(resolvedTriggerer)
+      }
    } else if (trigger.target === "self") {
       if (actorToken) targets.push(actorToken)
    } else if (trigger.target === "aura") {

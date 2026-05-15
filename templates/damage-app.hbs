@@ -11,8 +11,13 @@
          {{/if}}
          <div class="rnt-persistent-info-row"><strong>{{localize "pf2e-aztecs-rip-n-tear.hardness"}}</strong><span>{{part.hardness}}</span></div>
          <div class="rnt-persistent-info-row"><strong>{{localize "pf2e-aztecs-rip-n-tear.immunities"}}</strong><span>{{iwrImmune}}</span></div>
+         {{#if iwrImmuneExc}}<div class="rnt-persistent-info-row"><strong style="padding-left: 10px; font-weight: normal; font-size: 0.9em;">&#8627; {{localize "pf2e-aztecs-rip-n-tear.exceptions"}}</strong><span style="font-size: 0.9em;">{{iwrImmuneExc}}</span></div>{{/if}}
+         
          <div class="rnt-persistent-info-row"><strong>{{localize "pf2e-aztecs-rip-n-tear.weaknesses"}}</strong><span>{{iwrWeak}}</span></div>
+         {{#if iwrWeakExc}}<div class="rnt-persistent-info-row"><strong style="padding-left: 10px; font-weight: normal; font-size: 0.9em;">&#8627; {{localize "pf2e-aztecs-rip-n-tear.exceptions"}}</strong><span style="font-size: 0.9em;">{{iwrWeakExc}}</span></div>{{/if}}
+         
          <div class="rnt-persistent-info-row"><strong>{{localize "pf2e-aztecs-rip-n-tear.resistances"}}</strong><span>{{iwrResist}}</span></div>
+         {{#if iwrResistExc}}<div class="rnt-persistent-info-row"><strong style="padding-left: 10px; font-weight: normal; font-size: 0.9em;">&#8627; {{localize "pf2e-aztecs-rip-n-tear.exceptions"}}</strong><span style="font-size: 0.9em;">{{iwrResistExc}}</span></div>{{/if}}
       </div>
    </div>
 

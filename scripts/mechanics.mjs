@@ -1,4 +1,4 @@
-import { MODULE_ID } from "./constants.mjs"
+import { MODULE_ID, ENERGY_TYPES, PHYSICAL_TYPES } from "./constants.mjs"
 import { prepareBodyPartDisplay } from "./utils.mjs"
 import { playSfx } from "./sfx.mjs"
 
@@ -9,28 +9,38 @@ export function parseIWRString(str) {
    return str
       .split(",")
       .map((s) => {
-         const parts = s.trim().toLowerCase().split(" ")
-         return { type: parts[0], value: parseInt(parts[1]) || 0 }
+         let exceptions = []
+         let mainPart = s
+         if (s.includes(" except ")) {
+            const splitExc = s.split(" except ")
+            mainPart = splitExc[0]
+            exceptions = splitExc[1].trim().split(" ")
+         }
+         const parts = mainPart.trim().toLowerCase().split(" ")
+         return { type: parts[0], value: parseInt(parts[1]) || 0, exceptions }
       })
       .filter((x) => x.type)
 }
 
-const PHYSICAL_TYPES = ["bludgeoning", "piercing", "slashing", "bleed"]
-const ENERGY_TYPES = [
-   "acid",
-   "cold",
-   "electricity",
-   "fire",
-   "sonic",
-   "force",
-   "vitality",
-   "void",
-   "positive",
-   "negative",
-]
-
-function checkIWRMatch(iwrType, dmgType) {
+function checkIWRMatch(
+   iwrType,
+   dmgType,
+   rollOptions = new Set(),
+   exceptions = [],
+   globalExceptions = [],
+) {
    if (!iwrType || !dmgType) return false
+
+   const allExceptions = [...exceptions, ...globalExceptions]
+   for (const exc of allExceptions) {
+      const e = exc.toLowerCase()
+      if (dmgType.toLowerCase() === e) return false
+      if (rollOptions.has(e)) return false
+      if (rollOptions.has(`item:material:${e}`)) return false
+      if (rollOptions.has(`item:trait:${e}`)) return false
+      if (rollOptions.has(`trait:${e}`)) return false
+   }
+
    const iwr = iwrType.toLowerCase()
    const dmg = dmgType.toLowerCase()
    if (iwr === dmg) return true
@@ -206,6 +216,7 @@ export async function applyBodyPartDamage(
    dmgCategory,
    ignoreHardAmount = 0,
    ignoreAllHard = false,
+   rollOptions = new Set(),
 ) {
    if (!amount || amount <= 0) return
 
@@ -270,18 +281,59 @@ export async function applyBodyPartDamage(
       ? parseIWRString(part.iwr?.resist)
       : actor.system.attributes.resistances || []
 
+   const immuneExcList = part.customIWR
+      ? (part.iwr?.immuneExc || "")
+           .split(",")
+           .map((s) => s.trim())
+           .filter((s) => s)
+      : []
+   const weakExcList = part.customIWR
+      ? (part.iwr?.weakExc || "")
+           .split(",")
+           .map((s) => s.trim())
+           .filter((s) => s)
+      : []
+   const resistExcList = part.customIWR
+      ? (part.iwr?.resistExc || "")
+           .split(",")
+           .map((s) => s.trim())
+           .filter((s) => s)
+      : []
+
    if (dmgType) {
-      if (immuneList.some((i) => checkIWRMatch(i.type, dmgType))) {
+      if (
+         immuneList.some((i) =>
+            checkIWRMatch(
+               i.type,
+               dmgType,
+               rollOptions,
+               i.exceptions,
+               immuneExcList,
+            ),
+         )
+      ) {
          finalAmount = 0
       } else {
          const weaknesses = weakList.filter((w) =>
-            checkIWRMatch(w.type, dmgType),
+            checkIWRMatch(
+               w.type,
+               dmgType,
+               rollOptions,
+               w.exceptions,
+               weakExcList,
+            ),
          )
          if (weaknesses.length > 0) {
             finalAmount += Math.max(...weaknesses.map((w) => w.value))
          }
          const resistances = resistList.filter((r) =>
-            checkIWRMatch(r.type, dmgType),
+            checkIWRMatch(
+               r.type,
+               dmgType,
+               rollOptions,
+               r.exceptions,
+               resistExcList,
+            ),
          )
          if (resistances.length > 0) {
             const highest = Math.max(...resistances.map((r) => r.value))
