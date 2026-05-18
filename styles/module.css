@@ -1688,3 +1688,39 @@ a.rnt-link:hover {
    color: #008000 !important;
    text-shadow: 0 0 2px rgba(0, 255, 0, 0.5);
 }
+
+details > summary::-webkit-details-marker {
+   display: none;
+}
+details > summary {
+   list-style: none;
+}
+.rnt-chevron-icon {
+   transition: transform 0.2s ease;
+   display: inline-block;
+   text-align: center;
+   width: 14px;
+}
+details[open] > summary .rnt-chevron-icon {
+   transform: rotate(90deg);
+}
+
+.rnt-summary-flex {
+   display: flex;
+   align-items: center;
+   width: 100%;
+}
+
+.rnt-chevron-wrapper {
+   cursor: pointer;
+   color: var(--color-text-dark-secondary, #4b4a44);
+   transition:
+      color 0.2s,
+      text-shadow 0.2s;
+   margin-right: 8px;
+}
+.rnt-chevron-wrapper:hover,
+.rnt-chevron-orange:hover {
+   color: orange !important;
+   text-shadow: 0 0 4px rgba(255, 165, 0, 0.5) !important;
+}

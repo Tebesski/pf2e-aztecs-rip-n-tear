@@ -50,76 +50,121 @@ function checkIWRMatch(
    return false
 }
 
-export function createParentEffectData(part, threshold) {
-   const rules = []
+export function createParentEffectsData(part, thresholds) {
+   const groups = new Map()
 
-   if (threshold.conditions) {
-      for (const cond of threshold.conditions) {
-         const conditionBase = game.pf2e.ConditionManager.getCondition(
-            cond.slug,
-         )
-         if (!conditionBase) continue
-         const rule = {
-            key: "GrantItem",
-            uuid: conditionBase.sourceId || conditionBase.uuid,
-            onDeleteActions: { grantee: "restrict" },
-         }
-         if (cond.hasValue || cond.value > 1) {
-            rule.alterations = [
-               {
-                  property: "badge-value",
-                  mode: "override",
-                  value: cond.value,
-               },
-            ]
-         }
-         rules.push(rule)
+   const addRule = (item, rule, descHtml) => {
+      const key = `${item.durationValue || ""}|${item.durationUnit || ""}`
+      if (!groups.has(key)) {
+         groups.set(key, {
+            durationValue: item.durationValue,
+            durationUnit: item.durationUnit,
+            rules: [],
+            descriptions: [],
+         })
       }
+      groups.get(key).rules.push(rule)
+      groups.get(key).descriptions.push(descHtml)
    }
 
-   if (threshold.effects) {
-      for (const ef of threshold.effects) {
-         if (ef.uuid && !ef.invalid) {
-            rules.push({
+   for (const threshold of thresholds) {
+      if (threshold.conditions) {
+         for (const cond of threshold.conditions) {
+            const conditionBase = game.pf2e.ConditionManager.getCondition(
+               cond.slug,
+            )
+            if (!conditionBase) continue
+            const rule = {
                key: "GrantItem",
-               uuid: ef.uuid,
+               uuid: conditionBase.sourceId || conditionBase.uuid,
                onDeleteActions: { grantee: "restrict" },
-            })
+            }
+            if (cond.hasValue || cond.value > 1) {
+               rule.alterations = [
+                  {
+                     property: "badge-value",
+                     mode: "override",
+                     value: cond.value,
+                  },
+               ]
+            }
+            addRule(
+               cond,
+               rule,
+               `<li>@UUID[${conditionBase.sourceId || conditionBase.uuid}]</li>`,
+            )
+         }
+      }
+
+      if (threshold.effects) {
+         for (const ef of threshold.effects) {
+            if (ef.uuid && !ef.invalid) {
+               addRule(
+                  ef,
+                  {
+                     key: "GrantItem",
+                     uuid: ef.uuid,
+                     onDeleteActions: { grantee: "restrict" },
+                  },
+                  `<li>@UUID[${ef.uuid}]</li>`,
+               )
+            }
+         }
+      }
+
+      if (threshold.ruleElements) {
+         for (const re of threshold.ruleElements) {
+            if (!re.invalid && re.json && re.json.trim() !== "") {
+               try {
+                  const desc =
+                     re.customDescription && re.customDescription.trim() !== ""
+                        ? re.customDescription
+                        : "Rule Element"
+                  addRule(re, JSON.parse(re.json), `<li>${desc}</li>`)
+               } catch (e) {}
+            }
          }
       }
    }
 
-   if (threshold.ruleElements) {
-      for (const re of threshold.ruleElements) {
-         if (!re.invalid && re.json && re.json.trim() !== "") {
-            try {
-               rules.push(JSON.parse(re.json))
-            } catch (e) {}
-         }
-      }
-   }
+   const effectsData = []
+   let index = 1
 
-   const descValue =
-      threshold.customDescription && threshold.customDescription.trim() !== ""
-         ? threshold.customDescription
-         : `<p>Effects applied because <strong>${part.name}</strong> reached ${threshold.hpValue} HP or lower.</p>`
+   for (const group of groups.values()) {
+      const durationData =
+         group.durationValue &&
+         group.durationUnit &&
+         group.durationUnit !== "unlimited"
+            ? {
+                 value: group.durationValue,
+                 unit: group.durationUnit,
+                 expiry: "turn-end",
+              }
+            : { value: -1, unit: "unlimited" }
 
-   return {
-      name: `${part.name} Damaged`,
-      type: "effect",
-      img: "icons/svg/blood.svg",
-      system: {
-         description: { value: descValue },
-         rules,
-      },
-      flags: {
-         [MODULE_ID]: {
-            isBodyPartEffect: true,
-            bodyPartName: part.name,
-            partId: part.id,
+      const descValue = `<ul>${group.descriptions.join("")}</ul>`
+
+      effectsData.push({
+         name: `${part.name} Damaged [${index}]`,
+         type: "effect",
+         img: part.img || "icons/commodities/biological/organ-heart-pink.webp",
+         system: {
+            description: { value: descValue },
+            duration: durationData,
+            rules: group.rules,
          },
-      },
+         flags: {
+            [MODULE_ID]: {
+               isBodyPartEffect: true,
+               bodyPartName: part.name,
+               partId: part.id,
+            },
+         },
+      })
+      index++
    }
+
+   return effectsData
 }
 
 async function playPartChangeSfx(part, isDamage, isManual = false) {
@@ -491,7 +536,7 @@ async function processThresholdState(actor, part, parts) {
       return
    }
 
-   let activeThreshold = null
+   let activeThresholds = []
    let activeIndex = -1
    const ascendingThresholds = part.thresholds
       .map((t, i) => ({ ...t, originalIndex: i }))
@@ -509,9 +554,8 @@ async function processThresholdState(actor, part, parts) {
          }
       }
       if (conditionMet) {
-         activeThreshold = t
-         activeIndex = t.originalIndex
-         break
+         activeThresholds.push(t)
+         if (activeIndex === -1) activeIndex = t.originalIndex
       }
    }
 
@@ -534,22 +578,23 @@ async function processThresholdState(actor, part, parts) {
       if (currentActiveIndex !== -1 && part.thresholds[currentActiveIndex]) {
          currentHpValue = part.thresholds[currentActiveIndex].hpValue
       }
-      const newHpValue = activeThreshold ? activeThreshold.hpValue : Infinity
+      const newHpValue =
+         activeThresholds.length > 0 ? activeThresholds[0].hpValue : Infinity
       const isGettingBetter = newHpValue > currentHpValue
 
       if (isGettingBetter) {
          if (part.removeEffectsOnFullHeal) {
             if (isFullHeal) {
                shouldRemoveParent = true
-               if (activeThreshold) shouldApplyNewParent = true
+               if (activeThresholds.length > 0) shouldApplyNewParent = true
             }
          } else {
             shouldRemoveParent = true
-            if (activeThreshold) shouldApplyNewParent = true
+            if (activeThresholds.length > 0) shouldApplyNewParent = true
          }
       } else {
          shouldRemoveParent = true
-         if (activeThreshold) shouldApplyNewParent = true
+         if (activeThresholds.length > 0) shouldApplyNewParent = true
       }
    }
 
@@ -561,12 +606,19 @@ async function processThresholdState(actor, part, parts) {
       )
    }
 
-   if (shouldApplyNewParent && activeThreshold) {
-      const parentEffectData = createParentEffectData(part, activeThreshold)
-      parentEffectData.flags[MODULE_ID].activeThresholdIndex = activeIndex
-      await actor.createEmbeddedDocuments("Item", [parentEffectData])
+   if (shouldApplyNewParent && activeThresholds.length > 0) {
+      const parentEffectsData = createParentEffectsData(part, activeThresholds)
+      parentEffectsData.forEach(
+         (ef) => (ef.flags[MODULE_ID].activeThresholdIndex = activeIndex),
+      )
+      await actor.createEmbeddedDocuments("Item", parentEffectsData)
 
-      if (activeThreshold.damages && activeThreshold.damages.length > 0) {
+      const mainActiveThreshold = activeThresholds[0]
+
+      if (
+         mainActiveThreshold.damages &&
+         mainActiveThreshold.damages.length > 0
+      ) {
          const DamageRoll =
             window.DamageRoll ||
             CONFIG.Dice.rolls.find((r) => r.name === "DamageRoll") ||
@@ -576,7 +628,7 @@ async function processThresholdState(actor, part, parts) {
             ? { actor: actor.uuid, token: tokenDoc.uuid }
             : null
 
-         for (const d of activeThreshold.damages) {
+         for (const d of mainActiveThreshold.damages) {
             if (!d.diceNum && d.diceNum !== 0) continue
             let formula = d.diceStep
                ? `${d.diceNum}d${d.diceStep}`
@@ -609,12 +661,12 @@ async function processThresholdState(actor, part, parts) {
          }
       }
 
-      if (activeThreshold.macros && activeThreshold.macros.length > 0) {
-         for (const mac of activeThreshold.macros) {
+      if (mainActiveThreshold.macros && mainActiveThreshold.macros.length > 0) {
+         for (const mac of mainActiveThreshold.macros) {
             if (!mac.uuid || mac.invalid) continue
             const macroObj = await fromUuid(mac.uuid)
             if (macroObj && macroObj.documentName === "Macro") {
-               macroObj.execute({ actor, part, threshold: activeThreshold })
+               macroObj.execute({ actor, part, threshold: mainActiveThreshold })
             }
          }
       }

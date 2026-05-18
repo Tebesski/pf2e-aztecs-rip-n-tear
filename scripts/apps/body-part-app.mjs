@@ -182,6 +182,11 @@ export class DamageBodyPartApp extends HandlebarsApplicationMixin(
       })
    }
 
+   _saveScrollPos() {
+      const scrollable = this.element?.querySelector(".rnt-scrollable")
+      if (scrollable) this._savedScrollPos = scrollable.scrollTop
+   }
+
    static async _onAddDamage(event, target) {
       this.damages.push({ amount: 1, dmgType: "slashing", dmgCategory: "" })
       this._saveScrollPos()
@@ -270,11 +275,29 @@ export class BodyPartApp extends HandlebarsApplicationMixin(ApplicationV2) {
          removeWeakExc: this._onRemoveWeakExc,
          removeResistExc: this._onRemoveResistExc,
          removeAcceptedDmgType: this._onRemoveAcceptedDmgType,
+         pickPartIcon: this._onPickPartIcon,
       },
    }
 
    static PARTS = {
       form: { template: `${TEMPLATE_BASE}/body-part-editor.hbs` },
+   }
+
+   static async _onPickPartIcon(event, target) {
+      const input = target.nextElementSibling
+      if (!input) return
+      const FPClass =
+         foundry.applications?.apps?.FilePicker?.implementation ?? FilePicker
+      const fp = new FPClass({
+         type: "image",
+         current: input.value,
+         callback: async (path) => {
+            input.value = path
+            target.src = path
+            await this._saveCurrentState()
+         },
+      })
+      fp.render(true)
    }
 
    async _prepareContext(options) {
@@ -299,6 +322,8 @@ export class BodyPartApp extends HandlebarsApplicationMixin(ApplicationV2) {
          weakExc: "",
          resistExc: "",
       }
+      part.img =
+         part.img || "icons/commodities/biological/organ-heart-pink.webp"
 
       const baseFort = this.actor.saves?.fortitude?.mod || 0
       const baseRef = this.actor.saves?.reflex?.mod || 0
@@ -492,7 +517,9 @@ export class BodyPartApp extends HandlebarsApplicationMixin(ApplicationV2) {
          (i) => i.type === "melee" || i.type === "weapon",
       )
       const abilities = unlinkedItems.filter(
-         (i) => i.type === "action" && i.system.actionType?.value === "action",
+         (i) =>
+            i.type === "action" &&
+            ["action", "reaction", "free"].includes(i.system.actionType?.value),
       )
       const passives = unlinkedItems.filter(
          (i) => i.type === "action" && i.system.actionType?.value === "passive",
@@ -514,13 +541,51 @@ export class BodyPartApp extends HandlebarsApplicationMixin(ApplicationV2) {
       }
    }
 
-   _saveScrollPos() {
-      const scrollable = this.element?.querySelector(".rnt-scrollable")
+   _saveViewState() {
+      if (!this.element) return
+      const scrollable = this.element.querySelector(".rnt-scrollable")
       if (scrollable) this._savedScrollPos = scrollable.scrollTop
+
+      this._accordionStates = new Map()
+      this.element.querySelectorAll("details").forEach((d) => {
+         let key = d.dataset.section
+         if (!key && d.dataset.threshold !== undefined)
+            key = `threshold-${d.dataset.threshold}`
+         if (key) this._accordionStates.set(key, d.hasAttribute("open"))
+      })
    }
 
    _onRender(context, options) {
       super._onRender(context, options)
+
+      const summaries = this.element.querySelectorAll("summary")
+      summaries.forEach((summary) => {
+         summary.addEventListener("click", (ev) => {
+            const interactive = ev.target.closest(
+               "input, select, button, a[data-action], label",
+            )
+            if (interactive && !ev.target.closest(".rnt-chevron-orange")) {
+               const details = summary.parentElement
+               const wasOpen = details.hasAttribute("open")
+               requestAnimationFrame(() => {
+                  if (wasOpen) details.setAttribute("open", "")
+                  else details.removeAttribute("open")
+               })
+            }
+         })
+      })
+
+      if (this._accordionStates) {
+         this.element.querySelectorAll("details").forEach((d) => {
+            let key = d.dataset.section
+            if (!key && d.dataset.threshold !== undefined)
+               key = `threshold-${d.dataset.threshold}`
+            if (key && this._accordionStates.has(key)) {
+               if (this._accordionStates.get(key)) d.setAttribute("open", "")
+               else d.removeAttribute("open")
+            }
+         })
+      }
 
       const html = this.element
       const acInputs = html.querySelectorAll(".rnt-ac-adj-input")
@@ -561,7 +626,7 @@ export class BodyPartApp extends HandlebarsApplicationMixin(ApplicationV2) {
 
       const reRenderOnChange = async () => {
          await this._saveCurrentState()
-         this._saveScrollPos()
+         this._saveViewState()
          this.render()
       }
 
@@ -662,7 +727,7 @@ export class BodyPartApp extends HandlebarsApplicationMixin(ApplicationV2) {
             const part = this.workingParts.find((p) => p.id === this.partId)
             part.linkedItems = part.linkedItems || []
             if (!part.linkedItems.includes(id)) part.linkedItems.push(id)
-            this._saveScrollPos()
+            this._saveViewState()
             this.render()
          })
       }
@@ -682,7 +747,7 @@ export class BodyPartApp extends HandlebarsApplicationMixin(ApplicationV2) {
                const part = this.workingParts.find((p) => p.id === this.partId)
                if (!part.thresholds[ti].linkedParts.includes(val)) {
                   part.thresholds[ti].linkedParts.push(val)
-                  this._saveScrollPos()
+                  this._saveViewState()
                   this.render()
                }
             })
@@ -790,7 +855,7 @@ export class BodyPartApp extends HandlebarsApplicationMixin(ApplicationV2) {
             if (!part.acceptedDmgTypes) part.acceptedDmgTypes = []
             if (!part.acceptedDmgTypes.includes(val)) {
                part.acceptedDmgTypes.push(val)
-               this._saveScrollPos()
+               this._saveViewState()
                this.render()
             }
          })
@@ -828,7 +893,7 @@ export class BodyPartApp extends HandlebarsApplicationMixin(ApplicationV2) {
                   "parts",
                   parts,
                )
-               this._saveScrollPos()
+               this._saveViewState()
                this.render()
             })
       }
@@ -877,6 +942,9 @@ export class BodyPartApp extends HandlebarsApplicationMixin(ApplicationV2) {
       updatedPart.linkedEntries = currentPart.linkedEntries || []
       updatedPart.linkedSpells = currentPart.linkedSpells || []
       updatedPart.isHidden = currentPart.isHidden ?? false
+      updatedPart.img =
+         asString(updatedPart.img) ||
+         "icons/commodities/biological/organ-heart-pink.webp"
 
       if (updatedPart.saves) {
          for (const k of ["fortitude", "reflex", "will"]) {
@@ -949,11 +1017,12 @@ export class BodyPartApp extends HandlebarsApplicationMixin(ApplicationV2) {
                   : []
                t.disableAbilities = !!t.disableAbilities
                t.hpValue = parseInt(t.hpValue) || 0
-               t.customDescription = asString(t.customDescription)
                t.conditions = t.conditions
                   ? Object.values(t.conditions).map((c) => ({
                        slug: cleanSlug(c.slug),
                        value: parseInt(c.value) || 1,
+                       durationValue: parseInt(c.durationValue) || null,
+                       durationUnit: asString(c.durationUnit) || "",
                     }))
                   : []
                t.effects = t.effects
@@ -962,6 +1031,8 @@ export class BodyPartApp extends HandlebarsApplicationMixin(ApplicationV2) {
                        name: asString(e.name),
                        img: cleanPath(e.img),
                        invalid: String(e.invalid) === "true",
+                       durationValue: parseInt(e.durationValue) || null,
+                       durationUnit: asString(e.durationUnit) || "",
                     }))
                   : []
                t.macros = t.macros
@@ -984,6 +1055,9 @@ export class BodyPartApp extends HandlebarsApplicationMixin(ApplicationV2) {
                   ? Object.values(t.ruleElements).map((r) => ({
                        json: asString(r.json),
                        invalid: String(r.invalid) === "true",
+                       durationValue: parseInt(r.durationValue) || null,
+                       durationUnit: asString(r.durationUnit) || "",
+                       customDescription: asString(r.customDescription),
                     }))
                   : []
                return t
@@ -1036,7 +1110,16 @@ export class BodyPartApp extends HandlebarsApplicationMixin(ApplicationV2) {
       await playSfx(path, sfxType, false)
    }
 
+   async _confirmRemoval(itemName) {
+      return await foundry.applications.api.DialogV2.confirm({
+         window: { title: `Remove ${itemName}` },
+         content: `<p>Are you sure you want to remove this ${itemName.toLowerCase()}?</p>`,
+         rejectClose: false,
+      })
+   }
+
    static async _onRemoveImmunity(event, target) {
+      if (!(await this._confirmRemoval("Immunity"))) return
       const raw = target.dataset.raw
       await this._saveCurrentState()
       const parts = this._getParts()
@@ -1050,11 +1133,12 @@ export class BodyPartApp extends HandlebarsApplicationMixin(ApplicationV2) {
       arr = arr.filter((s) => s !== raw)
       part.iwr.immune = arr.join(", ")
       await this.actor.setFlag("pf2e-aztecs-rip-n-tear", "parts", parts)
-      this._saveScrollPos()
+      this._saveViewState()
       this.render()
    }
 
    static async _onRemoveWeakness(event, target) {
+      if (!(await this._confirmRemoval("Weakness"))) return
       const raw = target.dataset.raw
       await this._saveCurrentState()
       const parts = this._getParts()
@@ -1068,11 +1152,12 @@ export class BodyPartApp extends HandlebarsApplicationMixin(ApplicationV2) {
       arr = arr.filter((s) => s !== raw)
       part.iwr.weak = arr.join(", ")
       await this.actor.setFlag("pf2e-aztecs-rip-n-tear", "parts", parts)
-      this._saveScrollPos()
+      this._saveViewState()
       this.render()
    }
 
    static async _onRemoveResistance(event, target) {
+      if (!(await this._confirmRemoval("Resistance"))) return
       const raw = target.dataset.raw
       await this._saveCurrentState()
       const parts = this._getParts()
@@ -1086,11 +1171,12 @@ export class BodyPartApp extends HandlebarsApplicationMixin(ApplicationV2) {
       arr = arr.filter((s) => s !== raw)
       part.iwr.resist = arr.join(", ")
       await this.actor.setFlag("pf2e-aztecs-rip-n-tear", "parts", parts)
-      this._saveScrollPos()
+      this._saveViewState()
       this.render()
    }
 
    static async _onRemoveImmuneExc(event, target) {
+      if (!(await this._confirmRemoval("Immunity Exception"))) return
       const raw = target.dataset.raw
       await this._saveCurrentState()
       const parts = this._getParts()
@@ -1104,11 +1190,12 @@ export class BodyPartApp extends HandlebarsApplicationMixin(ApplicationV2) {
       arr = arr.filter((s) => s !== raw)
       part.iwr.immuneExc = arr.join(", ")
       await this.actor.setFlag("pf2e-aztecs-rip-n-tear", "parts", parts)
-      this._saveScrollPos()
+      this._saveViewState()
       this.render()
    }
 
    static async _onRemoveWeakExc(event, target) {
+      if (!(await this._confirmRemoval("Weakness Exception"))) return
       const raw = target.dataset.raw
       await this._saveCurrentState()
       const parts = this._getParts()
@@ -1122,11 +1209,12 @@ export class BodyPartApp extends HandlebarsApplicationMixin(ApplicationV2) {
       arr = arr.filter((s) => s !== raw)
       part.iwr.weakExc = arr.join(", ")
       await this.actor.setFlag("pf2e-aztecs-rip-n-tear", "parts", parts)
-      this._saveScrollPos()
+      this._saveViewState()
       this.render()
    }
 
    static async _onRemoveResistExc(event, target) {
+      if (!(await this._confirmRemoval("Resistance Exception"))) return
       const raw = target.dataset.raw
       await this._saveCurrentState()
       const parts = this._getParts()
@@ -1140,28 +1228,30 @@ export class BodyPartApp extends HandlebarsApplicationMixin(ApplicationV2) {
       arr = arr.filter((s) => s !== raw)
       part.iwr.resistExc = arr.join(", ")
       await this.actor.setFlag("pf2e-aztecs-rip-n-tear", "parts", parts)
-      this._saveScrollPos()
+      this._saveViewState()
       this.render()
    }
 
    static async _onRemoveAcceptedDmgType(event, target) {
+      if (!(await this._confirmRemoval("Accepted Damage Type"))) return
       const slug = target.dataset.slug
       await this._saveCurrentState()
       const part = this.workingParts.find((p) => p.id === this.partId)
       if (!part.acceptedDmgTypes) part.acceptedDmgTypes = []
       part.acceptedDmgTypes = part.acceptedDmgTypes.filter((t) => t !== slug)
-      this._saveScrollPos()
+      this._saveViewState()
       this.render()
    }
 
    static async _onRemoveLinkedItem(event, target) {
+      if (!(await this._confirmRemoval("Linked Ability"))) return
       const id = target.dataset.id
       await this._saveCurrentState()
       const part = this.workingParts.find((p) => p.id === this.partId)
       part.linkedItems = part.linkedItems.filter((i) => i !== id)
       part.linkedEntries = part.linkedEntries.filter((i) => i !== id)
       part.linkedSpells = part.linkedSpells.filter((i) => i !== id)
-      this._saveScrollPos()
+      this._saveViewState()
       this.render()
    }
 
@@ -1179,7 +1269,7 @@ export class BodyPartApp extends HandlebarsApplicationMixin(ApplicationV2) {
             const p = this.workingParts.find((x) => x.id === this.partId)
             p.linkedEntries = entries
             p.linkedSpells = spells
-            this._saveScrollPos()
+            this._saveViewState()
             this.render()
          },
       }).render(true)
@@ -1199,17 +1289,18 @@ export class BodyPartApp extends HandlebarsApplicationMixin(ApplicationV2) {
             damages: [],
             ruleElements: [],
          })
-      this._saveScrollPos()
+      this._saveViewState()
       this.render()
    }
 
    static async _onRemoveThreshold(event, target) {
+      if (!(await this._confirmRemoval("Damage Threshold"))) return
       const index = parseInt(target.dataset.index, 10)
       await this._saveCurrentState()
       this.workingParts
          .find((p) => p.id === this.partId)
          .thresholds.splice(index, 1)
-      this._saveScrollPos()
+      this._saveViewState()
       this.render()
    }
 
@@ -1219,29 +1310,31 @@ export class BodyPartApp extends HandlebarsApplicationMixin(ApplicationV2) {
       this.workingParts
          .find((p) => p.id === this.partId)
          .thresholds[tIndex].conditions.push({ slug: "off-guard", value: 1 })
-      this._saveScrollPos()
+      this._saveViewState()
       this.render()
    }
 
    static async _onRemoveThresholdPart(event, target) {
+      if (!(await this._confirmRemoval("Linked Body Part"))) return
       const ti = parseInt(target.dataset.ti, 10)
       const lpi = parseInt(target.dataset.lpi, 10)
       await this._saveCurrentState()
       this.workingParts
          .find((p) => p.id === this.partId)
          .thresholds[ti].linkedParts.splice(lpi, 1)
-      this._saveScrollPos()
+      this._saveViewState()
       this.render()
    }
 
    static async _onRemoveCondition(event, target) {
+      if (!(await this._confirmRemoval("Condition"))) return
       const tIndex = parseInt(target.dataset.ti, 10)
       const cIndex = parseInt(target.dataset.ci, 10)
       await this._saveCurrentState()
       this.workingParts
          .find((p) => p.id === this.partId)
          .thresholds[tIndex].conditions.splice(cIndex, 1)
-      this._saveScrollPos()
+      this._saveViewState()
       this.render()
    }
 
@@ -1256,18 +1349,19 @@ export class BodyPartApp extends HandlebarsApplicationMixin(ApplicationV2) {
             img: "icons/svg/mystery-man.svg",
             invalid: false,
          })
-      this._saveScrollPos()
+      this._saveViewState()
       this.render()
    }
 
    static async _onRemoveEffect(event, target) {
+      if (!(await this._confirmRemoval("Effect"))) return
       const tIndex = parseInt(target.dataset.ti, 10)
       const eIndex = parseInt(target.dataset.ei, 10)
       await this._saveCurrentState()
       this.workingParts
          .find((p) => p.id === this.partId)
          .thresholds[tIndex].effects.splice(eIndex, 1)
-      this._saveScrollPos()
+      this._saveViewState()
       this.render()
    }
 
@@ -1282,18 +1376,19 @@ export class BodyPartApp extends HandlebarsApplicationMixin(ApplicationV2) {
             img: "icons/svg/dice-target.svg",
             invalid: false,
          })
-      this._saveScrollPos()
+      this._saveViewState()
       this.render()
    }
 
    static async _onRemoveMacro(event, target) {
+      if (!(await this._confirmRemoval("Macro"))) return
       const tIndex = parseInt(target.dataset.ti, 10)
       const mIndex = parseInt(target.dataset.mi, 10)
       await this._saveCurrentState()
       this.workingParts
          .find((p) => p.id === this.partId)
          .thresholds[tIndex].macros.splice(mIndex, 1)
-      this._saveScrollPos()
+      this._saveViewState()
       this.render()
    }
 
@@ -1308,18 +1403,19 @@ export class BodyPartApp extends HandlebarsApplicationMixin(ApplicationV2) {
             dmgType: "slashing",
             dmgCategory: "",
          })
-      this._saveScrollPos()
+      this._saveViewState()
       this.render()
    }
 
    static async _onRemoveDamage(event, target) {
+      if (!(await this._confirmRemoval("Damage Instance"))) return
       const tIndex = parseInt(target.dataset.ti, 10)
       const dIndex = parseInt(target.dataset.di, 10)
       await this._saveCurrentState()
       this.workingParts
          .find((p) => p.id === this.partId)
          .thresholds[tIndex].damages.splice(dIndex, 1)
-      this._saveScrollPos()
+      this._saveViewState()
       this.render()
    }
 
@@ -1337,20 +1433,21 @@ export class BodyPartApp extends HandlebarsApplicationMixin(ApplicationV2) {
                   json: jsonString,
                   invalid: false,
                })
-            this._saveScrollPos()
+            this._saveViewState()
             this.render()
          },
       }).render(true)
    }
 
    static async _onRemoveRuleElement(event, target) {
+      if (!(await this._confirmRemoval("Rule Element"))) return
       const tIndex = parseInt(target.dataset.ti, 10)
       const rei = parseInt(target.dataset.rei, 10)
       await this._saveCurrentState()
       this.workingParts
          .find((p) => p.id === this.partId)
          .thresholds[tIndex].ruleElements.splice(rei, 1)
-      this._saveScrollPos()
+      this._saveViewState()
       this.render()
    }
 }

@@ -457,6 +457,7 @@ function activateRipAndTearListeners(app, container) {
       parts.push({
          id: foundry.utils.randomID(),
          name: "New Body Part",
+         img: "icons/commodities/biological/organ-heart-pink.webp",
          hp: { value: partHp, max: partHp },
          ac: app.actor.attributes.ac.value + 2,
          hardness: actorHardness,

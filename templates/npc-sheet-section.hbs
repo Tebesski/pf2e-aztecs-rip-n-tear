@@ -13,6 +13,7 @@
          <div class="rnt-item-card item action {{#if part.isHidden}}rnt-hidden-part{{/if}}" data-part-id="{{part.id}}">
             <div class="rnt-item-row">
                <div class="rnt-item-name">
+                  <img src="{{part.img}}" style="width: 24px; height: 24px; border: 1px solid var(--color-border-dark); margin-right: 6px; object-fit: contain; border-radius: 2px;" title="{{part.name}}" />
                   <a class="rnt-name name">{{part.name}}</a>
                   <span class="rnt-hp-block">
                      {{#if part.useRupture}}
