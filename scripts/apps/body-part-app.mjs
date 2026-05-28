@@ -247,7 +247,7 @@ export class BodyPartApp extends HandlebarsApplicationMixin(ApplicationV2) {
    static DEFAULT_OPTIONS = {
       id: "body-part-editor",
       classes: ["pf2e", "rnt-app-v2"],
-      position: { width: 550, height: 700 },
+      position: { width: 600, height: 700 },
       window: { title: `${MODULE_ID}.editorTitle` },
       actions: {
          saveChanges: this._onSaveChanges,
@@ -260,6 +260,8 @@ export class BodyPartApp extends HandlebarsApplicationMixin(ApplicationV2) {
          removeEffect: this._onRemoveEffect,
          addMacro: this._onAddMacro,
          removeMacro: this._onRemoveMacro,
+         addScript: this._onAddScript,
+         removeScript: this._onRemoveScript,
          addDamage: this._onAddDamage,
          removeDamage: this._onRemoveDamage,
          addRuleElement: this._onAddRuleElement,
@@ -275,6 +277,7 @@ export class BodyPartApp extends HandlebarsApplicationMixin(ApplicationV2) {
          removeWeakExc: this._onRemoveWeakExc,
          removeResistExc: this._onRemoveResistExc,
          removeAcceptedDmgType: this._onRemoveAcceptedDmgType,
+         removeDisableRegenDmgType: this._onRemoveDisableRegenDmgType,
          pickPartIcon: this._onPickPartIcon,
       },
    }
@@ -439,6 +442,17 @@ export class BodyPartApp extends HandlebarsApplicationMixin(ApplicationV2) {
          (dt) => !part.acceptedDmgTypes.includes(dt.slug),
       )
 
+      part.disableRegenDmgTypes = Array.isArray(part.disableRegenDmgTypes)
+         ? part.disableRegenDmgTypes.filter((t) => t)
+         : []
+      const disableRegenChips = part.disableRegenDmgTypes.map((slug) => {
+         const dt = pf2eDamageTypes.find((t) => t.slug === slug)
+         return { slug, label: dt ? dt.label : slug }
+      })
+      const availableDisableRegenDmgTypes = pf2eDamageTypes.filter(
+         (dt) => !part.disableRegenDmgTypes.includes(dt.slug),
+      )
+
       const allParts = this.workingParts
       part.dependentParts = allParts
          .filter(
@@ -464,6 +478,7 @@ export class BodyPartApp extends HandlebarsApplicationMixin(ApplicationV2) {
          t.conditions = t.conditions || []
          t.effects = t.effects || []
          t.macros = t.macros || []
+         t.scripts = t.scripts || []
          t.damages = t.damages || []
          t.ruleElements = t.ruleElements || []
          t.conditions.forEach(
@@ -538,6 +553,8 @@ export class BodyPartApp extends HandlebarsApplicationMixin(ApplicationV2) {
          pf2eIWRTypes,
          acceptedDmgTypeChips,
          availableAcceptedDmgTypes,
+         disableRegenChips,
+         availableDisableRegenDmgTypes,
       }
    }
 
@@ -860,6 +877,21 @@ export class BodyPartApp extends HandlebarsApplicationMixin(ApplicationV2) {
             }
          })
 
+      this.element
+         .querySelector('select[name="disableRegenDmgTypesSelect"]')
+         ?.addEventListener("change", async (ev) => {
+            const val = ev.currentTarget.value
+            if (!val) return
+            await this._saveCurrentState()
+            const part = this.workingParts.find((p) => p.id === this.partId)
+            if (!part.disableRegenDmgTypes) part.disableRegenDmgTypes = []
+            if (!part.disableRegenDmgTypes.includes(val)) {
+               part.disableRegenDmgTypes.push(val)
+               this._saveViewState()
+               this.render()
+            }
+         })
+
       const setupIWRSelect = (id, field) => {
          this.element
             .querySelector(id)
@@ -938,6 +970,19 @@ export class BodyPartApp extends HandlebarsApplicationMixin(ApplicationV2) {
       updatedPart.removeEffectsOnFullHeal =
          !!updatedPart.removeEffectsOnFullHeal
       updatedPart.customIWR = !!updatedPart.customIWR
+
+      if (updatedPart.regrowth) {
+         updatedPart.regrowth.enabled = !!updatedPart.regrowth.enabled
+         updatedPart.regrowth.full = !!updatedPart.regrowth.full
+         updatedPart.regrowth.anyTurn = !!updatedPart.regrowth.anyTurn
+      } else {
+         updatedPart.regrowth = {
+            enabled: false,
+            full: false,
+            anyTurn: false,
+            amount: 0,
+         }
+      }
       updatedPart.linkedItems = currentPart.linkedItems || []
       updatedPart.linkedEntries = currentPart.linkedEntries || []
       updatedPart.linkedSpells = currentPart.linkedSpells || []
@@ -970,6 +1015,21 @@ export class BodyPartApp extends HandlebarsApplicationMixin(ApplicationV2) {
          .flatMap((v) => String(v).split(","))
          .map((v) => v.trim())
          .filter((t) => t)
+
+      delete updatedPart.disableRegenDmgTypesSelect
+      if (!updatedPart.disableRegenDmgTypes)
+         updatedPart.disableRegenDmgTypes = []
+      else if (!Array.isArray(updatedPart.disableRegenDmgTypes))
+         updatedPart.disableRegenDmgTypes = [updatedPart.disableRegenDmgTypes]
+      updatedPart.disableRegenDmgTypes = updatedPart.disableRegenDmgTypes
+         .flatMap((v) => String(v).split(","))
+         .map((v) => v.trim())
+         .filter((t) => t)
+
+      updatedPart.disableRegenDurationValue =
+         parseInt(updatedPart.disableRegenDurationValue) || 1
+      updatedPart.disableRegenDurationUnit =
+         asString(updatedPart.disableRegenDurationUnit) || "rounds"
 
       if (updatedPart.iwr) {
          updatedPart.iwr.immune = asString(updatedPart.iwr.immune)
@@ -1041,6 +1101,11 @@ export class BodyPartApp extends HandlebarsApplicationMixin(ApplicationV2) {
                        name: asString(m.name),
                        img: cleanPath(m.img),
                        invalid: String(m.invalid) === "true",
+                    }))
+                  : []
+               t.scripts = t.scripts
+                  ? Object.values(t.scripts).map((s) => ({
+                       code: asString(s.code),
                     }))
                   : []
                t.damages = t.damages
@@ -1243,6 +1308,18 @@ export class BodyPartApp extends HandlebarsApplicationMixin(ApplicationV2) {
       this.render()
    }
 
+   static async _onRemoveDisableRegenDmgType(event, target) {
+      const slug = target.dataset.slug
+      await this._saveCurrentState()
+      const part = this.workingParts.find((p) => p.id === this.partId)
+      if (!part.disableRegenDmgTypes) part.disableRegenDmgTypes = []
+      part.disableRegenDmgTypes = part.disableRegenDmgTypes.filter(
+         (t) => t !== slug,
+      )
+      this._saveViewState()
+      this.render()
+   }
+
    static async _onRemoveLinkedItem(event, target) {
       if (!(await this._confirmRemoval("Linked Ability"))) return
       const id = target.dataset.id
@@ -1388,6 +1465,28 @@ export class BodyPartApp extends HandlebarsApplicationMixin(ApplicationV2) {
       this.workingParts
          .find((p) => p.id === this.partId)
          .thresholds[tIndex].macros.splice(mIndex, 1)
+      this._saveViewState()
+      this.render()
+   }
+
+   static async _onAddScript(event, target) {
+      const tIndex = parseInt(target.dataset.ti, 10)
+      await this._saveCurrentState()
+      this.workingParts
+         .find((p) => p.id === this.partId)
+         .thresholds[tIndex].scripts.push({ code: "" })
+      this._saveViewState()
+      this.render()
+   }
+
+   static async _onRemoveScript(event, target) {
+      if (!(await this._confirmRemoval("Script"))) return
+      const tIndex = parseInt(target.dataset.ti, 10)
+      const sIndex = parseInt(target.dataset.si, 10)
+      await this._saveCurrentState()
+      this.workingParts
+         .find((p) => p.id === this.partId)
+         .thresholds[tIndex].scripts.splice(sIndex, 1)
       this._saveViewState()
       this.render()
    }

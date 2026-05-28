@@ -1228,41 +1228,46 @@ function setupCombatTurnHook() {
       if (!game.user.isGM) return
       if (!("turn" in changed) && !("round" in changed)) return
 
-      const currentId = combat.combatant?.id
-      if (currentId) {
-         const currentCombatant = combat.combatants.get(currentId)
-         if (currentCombatant && currentCombatant.actor) {
-            const parts =
-               currentCombatant.actor.getFlag(MODULE_ID, "parts") || []
-            const m = await import("./mechanics.mjs")
+      const previousId = combat.previous?.combatantId
+      const m = await import("./mechanics.mjs")
 
-            for (let p of parts) {
-               if (
-                  p.regrowth?.enabled &&
-                  p.hp.value > 0 &&
-                  p.hp.value < p.hp.max
-               ) {
+      for (const c of combat.combatants) {
+         if (!c.actor) continue
+
+         const isRegenDisabled = c.actor.items.some((i) =>
+            i.getFlag(MODULE_ID, "isRegenDisabled"),
+         )
+         if (isRegenDisabled) continue
+
+         const parts = c.actor.getFlag(MODULE_ID, "parts") || []
+         const isTheirTurnEnd = c.id === previousId
+
+         for (let p of parts) {
+            if (
+               p.regrowth?.enabled &&
+               p.hp.value > 0 &&
+               p.hp.value < p.hp.max
+            ) {
+               if (p.regrowth.anyTurn || isTheirTurnEnd) {
                   const healAmount = p.regrowth.full
                      ? p.hp.max
                      : p.regrowth.amount || 0
                   if (healAmount > 0) {
-                     await m.applyBodyPartHealing(
-                        currentCombatant.actor,
-                        p.id,
-                        healAmount,
-                     )
+                     await m.applyBodyPartHealing(c.actor, p.id, healAmount)
                   }
                }
             }
+         }
 
-            const hotEffects = currentCombatant.actor.items.filter((i) =>
+         if (isTheirTurnEnd) {
+            const hotEffects = c.actor.items.filter((i) =>
                i.getFlag(MODULE_ID, "isHoT"),
             )
             for (const effect of hotEffects) {
                const hotData = effect.getFlag(MODULE_ID, "hotData")
                if (hotData && hotData.partId && hotData.amount) {
                   await m.applyBodyPartHealing(
-                     currentCombatant.actor,
+                     c.actor,
                      hotData.partId,
                      hotData.amount,
                   )
@@ -1271,7 +1276,6 @@ function setupCombatTurnHook() {
          }
       }
 
-      const previousId = combat.previous?.combatantId
       if (previousId) {
          const previousCombatant = combat.combatants.get(previousId)
          if (previousCombatant && previousCombatant.actor) {

@@ -487,6 +487,52 @@ export async function applyBodyPartDamage(
    }
 
    await processThresholdState(actor, part, parts)
+
+   if (
+      finalAmount > 0 &&
+      part.disableRegenDmgTypes &&
+      part.disableRegenDmgTypes.includes(dmgType)
+   ) {
+      const dVal = part.disableRegenDurationValue || 1
+      const dUnit = part.disableRegenDurationUnit || "rounds"
+      const effectData = {
+         name: `Regeneration Disabled (${part.name})`,
+         type: "effect",
+         img: "icons/magic/life/heart-broken-red.webp",
+         system: {
+            description: {
+               value: "Regrowth, Regeneration, and Fast Healing are disabled.",
+            },
+            duration:
+               dUnit !== "unlimited"
+                  ? { value: dVal, unit: dUnit, expiry: "turn-end" }
+                  : { value: -1, unit: "unlimited" },
+            rules: [
+               {
+                  key: "AELike",
+                  mode: "override",
+                  path: "system.attributes.hp.regeneration.suppressed",
+                  value: true,
+                  priority: 99,
+               },
+               {
+                  key: "AELike",
+                  mode: "override",
+                  path: "system.attributes.hp.fastHealing",
+                  value: null,
+                  priority: 99,
+               },
+            ],
+         },
+         flags: { [MODULE_ID]: { isRegenDisabled: true, partId: part.id } },
+      }
+      await actor.createEmbeddedDocuments("Item", [effectData])
+      ChatMessage.create({
+         speaker: ChatMessage.getSpeaker({ actor }),
+         content: `<strong>${part.name}</strong> took ${dmgType} damage! Regeneration and Regrowth are disabled.`,
+      })
+   }
+
    for (const otherPart of parts) {
       if (otherPart.id === part.id) continue
       const linksToMe = otherPart.thresholds?.some((t) =>
@@ -667,6 +713,32 @@ async function processThresholdState(actor, part, parts) {
             const macroObj = await fromUuid(mac.uuid)
             if (macroObj && macroObj.documentName === "Macro") {
                macroObj.execute({ actor, part, threshold: mainActiveThreshold })
+            }
+         }
+      }
+
+      if (
+         mainActiveThreshold.scripts &&
+         mainActiveThreshold.scripts.length > 0
+      ) {
+         for (const scr of mainActiveThreshold.scripts) {
+            if (!scr.code || scr.code.trim() === "") continue
+            try {
+               const AsyncFunction = Object.getPrototypeOf(
+                  async function () {},
+               ).constructor
+               const fn = new AsyncFunction(
+                  "actor",
+                  "part",
+                  "threshold",
+                  scr.code,
+               )
+               await fn(actor, part, mainActiveThreshold)
+            } catch (err) {
+               console.error(
+                  "Rip & Tear | Threshold script execution failed",
+                  err,
+               )
             }
          }
       }

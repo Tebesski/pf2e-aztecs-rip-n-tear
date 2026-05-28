@@ -24,6 +24,11 @@ function cleanPart(p) {
       out.hp.value = out.hp.max
    }
 
+   if (!out.disableRegenDmgTypes) out.disableRegenDmgTypes = []
+   if (out.disableRegenDurationValue === undefined)
+      out.disableRegenDurationValue = 1
+   if (!out.disableRegenDurationUnit) out.disableRegenDurationUnit = "rounds"
+
    if (!out.saves) {
       out.saves = {
          fortitude: { enabled: false, value: 0 },
@@ -41,6 +46,7 @@ function cleanPart(p) {
          const tt = foundry.utils.deepClone(t)
          delete tt.linkedPartsData
          if (!tt.ruleElements) tt.ruleElements = []
+         if (!tt.scripts) tt.scripts = []
          return tt
       })
    } else {
