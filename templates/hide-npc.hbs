@@ -1,0 +1,30 @@
+<form autocomplete="off" onsubmit="event.preventDefault();">
+   <div class="rnt-scrollable">
+      <div class="rnt-field">
+         <label class="rnt-toggle">
+            <input type="checkbox" name="absoluteHide" {{#if config.absoluteHide}}checked{{/if}}>
+<span>{{localize 'pf2e-aztecs-rip-n-tear.disableMainNpc'}} <i class="fa-solid fa-circle-info rnt-info" data-tooltip="{{localize 'pf2e-aztecs-rip-n-tear.disableMainNpcTooltip'}}"></i></span>
+         </label>
+      </div>
+
+      <div id="rnt-connected-parts-section" {{#if config.absoluteHide}}style="display: none;"{{/if}}>
+         <hr>
+<div class="rnt-section-title">
+            {{localize 'pf2e-aztecs-rip-n-tear.connectedBodyParts'}} <i class="fa-solid fa-circle-info rnt-info" data-tooltip="{{localize 'pf2e-aztecs-rip-n-tear.connectedBodyPartsTooltip'}}"></i>
+         </div>
+         <div class="rnt-repeat-list">
+            {{#each parts}}
+            <label class="rnt-toggle" style="padding: 4px 8px; background: rgba(0,0,0,0.2); border-radius: 4px;">
+               <input type="checkbox" name="connectedParts" value="{{this.id}}" {{#if this.checked}}checked{{/if}}>
+               <span>{{this.name}}</span>
+            </label>
+            {{/each}}
+         </div>
+      </div>
+   </div>
+   <div class="rnt-footer">
+      <button type="button" class="rnt-btn-primary rnt-btn-block" data-action="saveConfig">
+         <i class="fa-solid fa-save"></i> {{localize "pf2e-aztecs-rip-n-tear.save"}}
+      </button>
+   </div>
+</form>

@@ -444,6 +444,12 @@ function bindClick(container, selector, handler) {
 }
 
 function activateRipAndTearListeners(app, container) {
+   bindClick(container, ".rnt-hide-npc", async (ev) => {
+      ev.preventDefault()
+      const m = await import("./apps/hide-npc-app.mjs")
+      new m.HideNpcApp({ actor: app.actor }).render(true)
+   })
+
    bindClick(container, ".rnt-add-part", async (ev) => {
       ev.preventDefault()
       const parts = app.actor.getFlag(MODULE_ID, "parts") || []

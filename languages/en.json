@@ -1,6 +1,11 @@
 {
    "pf2e-aztecs-rip-n-tear": {
       "title": "RIP & TEAR",
+      "hideMainNpc": "Configure NPC Called Shot visibility",
+      "disableMainNpc": "Disable the NPC as a target in a Called Shot app",
+      "disableMainNpcTooltip": "When attacking the NPC with the Called Shot app, you won't be able to target the main NPC, you could only attack the body parts.",
+      "connectedBodyParts": "Body Parts connected to NPC visibility in Called Shot",
+      "connectedBodyPartsTooltip": "The main NPC will be disabled as a target as long as the body parts checked in this list are intact. Only when all of them are destroyed, the main NPC could be targeted.",
       "newBodyPart": "New Body Part",
       "hp": "HP",
       "ac": "AC",

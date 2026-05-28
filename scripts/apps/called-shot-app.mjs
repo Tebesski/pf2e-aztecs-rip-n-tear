@@ -39,6 +39,14 @@ export class CalledShotTargetApp extends HandlebarsApplicationMixin(
       const hideAc =
          game.settings.get(MODULE_ID, "hideAcFromPlayers") && !game.user.isGM
 
+      const hideConfig = this.actor.getFlag(MODULE_ID, "hideNpcConfig") || {}
+      let hideMain = !!hideConfig.absoluteHide
+      if (!hideMain && hideConfig.connectedParts?.length) {
+         hideMain = this.bodyParts.some(
+            (p) => hideConfig.connectedParts.includes(p.id) && p.hp.value > 0,
+         )
+      }
+
       let hasChecked = false
       const partsData = this.bodyParts.map((p) => {
          const isDestroyed = p.hp.value <= 0
@@ -74,6 +82,7 @@ export class CalledShotTargetApp extends HandlebarsApplicationMixin(
 
       return {
          parts: partsData,
+         hideMain,
          showAc: !this.isSave && !hideAc,
          isSave: this.isSave,
          saveType: this.saveType

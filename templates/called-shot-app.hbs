@@ -1,10 +1,12 @@
 <div class="rnt-called-shot-wrapper" style="display: flex; flex-direction: column; height: 100%;">
    <div class="rnt-scrollable">
+      {{#unless hideMain}}
       <button type="button" class="rnt-btn rnt-btn-primary rnt-btn-block" data-action="selectMain">
          <i class="fa-solid fa-crosshairs"></i> {{localize "pf2e-aztecs-rip-n-tear.targetCreature"}}
       </button>
 
       <hr>
+      {{/unless}}
 
       <div class="rnt-called-shot-list">
          {{#each parts}}
