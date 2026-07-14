@@ -32,10 +32,15 @@
          "lang": "ru",
          "name": "Русский",
          "path": "languages/ru.json"
+      },
+      {
+         "lang": "zh-Hans",
+         "name": "简体中文",
+         "path": "languages/zh_Hans.json"
       }
    ],
    "url": "#{URL}#",
    "manifest": "#{MANIFEST}#",
    "download": "#{DOWNLOAD}#",
-   "socket":true
+   "socket": true
 }
