@@ -6,11 +6,13 @@ import {
    getBodyPartHpColor,
    getBodyPartSaveMod,
 } from "../utils.mjs"
+import { withRntActorTheme } from "../actor-support.mjs"
 
 export class CalledShotTargetApp extends HandlebarsApplicationMixin(
    ApplicationV2,
 ) {
    constructor(options = {}) {
+      options = withRntActorTheme(options)
       super(options)
       this.actor = options.actor
       this.bodyParts = options.parts
@@ -62,7 +64,7 @@ export class CalledShotTargetApp extends HandlebarsApplicationMixin(
             saveMod = getBodyPartSaveMod(p, this.actor, this.saveType)
          }
 
-         const displayData = prepareBodyPartDisplay(p, this.actor, true)
+         const displayData = prepareBodyPartDisplay(p, this.actor)
          return {
             ...p,
             acDisplay: displayData.acDisplay,

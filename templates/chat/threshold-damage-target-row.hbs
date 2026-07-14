@@ -1,0 +1,27 @@
+<div class="target-row siege-consequence-target-row"
+   data-target-uuid="{{uuid}}"
+   data-rolled="true"
+   style="transition: filter 0.3s;">
+   <hr>
+   <div class="target-header">
+      <span class="name">
+         <i class="fa-solid fa-person"></i>
+         {{name}}
+      </span>
+   </div>
+   <div class="siege-target-roll-slot"></div>
+   <section class="damage-application small atw-mtcard-apply siege-consequence-application" data-target-uuid="{{uuid}}" style="transition: filter 0.3s;">
+      <button type="button" data-rnt-threshold-damage-action="damage" data-hp-key="primary" data-multiplier="1" data-action="target-applyDamage">
+         <i class="fa-solid fa-heart-crack fa-fw"></i>
+         <span class="label">{{applyLabel}}</span>
+      </button>
+      <button type="button" class="half-damage" data-rnt-threshold-damage-action="damage" data-hp-key="primary" data-multiplier="0.5" data-action="target-applyDamage">
+         <i class="fa-solid fa-heart-crack fa-fw"></i>
+         <span class="label">{{halfLabel}}</span>
+      </button>
+      <button type="button" data-rnt-threshold-damage-action="damage" data-hp-key="primary" data-multiplier="2" data-action="target-applyDamage">
+         <img src="systems/pf2e/icons/damage/double.svg">
+         <span class="label">{{doubleLabel}}</span>
+      </button>
+   </section>
+</div>

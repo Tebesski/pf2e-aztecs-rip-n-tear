@@ -159,6 +159,25 @@
                               "pf2e-aztecs-rip-n-tear.disableAbilities"
                            }}</span>
                      {{/if}}
+                     {{#if t.disableModules}}
+                        <span
+                           class="rnt-summary-tag rnt-summary-tag-danger"
+                        >{{localize
+                              "pf2e-aztecs-rip-n-tear.disableModules"
+                           }}</span>
+                     {{/if}}
+                     {{#if t.modifyVehicleLoadCapacity}}
+                        <span class="rnt-summary-tag">{{localize
+                              "pf2e-aztecs-rip-n-tear.modifyLoadingCapacity"
+                           }}:
+                           {{t.vehicleLoadCapacityModifier}}</span>
+                     {{/if}}
+                     {{#if t.modifyVehicleSpeed}}
+                        <span class="rnt-summary-tag">{{localize
+                              "pf2e-aztecs-rip-n-tear.modifySpeed"
+                           }}:
+                           {{t.vehicleSpeedModifier}}</span>
+                     {{/if}}
                   </div>
                   {{#if t.customDescription}}
                      <div

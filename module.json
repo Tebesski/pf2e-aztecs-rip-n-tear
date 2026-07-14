@@ -13,7 +13,15 @@
       }
    ],
    "esmodules": ["scripts/main.mjs"],
-   "styles": ["styles/module.css"],
+   "styles": [
+      "styles/base.css",
+      "styles/siege.css",
+      "styles/sheet.css",
+      "styles/apps.css",
+      "styles/editors.css",
+      "styles/dialogs.css",
+      "styles/summaries.css"
+   ],
    "languages": [
       {
          "lang": "en",
@@ -28,5 +36,6 @@
    ],
    "url": "#{URL}#",
    "manifest": "#{MANIFEST}#",
-   "download": "#{DOWNLOAD}#"
+   "download": "#{DOWNLOAD}#",
+   "socket":true
 }

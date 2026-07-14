@@ -8,12 +8,18 @@ import {
 } from "../constants.mjs"
 import { playSfx } from "../sfx.mjs"
 import { captureActorSheetScroll } from "../sheet-injector.mjs"
+import { withRntActorTheme } from "../actor-support.mjs"
+import {
+   renderEffectContentLink,
+   renderInvalidEffectLabel,
+   renderPendingEffectLabel,
+} from "./effect-link-renderer.mjs"
 
 const DOS_GROUPS = [
-   { key: "criticalSuccess", label: "Critical Success" },
-   { key: "success", label: "Success" },
-   { key: "failure", label: "Failure" },
-   { key: "criticalFailure", label: "Critical Failure" },
+   { key: "criticalSuccess" },
+   { key: "success" },
+   { key: "failure" },
+   { key: "criticalFailure" },
 ]
 
 function decorateTriggers(triggers) {
@@ -25,7 +31,7 @@ function decorateTriggers(triggers) {
       if (t.type === "saving-throw") {
          t.dosGroups = DOS_GROUPS.map((g) => ({
             key: g.key,
-            label: g.label,
+            label: game.i18n.localize(`${MODULE_ID}.${g.key}`),
             actions: t.saveActions?.[g.key] || [],
          }))
       }
@@ -106,8 +112,7 @@ async function handleEffectUuidChange(ev) {
 
    if (!uuid) {
       if (iconEl) iconEl.src = "icons/svg/mystery-man.svg"
-      if (nameEl)
-         nameEl.innerHTML = `<span style="color: gray;">Pending...</span>`
+      if (nameEl) nameEl.innerHTML = await renderPendingEffectLabel()
       setField('input[name$=".invalid"]', "false")
       return
    }
@@ -115,21 +120,19 @@ async function handleEffectUuidChange(ev) {
    const item = await fromUuid(uuid)
    if (!item || (item.type !== "effect" && item.documentName !== "Macro")) {
       if (iconEl) iconEl.src = "icons/svg/hazard.svg"
-      if (nameEl)
-         nameEl.innerHTML = `<span style="color: darkred; font-weight: bold;"><i class="fa-solid fa-triangle-exclamation"></i> Invalid Item</span>`
+      if (nameEl) nameEl.innerHTML = await renderInvalidEffectLabel()
       setField('input[name$=".invalid"]', "true")
       setField(
          'input[name$=".name"]',
-         game.i18n.localize("pf2e-aztecs-rip-n-tear.invalidItem"),
+         game.i18n.localize(`${MODULE_ID}.invalidItem`),
       )
       setField('input[name$=".img"]', "icons/svg/hazard.svg")
       ui.notifications.warn(
-         "The provided UUID does not exist, or is not an Effect/Macro.",
+         game.i18n.localize(`${MODULE_ID}.invalidEffectMacroUuid`),
       )
    } else {
       if (iconEl) iconEl.src = item.img || "icons/svg/dice-target.svg"
-      if (nameEl)
-         nameEl.innerHTML = `<a class="content-link rnt-effect-link" data-uuid="${uuid}"><i class="fa-solid ${item.documentName === "Macro" ? "fa-code" : "fa-suitcase"}"></i> ${item.name}</a>`
+      if (nameEl) nameEl.innerHTML = await renderEffectContentLink(item, uuid)
       setField('input[name$=".invalid"]', "false")
       setField('input[name$=".name"]', item.name)
       setField('input[name$=".img"]', item.img || "icons/svg/dice-target.svg")
@@ -138,6 +141,7 @@ async function handleEffectUuidChange(ev) {
 
 export class ReactionApp extends HandlebarsApplicationMixin(ApplicationV2) {
    constructor(options = {}) {
+      options = withRntActorTheme(options)
       super(options)
       this.actor = options.actor
       this.reactionId = options.reactionId
@@ -375,7 +379,9 @@ export class ReactionApp extends HandlebarsApplicationMixin(ApplicationV2) {
                )
                if (invalidInput) invalidInput.value = "true"
                ev.currentTarget.style.borderColor = "red"
-               ui.notifications.warn("Invalid Rule Element JSON.")
+               ui.notifications.warn(
+                  game.i18n.localize(`${MODULE_ID}.invalidRuleElementJson`),
+               )
             }
             await this._saveCurrentState()
          })

@@ -1,6 +1,7 @@
 const { ApplicationV2, HandlebarsApplicationMixin } = foundry.applications.api
 
 import { MODULE_ID } from "../constants.mjs"
+import { withRntActorTheme } from "../actor-support.mjs"
 
 const MODIFIER_CATEGORIES = [
    "speed",
@@ -16,6 +17,7 @@ const MODIFIER_CATEGORIES = [
 
 export class RuleElementApp extends HandlebarsApplicationMixin(ApplicationV2) {
    constructor(options = {}) {
+      options = withRntActorTheme(options)
       super(options)
       this.actor = options.actor
       this.partId = options.partId

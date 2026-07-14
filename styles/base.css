@@ -1,0 +1,56 @@
+﻿:root {
+   --rnt-bg-block: rgb(28, 24, 22);
+   --rnt-bg-card: rgb(38, 34, 30);
+   --rnt-bg-card-hover: rgb(48, 42, 38);
+   --rnt-bg-section: rgb(34, 30, 27);
+   --rnt-bg-input: rgb(20, 18, 16);
+   --rnt-bg-input-focus: rgb(28, 25, 22);
+   --rnt-bg-chip: rgb(48, 42, 38);
+   --rnt-bg-chip-hover: rgb(60, 52, 47);
+
+   --rnt-border: rgba(255, 255, 255, 0.08);
+   --rnt-border-strong: rgba(255, 255, 255, 0.16);
+   --rnt-border-focus: rgba(220, 60, 50, 0.65);
+
+   --rnt-text: rgb(239, 230, 216);
+   --rnt-text-muted: rgba(239, 230, 216, 0.65);
+   --rnt-text-subtle: rgba(239, 230, 216, 0.42);
+
+   --rnt-accent: #c8362f;
+   --rnt-accent-hover: #e54a42;
+   --rnt-accent-text: #fff;
+
+   --rnt-success: #4caf50;
+   --rnt-warning: #f0a830;
+   --rnt-danger: #e54a42;
+   --rnt-info: #5b9bd5;
+
+   --rnt-radius-sm: 4px;
+   --rnt-radius-md: 6px;
+   --rnt-radius-lg: 10px;
+   --rnt-radius-pill: 999px;
+
+   --rnt-space-1: 4px;
+   --rnt-space-2: 8px;
+   --rnt-space-3: 12px;
+   --rnt-space-4: 16px;
+   --rnt-space-5: 20px;
+
+   --rnt-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.35);
+   --rnt-shadow-md: 0 2px 8px rgba(0, 0, 0, 0.45);
+
+   --rnt-font-size-xs: 0.78em;
+   --rnt-font-size-sm: 0.85em;
+   --rnt-font-size-md: 0.95em;
+   --rnt-font-size-lg: 1.05em;
+}
+
+.rip-n-tear-container {
+   margin-top: var(--rnt-space-2);
+}
+
+.rip-n-tear-container.rnt-siege-theme {
+   margin: 0;
+   padding: var(--rnt-space-3);
+}
+

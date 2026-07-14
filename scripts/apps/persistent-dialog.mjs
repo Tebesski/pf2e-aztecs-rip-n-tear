@@ -2,12 +2,15 @@ const { ApplicationV2, HandlebarsApplicationMixin } = foundry.applications.api
 
 import { MODULE_ID } from "../constants.mjs"
 import { applyBodyPartDamage } from "../mechanics.mjs"
+import { getActorIwrList, withRntActorTheme } from "../actor-support.mjs"
+import { coloredSpan, strongText } from "../html-format.mjs"
 
 export class PersistentDamageApp extends HandlebarsApplicationMixin(
    ApplicationV2,
 ) {
    constructor(options = {}) {
       options.id = `rnt-persistent-${options.effect?.id || foundry.utils.randomID()}`
+      options = withRntActorTheme(options)
       super(options)
       this.actor = options.actor
       this.token = options.token
@@ -39,21 +42,21 @@ export class PersistentDamageApp extends HandlebarsApplicationMixin(
       const iwrImmune =
          part.customIWR && part.iwr?.immune
             ? part.iwr.immune
-            : this.actor.system.attributes.immunities
+            : getActorIwrList(this.actor, "immunities")
                  ?.map((x) => x.type)
-                 .join(", ") || "None"
+                 .join(", ") || game.i18n.localize(`${MODULE_ID}.none`)
       const iwrWeak =
          part.customIWR && part.iwr?.weak
             ? part.iwr.weak
-            : this.actor.system.attributes.weaknesses
+            : getActorIwrList(this.actor, "weaknesses")
                  ?.map((x) => `${x.type} ${x.value}`)
-                 .join(", ") || "None"
+                 .join(", ") || game.i18n.localize(`${MODULE_ID}.none`)
       const iwrResist =
          part.customIWR && part.iwr?.resist
             ? part.iwr.resist
-            : this.actor.system.attributes.resistances
+            : getActorIwrList(this.actor, "resistances")
                  ?.map((x) => `${x.type} ${x.value}`)
-                 .join(", ") || "None"
+                 .join(", ") || game.i18n.localize(`${MODULE_ID}.none`)
 
       const rememberedDc = this.token?.document?.getFlag(
          MODULE_ID,
@@ -61,8 +64,8 @@ export class PersistentDamageApp extends HandlebarsApplicationMixin(
       )
 
       const headlineHtml = game.i18n.format(`${MODULE_ID}.persistentHeadline`, {
-         actorName: `<strong>${this.actor.name}</strong>`,
-         partName: `<strong>${part.name}</strong>`,
+         actorName: strongText(this.actor.name),
+         partName: strongText(part.name),
       })
 
       return {
@@ -88,7 +91,9 @@ export class PersistentDamageApp extends HandlebarsApplicationMixin(
                actor: this.actor,
                token: this.token,
             }),
-            flavor: `Persistent ${this.flags.dmgType} Damage`,
+            flavor: game.i18n.format(`${MODULE_ID}.persistentDamageFlavor`, {
+               damageType: this.flags.dmgType,
+            }),
          })
          amountToDeal = roll.total
       } else {
@@ -129,7 +134,21 @@ export class PersistentDamageApp extends HandlebarsApplicationMixin(
             actor: this.actor,
             token: this.token,
          }),
-         flavor: `<strong>Flat Check (Recovery)</strong> vs DC ${dc}<br>${success ? "<span style='color:green;'>Success!</span> Persistent damage removed." : "<span style='color:darkred;'>Failure!</span> Persistent damage remains."}`,
+         flavor: game.i18n.format(`${MODULE_ID}.recoveryFlatCheckFlavor`, {
+            label: strongText(
+               game.i18n.localize(`${MODULE_ID}.recoveryFlatCheckLabel`),
+            ),
+            dc,
+            result: success
+               ? coloredSpan(
+                    game.i18n.localize(`${MODULE_ID}.recoverySuccess`),
+                    "green",
+                 )
+               : coloredSpan(
+                    game.i18n.localize(`${MODULE_ID}.recoveryFailure`),
+                    "darkred",
+                 ),
+         }),
       })
 
       if (success) await this.effect.delete()

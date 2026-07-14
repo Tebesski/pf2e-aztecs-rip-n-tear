@@ -1,4 +1,5 @@
 import { MODULE_ID } from "./constants.mjs"
+import { getActorBaseAc, getActorSaveMod } from "./actor-support.mjs"
 
 const HP_TEXT_KEYS = [
    { max: 0, key: "textDestroyed", color: "darkred" },
@@ -26,7 +27,7 @@ export function getBodyPartHpColor(part) {
    return getHpTier(part).color
 }
 
-export function prepareBodyPartDisplay(part, actor, isCalledShot = false) {
+export function prepareBodyPartDisplay(part, actor) {
    const usePercentage = game.settings.get(
       "pf2e-aztecs-rip-n-tear",
       "usePercentageHp",
@@ -37,8 +38,7 @@ export function prepareBodyPartDisplay(part, actor, isCalledShot = false) {
       "showAcDifference",
    )
 
-   const baseAc =
-      actor?.system?.attributes?.ac?.value || actor?.attributes?.ac?.value || 0
+   const baseAc = getActorBaseAc(actor)
 
    let adj = 0
    if (
@@ -60,8 +60,8 @@ export function prepareBodyPartDisplay(part, actor, isCalledShot = false) {
    if (usePercentage) {
       const pct =
          part.hp.max > 0 ? Math.round((part.hp.value / part.hp.max) * 100) : 0
-      hpDisplay = `HP: ${pct}%`
-   } else if (useText && isCalledShot) {
+      hpDisplay = game.i18n.format(`${MODULE_ID}.hpPercentageDisplay`, { pct })
+   } else if (useText) {
       hpDisplay = getBodyPartHpText(part)
    }
 
@@ -70,7 +70,7 @@ export function prepareBodyPartDisplay(part, actor, isCalledShot = false) {
 
 export function getBodyPartSaveMod(part, actor, saveType) {
    if (!saveType || !part.saves?.[saveType]) return ""
-   const baseMod = actor?.saves?.[saveType]?.mod || 0
+   const baseMod = getActorSaveMod(actor, saveType)
    let adj = part.saves[saveType].adjustment
 
    if (adj === undefined && part.saves[saveType].value !== undefined) {

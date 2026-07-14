@@ -32,8 +32,7 @@ export async function resolveSfxPath(path) {
       if (matches.length > 0) {
          return matches[Math.floor(Math.random() * matches.length)]
       }
-   } catch (e) {
-      console.error("Rip & Tear | SFX Wildcard error:", e)
+   } catch (_err) {
    }
    return null
 }

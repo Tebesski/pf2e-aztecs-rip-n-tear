@@ -2,11 +2,17 @@ const { ApplicationV2, HandlebarsApplicationMixin } = foundry.applications.api
 
 import { MODULE_ID } from "../constants.mjs"
 import { applyTemplateToActor, getAllTemplates } from "../templates.mjs"
+import {
+   withRntActorTheme,
+   withRntDialogTheme,
+} from "../actor-support.mjs"
+import { renderDialogMessage } from "../dialogs/content.mjs"
 
 export class TemplatePickerApp extends HandlebarsApplicationMixin(
    ApplicationV2,
 ) {
    constructor(options = {}) {
+      options = withRntActorTheme(options)
       super(options)
       this.actor = options.actor
       this.mode = options.mode || "add"
@@ -201,8 +207,7 @@ export class TemplatePickerApp extends HandlebarsApplicationMixin(
          const r = await orig(...args)
          try {
             await cb()
-         } catch (e) {
-            console.error("Rip & Tear | Template picker cleanup failed", e)
+         } catch (_err) {
          }
          return r
       }
@@ -234,7 +239,9 @@ export class TemplatePickerApp extends HandlebarsApplicationMixin(
          const ie = await import("../import-export.mjs")
          ie.downloadJson(
             ie.buildTemplateExport(filtered),
-            ie.safeFilename(`template-${filtered.name || "untitled"}`),
+            ie.safeFilename(
+               `template-${filtered.name || game.i18n.localize(`${MODULE_ID}.untitled`)}`,
+            ),
          )
          this.close()
          return
@@ -245,30 +252,37 @@ export class TemplatePickerApp extends HandlebarsApplicationMixin(
          this.actor.getFlag(MODULE_ID, "deathReaction")
       let mode = "append"
       if (hasExisting) {
-         const choice = await foundry.applications.api.DialogV2.wait({
-            window: {
-               title: game.i18n.localize(`${MODULE_ID}.tplExistingTitle`),
-            },
-            content: `<p>${game.i18n.localize(`${MODULE_ID}.tplExistingPrompt`)}</p>`,
-            buttons: [
+         const choice = await foundry.applications.api.DialogV2.wait(
+            withRntDialogTheme(
                {
-                  action: "append",
-                  icon: "fa-solid fa-plus",
-                  label: game.i18n.localize(`${MODULE_ID}.tplAppend`),
+                  window: {
+                     title: game.i18n.localize(`${MODULE_ID}.tplExistingTitle`),
+                  },
+                  content: await renderDialogMessage(
+                     game.i18n.localize(`${MODULE_ID}.tplExistingPrompt`),
+                  ),
+                  buttons: [
+                     {
+                        action: "append",
+                        icon: "fa-solid fa-plus",
+                        label: game.i18n.localize(`${MODULE_ID}.tplAppend`),
+                     },
+                     {
+                        action: "replace",
+                        icon: "fa-solid fa-arrow-rotate-left",
+                        label: game.i18n.localize(`${MODULE_ID}.tplReplace`),
+                     },
+                     {
+                        action: "cancel",
+                        icon: "fa-solid fa-xmark",
+                        label: game.i18n.localize(`${MODULE_ID}.cancel`),
+                     },
+                  ],
+                  default: "append",
                },
-               {
-                  action: "replace",
-                  icon: "fa-solid fa-arrow-rotate-left",
-                  label: game.i18n.localize(`${MODULE_ID}.tplReplace`),
-               },
-               {
-                  action: "cancel",
-                  icon: "fa-solid fa-xmark",
-                  label: game.i18n.localize(`${MODULE_ID}.cancel`),
-               },
-            ],
-            default: "append",
-         })
+               this.actor,
+            ),
+         )
          if (!choice) return
          mode = choice
       }

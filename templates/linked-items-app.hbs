@@ -1,8 +1,8 @@
 <div class="rnt-scrollable">
    <div class="rnt-section">
       <div class="rnt-section-title">
-         {{#if (eq linkType "spells")}}<i class="fa-solid fa-wand-magic-sparkles rnt-section-title-icon"></i>{{else}}<i class="fa-solid fa-suitcase rnt-section-title-icon"></i>{{/if}}
-         {{part.name}} — {{#if (eq linkType "spells")}}{{localize "pf2e-aztecs-rip-n-tear.spellcasting"}}{{else}}{{localize "pf2e-aztecs-rip-n-tear.abilities"}}{{/if}}
+         {{#if (eq linkType "spells")}}<i class="fa-solid fa-wand-magic-sparkles rnt-section-title-icon"></i>{{else if (eq linkType "modules")}}<i class="fa-solid fa-gears rnt-section-title-icon"></i>{{else}}<i class="fa-solid fa-suitcase rnt-section-title-icon"></i>{{/if}}
+         {{part.name}} — {{#if (eq linkType "spells")}}{{localize "pf2e-aztecs-rip-n-tear.spellcasting"}}{{else if (eq linkType "modules")}}{{localize "pf2e-aztecs-rip-n-tear.linkedModules"}}{{else}}{{localize "pf2e-aztecs-rip-n-tear.abilities"}}{{/if}}
       </div>
       {{#if items.length}}
       <div class="rnt-linked-items-list">

@@ -1,0 +1,84 @@
+<div class="rnt-vehicle-hud-status rnt-siege-theme open">
+   <button class="vh-weapon-acc-head rnt-vehicle-hud-status-head" data-action="toggle-rnt-hud-status" type="button">
+      <i class="fa-solid fa-chevron-down"></i>
+      <span>{{localize "pf2e-aztecs-rip-n-tear.status"}}</span>
+   </button>
+   <div class="vh-weapon-acc-body rnt-vehicle-hud-status-body">
+      <section class="rnt-hud-section">
+         {{#each parts as |part|}}
+            <div class="rnt-hud-entry {{#if part.isHidden}}rnt-hidden-part{{/if}}" data-part-id="{{part.id}}">
+               <button class="rnt-hud-entry-head" type="button">
+                  <img class="rnt-hud-entry-icon" src="{{part.img}}" alt="" />
+                  <span class="rnt-hud-entry-main">
+                     <span class="rnt-hud-entry-name">{{part.name}}</span>
+                     <span class="rnt-hud-entry-meta" style="color: {{part.hpColor}};">{{part.hpText}}</span>
+                  </span>
+                  <span class="rnt-hud-entry-toggle"><i class="fa-solid fa-chevron-right"></i></span>
+               </button>
+               <div class="rnt-hud-entry-body" hidden>
+                  {{{part.summaryHtml}}}
+               </div>
+            </div>
+         {{else}}
+            <div class="rnt-hud-empty">{{localize "pf2e-aztecs-rip-n-tear.noBodyParts"}}</div>
+         {{/each}}
+      </section>
+
+      <section class="rnt-hud-section">
+         <div class="rnt-hud-section-title">
+            <i class="fa-solid fa-bolt"></i>
+            {{localize "pf2e-aztecs-rip-n-tear.damageReactions"}}
+         </div>
+         {{#each reactions as |rx|}}
+            <div class="rnt-hud-entry {{#if rx.disabled}}rnt-disabled{{/if}}" data-reaction-id="{{rx.id}}">
+               <button class="rnt-hud-entry-head" type="button">
+                  <span class="rnt-hud-entry-symbol"><i class="fa-solid fa-bolt"></i></span>
+                  <span class="rnt-hud-entry-main">
+                     <span class="rnt-hud-entry-name">{{rx.name}}</span>
+                     <span class="rnt-hud-entry-meta">
+                        {{#if rx.minDamage}}{{rx.minDamage}}+ {{localize "pf2e-aztecs-rip-n-tear.damage"}} / {{/if}}
+                        {{#if rx.damageTypes.length}}
+                           {{#each rx.damageTypes}}{{this}}{{#unless @last}}, {{/unless}}{{/each}}
+                        {{else}}
+                           {{localize "pf2e-aztecs-rip-n-tear.anyType"}}
+                        {{/if}}
+                     </span>
+                  </span>
+                  <span class="rnt-hud-entry-toggle"><i class="fa-solid fa-chevron-right"></i></span>
+               </button>
+               <div class="rnt-hud-entry-body" hidden>
+                  {{{rx.summaryHtml}}}
+               </div>
+            </div>
+         {{else}}
+            <div class="rnt-hud-empty">{{localize "pf2e-aztecs-rip-n-tear.noDamageReactions"}}</div>
+         {{/each}}
+      </section>
+
+      <section class="rnt-hud-section">
+         <div class="rnt-hud-section-title">
+            <i class="fa-solid fa-skull"></i>
+            {{localize "pf2e-aztecs-rip-n-tear.deathReaction"}}
+         </div>
+         {{#if deathReaction}}
+            <div class="rnt-hud-entry {{#if deathReaction.disabled}}rnt-disabled{{/if}}" data-death-reaction-id="{{deathReaction.id}}">
+               <button class="rnt-hud-entry-head" type="button">
+                  <span class="rnt-hud-entry-symbol"><i class="fa-solid fa-skull"></i></span>
+                  <span class="rnt-hud-entry-main">
+                     <span class="rnt-hud-entry-name">{{deathReaction.name}}</span>
+                     {{#if deathReaction.useDelay}}
+                        <span class="rnt-hud-entry-meta">{{localize "pf2e-aztecs-rip-n-tear.delayedShort"}} {{deathReaction.delayRounds}} {{localize "pf2e-aztecs-rip-n-tear.rounds"}}</span>
+                     {{/if}}
+                  </span>
+                  <span class="rnt-hud-entry-toggle"><i class="fa-solid fa-chevron-right"></i></span>
+               </button>
+               <div class="rnt-hud-entry-body" hidden>
+                  {{{deathReaction.summaryHtml}}}
+               </div>
+            </div>
+         {{else}}
+            <div class="rnt-hud-empty">{{localize "pf2e-aztecs-rip-n-tear.noDeathReaction"}}</div>
+         {{/if}}
+      </section>
+   </div>
+</div>

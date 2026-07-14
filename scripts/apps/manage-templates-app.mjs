@@ -6,6 +6,7 @@ import {
    removeTemplatesByIds,
    saveTemplate,
 } from "../templates.mjs"
+import { renderDialogMessage } from "../dialogs/content.mjs"
 
 export class ManageTemplatesApp extends HandlebarsApplicationMixin(
    ApplicationV2,
@@ -122,7 +123,11 @@ export class ManageTemplatesApp extends HandlebarsApplicationMixin(
       if (!tpl) return
       const confirmed = await foundry.applications.api.DialogV2.confirm({
          window: { title: game.i18n.localize(`${MODULE_ID}.removeTemplate`) },
-         content: `<p>${game.i18n.format(`${MODULE_ID}.removeTemplateConfirm`, { name: tpl.name })}</p>`,
+         content: await renderDialogMessage(
+            game.i18n.format(`${MODULE_ID}.removeTemplateConfirm`, {
+               name: tpl.name,
+            }),
+         ),
       })
       if (!confirmed) return
       await removeTemplatesByIds([id])
@@ -146,7 +151,11 @@ export class ManageTemplatesApp extends HandlebarsApplicationMixin(
       if (!this.selected.size) return
       const confirmed = await foundry.applications.api.DialogV2.confirm({
          window: { title: game.i18n.localize(`${MODULE_ID}.removeTemplate`) },
-         content: `<p>${game.i18n.format(`${MODULE_ID}.removeTemplatesConfirmCount`, { count: this.selected.size })}</p>`,
+         content: await renderDialogMessage(
+            game.i18n.format(`${MODULE_ID}.removeTemplatesConfirmCount`, {
+               count: this.selected.size,
+            }),
+         ),
       })
       if (!confirmed) return
       await removeTemplatesByIds([...this.selected])

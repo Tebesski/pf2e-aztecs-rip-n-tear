@@ -1,0 +1,401 @@
+﻿.rnt-summary-details {
+   padding: var(--rnt-space-3);
+   color: var(--rnt-text);
+}
+
+.rnt-summary-details h3,
+.rnt-summary-details h4 {
+   color: var(--rnt-text);
+   border-bottom: 1px solid var(--rnt-border);
+   padding-bottom: 4px;
+   margin: var(--rnt-space-2) 0 var(--rnt-space-1) 0;
+}
+
+.rnt-summary-list {
+   list-style: none;
+   padding: 0;
+   margin: 0;
+   display: flex;
+   flex-direction: column;
+   gap: var(--rnt-space-2);
+}
+
+.rnt-summary-list li {
+   background: var(--rnt-bg-card);
+   border: 1px solid var(--rnt-border);
+   border-radius: var(--rnt-radius-sm);
+   padding: var(--rnt-space-2);
+   font-size: var(--rnt-font-size-sm);
+}
+
+.rnt-effect-link,
+.rnt-app-v2 a.content-link {
+   text-decoration: none !important;
+   color: var(--rnt-text) !important;
+   border: none;
+   background: transparent;
+}
+
+.rnt-app-v2 a.content-link:hover,
+.rnt-effect-link:hover {
+   color: var(--rnt-accent-hover) !important;
+}
+
+.rip-n-tear-header {
+   display: flex;
+   justify-content: space-between;
+   align-items: center;
+   background: rgba(0, 0, 0, 0.1);
+   padding: 4px 8px;
+   font-weight: bold;
+}
+
+.rip-n-tear-list {
+   list-style: none;
+   padding: 0;
+   margin: 0;
+}
+
+.rip-n-tear-item {
+   display: flex;
+   flex-direction: column;
+}
+
+.rip-n-tear-item-summary {
+   display: flex;
+   justify-content: space-between;
+   align-items: center;
+   cursor: pointer;
+}
+
+.rip-n-tear-item-details {
+   display: none;
+}
+
+.rip-n-tear-item-details.expanded {
+   display: block;
+}
+
+.rip-n-tear-controls {
+   display: flex;
+   gap: 4px;
+}
+
+.rip-n-tear-linked-icon {
+   color: var(--rnt-text-muted);
+   cursor: pointer;
+}
+
+.rip-n-tear-broken-icon {
+   color: var(--rnt-danger);
+}
+
+.rnt-summary-content {
+   font-size: 0.9em;
+   color: var(--rnt-text);
+   display: flex;
+   flex-direction: column;
+   gap: var(--rnt-space-2);
+}
+
+.rnt-summary-grid {
+   display: grid;
+   grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+   gap: var(--rnt-space-1) var(--rnt-space-3);
+}
+
+.rnt-summary-cell {
+   display: flex;
+   align-items: center;
+   gap: 6px;
+   font-size: var(--rnt-font-size-sm);
+   white-space: nowrap;
+   overflow: hidden;
+   text-overflow: ellipsis;
+}
+
+.rnt-summary-cell > i {
+   color: var(--rnt-text-muted);
+   width: 14px;
+   text-align: center;
+}
+
+.rnt-summary-label {
+   color: var(--rnt-text-muted);
+}
+
+.rnt-summary-value {
+   font-weight: 600;
+   color: var(--rnt-text);
+}
+
+.rnt-summary-section {
+   border-top: 1px solid var(--rnt-border);
+   padding-top: var(--rnt-space-2);
+   display: flex;
+   flex-direction: column;
+   gap: var(--rnt-space-1);
+}
+
+.rnt-summary-mini-title {
+   font-size: var(--rnt-font-size-xs);
+   text-transform: uppercase;
+   letter-spacing: 0.05em;
+   font-weight: 700;
+   color: var(--rnt-text-muted);
+   display: flex;
+   align-items: center;
+   gap: 6px;
+}
+
+.rnt-summary-mini-title > i {
+   color: var(--rnt-warning);
+}
+
+.rnt-summary-line {
+   font-size: var(--rnt-font-size-sm);
+   line-height: 1.5;
+}
+
+.rnt-summary-tag {
+   display: inline-flex;
+   align-items: center;
+   gap: 4px;
+   padding: 1px 8px;
+   margin: 1px 2px 1px 0;
+   font-size: var(--rnt-font-size-xs);
+   background: rgba(255, 255, 255, 0.07);
+   border: 1px solid var(--rnt-border);
+   border-radius: var(--rnt-radius-pill);
+   text-transform: capitalize;
+   white-space: nowrap;
+   color: var(--rnt-text);
+}
+
+.rnt-summary-tag-img img {
+   width: 14px;
+   height: 14px;
+   border: none;
+   object-fit: contain;
+   flex: none;
+}
+
+.rnt-summary-tag-danger {
+   background: rgba(229, 74, 66, 0.18);
+   color: var(--rnt-danger);
+   border-color: rgba(229, 74, 66, 0.35);
+}
+
+.rnt-summary-thresholds {
+   display: flex;
+   flex-direction: column;
+   gap: var(--rnt-space-1);
+   margin-top: var(--rnt-space-1);
+}
+
+.rnt-summary-threshold {
+   background: rgba(0, 0, 0, 0.18);
+   border: 1px solid var(--rnt-border);
+   border-left: 2px solid var(--rnt-warning);
+   border-radius: var(--rnt-radius-sm);
+   padding: 6px 8px;
+   display: flex;
+   flex-direction: column;
+   gap: 4px;
+}
+
+.rnt-summary-threshold-head {
+   display: flex;
+   align-items: center;
+   gap: 6px;
+   font-weight: 600;
+}
+
+.rnt-summary-threshold-head > i {
+   color: var(--rnt-warning);
+   width: 14px;
+   text-align: center;
+}
+
+.rnt-summary-threshold-hp {
+   flex: 1;
+}
+
+.rnt-summary-threshold-desc {
+   font-style: italic;
+   color: var(--rnt-text-muted);
+   font-size: var(--rnt-font-size-xs);
+}
+
+.rnt-summary-threshold-row {
+   display: flex;
+   gap: 6px;
+   align-items: flex-start;
+   flex-wrap: wrap;
+   font-size: var(--rnt-font-size-xs);
+}
+
+.rnt-summary-row-label {
+   color: var(--rnt-text-muted);
+   font-weight: 600;
+   text-transform: uppercase;
+   letter-spacing: 0.04em;
+   flex: 0 0 auto;
+}
+
+.rnt-summary-row-value {
+   flex: 1;
+   min-width: 0;
+   display: inline-flex;
+   flex-wrap: wrap;
+   gap: 2px;
+}
+
+.rnt-summary-text {
+   color: var(--rnt-text);
+}
+
+.rnt-summary-arrow {
+   color: var(--rnt-text-muted);
+   margin: 0 2px;
+}
+
+.rnt-app-v2 a.rnt-link,
+a.rnt-link {
+   text-decoration: none;
+}
+
+.rnt-app-v2 a.rnt-link:hover,
+a.rnt-link:hover {
+   text-decoration: none;
+}
+
+.rnt-chat-card {
+   padding: var(--rnt-space-2);
+   border: 1px solid rgba(0, 0, 0, 0.15);
+   border-radius: var(--rnt-radius-sm);
+   background: rgba(0, 0, 0, 0.04);
+   margin: var(--rnt-space-1) 0;
+}
+
+.rnt-chat-card-header {
+   font-weight: 700;
+   margin-bottom: var(--rnt-space-1);
+   color: var(--rnt-accent);
+}
+
+.rnt-chat-card-row {
+   display: flex;
+   justify-content: space-between;
+   gap: var(--rnt-space-2);
+   font-size: var(--rnt-font-size-sm);
+   padding: 2px 0;
+}
+
+.rnt-chat-card .card-buttons {
+   margin-top: var(--rnt-space-2);
+}
+
+.rnt-chat-card-actions {
+   display: flex;
+   gap: 4px;
+   margin-top: var(--rnt-space-2);
+}
+
+.rnt-chat-card-actions .rnt-chat-btn {
+   flex: 1 1 0;
+   min-width: 0;
+   height: 28px;
+   padding: 0 8px;
+   display: inline-flex;
+   align-items: center;
+   justify-content: center;
+   gap: 4px;
+   font-size: 0.85em;
+   font-weight: 600;
+   line-height: 1;
+   white-space: nowrap;
+   background: rgba(0, 0, 0, 0.05);
+   border: 1px solid rgba(0, 0, 0, 0.2);
+   border-radius: 3px;
+   cursor: pointer;
+   color: inherit;
+}
+
+.rnt-chat-card-actions .rnt-chat-btn:hover {
+   background: rgba(220, 60, 50, 0.12);
+   border-color: rgba(220, 60, 50, 0.4);
+}
+
+.rnt-chat-card-actions .rnt-chat-btn i {
+   font-size: 0.85em;
+   flex: 0 0 auto;
+}
+
+.rnt-apply-damage-btn {
+   width: 1.4rem;
+   height: 1.4rem;
+   min-height: revert;
+   padding: 0;
+   display: inline-flex;
+   justify-content: center;
+   align-items: center;
+   border: 1px solid var(--button-border-color, var(--color-dark-5, gray));
+   border-radius: 4px;
+   background: var(--button-background-color, rgba(0, 0, 0, 0.1));
+   cursor: pointer;
+   color: var(--button-text-color, var(--color-dark-1, #111));
+   transition: 0.5s;
+}
+
+.rnt-apply-damage-btn:hover {
+   background: var(--button-hover-background-color, var(--color-warm-2));
+   color: var(--button-hover-text-color, var(--color-light-1));
+   border-color: var(--button-hover-border-color, var(--color-light-3));
+   box-shadow: 0 0 0 1px var(--button-focus-outline-color, var(--color-warm-2));
+}
+
+.rnt-reaction-targets .target-row.crit-success-row {
+   filter: blur(0.5px) opacity(0.85);
+}
+
+.rnt-reaction-targets .degree.critical-success {
+   color: #008000 !important;
+   text-shadow: 0 0 2px rgba(0, 255, 0, 0.5);
+}
+
+details > summary::-webkit-details-marker {
+   display: none;
+}
+details > summary {
+   list-style: none;
+}
+.rnt-chevron-icon {
+   transition: transform 0.2s ease;
+   display: inline-block;
+   text-align: center;
+   width: 14px;
+}
+details[open] > summary .rnt-chevron-icon {
+   transform: rotate(90deg);
+}
+
+.rnt-summary-flex {
+   display: flex;
+   align-items: center;
+   width: 100%;
+}
+
+.rnt-chevron-wrapper {
+   cursor: pointer;
+   color: var(--color-text-dark-secondary, #4b4a44);
+   transition:
+      color 0.2s,
+      text-shadow 0.2s;
+   margin-right: 8px;
+}
+.rnt-chevron-wrapper:hover,
+.rnt-chevron-orange:hover {
+   color: orange !important;
+   text-shadow: 0 0 4px rgba(255, 165, 0, 0.5) !important;
+}

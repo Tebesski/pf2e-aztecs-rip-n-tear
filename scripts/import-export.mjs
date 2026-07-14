@@ -2,13 +2,17 @@ import { MODULE_ID } from "./constants.mjs"
 
 const FORMAT_VERSION = 2
 
+function fallbackFilename() {
+   return game?.i18n?.localize?.(`${MODULE_ID}.untitled`) || "untitled"
+}
+
 export function safeFilename(base, ext = "json") {
    const cleaned =
-      String(base || "untitled")
+      String(base || fallbackFilename())
          .trim()
          .replace(/[^a-z0-9_\-]+/gi, "_")
          .replace(/^_+|_+$/g, "")
-         .slice(0, 60) || "untitled"
+         .slice(0, 60) || fallbackFilename()
    return `${cleaned}.${ext}`
 }
 
@@ -19,10 +23,16 @@ function cleanPart(p) {
    out.linkedItems = []
    out.linkedEntries = []
    out.linkedSpells = []
+   out.linkedModules = []
 
    if (out.hp && typeof out.hp === "object") {
       out.hp.value = out.hp.max
    }
+
+   if (!out.disableRegenDmgTypes) out.disableRegenDmgTypes = []
+   if (out.disableRegenDurationValue === undefined)
+      out.disableRegenDurationValue = 1
+   if (!out.disableRegenDurationUnit) out.disableRegenDurationUnit = "rounds"
 
    if (!out.saves) {
       out.saves = {
@@ -41,6 +51,7 @@ function cleanPart(p) {
          const tt = foundry.utils.deepClone(t)
          delete tt.linkedPartsData
          if (!tt.ruleElements) tt.ruleElements = []
+         if (!tt.scripts) tt.scripts = []
          return tt
       })
    } else {

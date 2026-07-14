@@ -7,11 +7,17 @@ import {
    saveTemplate,
    snapshotFromActor,
 } from "../templates.mjs"
+import {
+   withRntActorTheme,
+   withRntDialogTheme,
+} from "../actor-support.mjs"
+import { renderDialogMessage } from "../dialogs/content.mjs"
 
 export class TemplateBuilderApp extends HandlebarsApplicationMixin(
    ApplicationV2,
 ) {
    constructor(options = {}) {
+      options = withRntActorTheme(options)
       super(options)
       this.actor = options.actor
       this._initWorking()
@@ -252,8 +258,7 @@ export class TemplateBuilderApp extends HandlebarsApplicationMixin(
          const r = await origClose(...args)
          try {
             await cb()
-         } catch (e) {
-            console.error("Rip & Tear | Template builder pull-back failed", e)
+         } catch (_err) {
          }
          return r
       }
@@ -305,7 +310,7 @@ export class TemplateBuilderApp extends HandlebarsApplicationMixin(
    static async _onAddDeath() {
       this.working.deathReaction = {
          id: foundry.utils.randomID(),
-         name: "New Death Reaction",
+         name: game.i18n.localize(`${MODULE_ID}.newDeathReaction`),
          useDelay: false,
          delayRounds: 1,
          expiry: "turn-end",
@@ -461,10 +466,21 @@ export class TemplateBuilderApp extends HandlebarsApplicationMixin(
       const all = getAllTemplates()
       const tpl = all.find((t) => t.id === id)
       if (!tpl) return
-      const confirmed = await foundry.applications.api.DialogV2.confirm({
-         window: { title: game.i18n.localize(`${MODULE_ID}.rewriteTemplate`) },
-         content: `<p>${game.i18n.format(`${MODULE_ID}.rewriteTemplateConfirm`, { name: tpl.name })}</p>`,
-      })
+      const confirmed = await foundry.applications.api.DialogV2.confirm(
+         withRntDialogTheme(
+            {
+               window: {
+                  title: game.i18n.localize(`${MODULE_ID}.rewriteTemplate`),
+               },
+               content: await renderDialogMessage(
+                  game.i18n.format(`${MODULE_ID}.rewriteTemplateConfirm`, {
+                     name: tpl.name,
+                  }),
+               ),
+            },
+            this.actor,
+         ),
+      )
       if (!confirmed) return
       const payload = {
          id: tpl.id,
@@ -483,10 +499,21 @@ export class TemplateBuilderApp extends HandlebarsApplicationMixin(
       const all = getAllTemplates()
       const tpl = all.find((t) => t.id === id)
       if (!tpl) return
-      const confirmed = await foundry.applications.api.DialogV2.confirm({
-         window: { title: game.i18n.localize(`${MODULE_ID}.removeTemplate`) },
-         content: `<p>${game.i18n.format(`${MODULE_ID}.removeTemplateConfirm`, { name: tpl.name })}</p>`,
-      })
+      const confirmed = await foundry.applications.api.DialogV2.confirm(
+         withRntDialogTheme(
+            {
+               window: {
+                  title: game.i18n.localize(`${MODULE_ID}.removeTemplate`),
+               },
+               content: await renderDialogMessage(
+                  game.i18n.format(`${MODULE_ID}.removeTemplateConfirm`, {
+                     name: tpl.name,
+                  }),
+               ),
+            },
+            this.actor,
+         ),
+      )
       if (!confirmed) return
       await removeTemplateById(id)
       if (this.selectedExistingId === id) this.selectedExistingId = null

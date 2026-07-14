@@ -1,11 +1,13 @@
 const { ApplicationV2, HandlebarsApplicationMixin } = foundry.applications.api
 
 import { MODULE_ID } from "../constants.mjs"
+import { getActorItemsByType, withRntActorTheme } from "../actor-support.mjs"
 
 export class SpellcastingConfigApp extends HandlebarsApplicationMixin(
    ApplicationV2,
 ) {
    constructor(options = {}) {
+      options = withRntActorTheme(options)
       super(options)
       this.actor = options.actor
       this.partId = options.partId
@@ -31,9 +33,12 @@ export class SpellcastingConfigApp extends HandlebarsApplicationMixin(
    }
 
    async _prepareContext(options) {
-      const entries = this.actor.itemTypes.spellcastingEntry.map((e) => {
-         const spells = this.actor.itemTypes.spell.filter(
-            (s) => s.system.location.value === e.id,
+      const entries = getActorItemsByType(
+         this.actor,
+         "spellcastingEntry",
+      ).map((e) => {
+         const spells = getActorItemsByType(this.actor, "spell").filter(
+            (s) => s.system?.location?.value === e.id,
          )
          return {
             id: e.id,

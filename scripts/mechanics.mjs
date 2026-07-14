@@ -1,171 +1,17 @@
-import { MODULE_ID, ENERGY_TYPES, PHYSICAL_TYPES } from "./constants.mjs"
-import { prepareBodyPartDisplay } from "./utils.mjs"
+import { MODULE_ID } from "./constants.mjs"
 import { playSfx } from "./sfx.mjs"
+import {
+   getActorHpValue,
+   getActorIwrList,
+} from "./actor-support.mjs"
+import { formatHpState } from "./mechanics/hp-display.mjs"
+import { checkIWRMatch, parseIWRString } from "./mechanics/iwr.mjs"
+import { createParentEffectsData } from "./mechanics/threshold-effects-data.mjs"
+import { processThresholdState } from "./mechanics/threshold-state.mjs"
+import { strongText } from "./html-format.mjs"
 
 export { resolveSfxPath } from "./sfx.mjs"
-
-export function parseIWRString(str) {
-   if (!str || typeof str !== "string") return []
-   return str
-      .split(",")
-      .map((s) => {
-         let exceptions = []
-         let mainPart = s
-         if (s.includes(" except ")) {
-            const splitExc = s.split(" except ")
-            mainPart = splitExc[0]
-            exceptions = splitExc[1].trim().split(" ")
-         }
-         const parts = mainPart.trim().toLowerCase().split(" ")
-         return { type: parts[0], value: parseInt(parts[1]) || 0, exceptions }
-      })
-      .filter((x) => x.type)
-}
-
-function checkIWRMatch(
-   iwrType,
-   dmgType,
-   rollOptions = new Set(),
-   exceptions = [],
-   globalExceptions = [],
-) {
-   if (!iwrType || !dmgType) return false
-
-   const allExceptions = [...exceptions, ...globalExceptions]
-   for (const exc of allExceptions) {
-      const e = exc.toLowerCase()
-      if (dmgType.toLowerCase() === e) return false
-      if (rollOptions.has(e)) return false
-      if (rollOptions.has(`item:material:${e}`)) return false
-      if (rollOptions.has(`item:trait:${e}`)) return false
-      if (rollOptions.has(`trait:${e}`)) return false
-   }
-
-   const iwr = iwrType.toLowerCase()
-   const dmg = dmgType.toLowerCase()
-   if (iwr === dmg) return true
-   if (iwr === "all-damage" || iwr === "all") return true
-   if (iwr === "physical" && PHYSICAL_TYPES.includes(dmg)) return true
-   if (iwr === "energy" && ENERGY_TYPES.includes(dmg)) return true
-   return false
-}
-
-export function createParentEffectsData(part, thresholds) {
-   const groups = new Map()
-
-   const addRule = (item, rule, descHtml) => {
-      const key = `${item.durationValue || ""}|${item.durationUnit || ""}`
-      if (!groups.has(key)) {
-         groups.set(key, {
-            durationValue: item.durationValue,
-            durationUnit: item.durationUnit,
-            rules: [],
-            descriptions: [],
-         })
-      }
-      groups.get(key).rules.push(rule)
-      groups.get(key).descriptions.push(descHtml)
-   }
-
-   for (const threshold of thresholds) {
-      if (threshold.conditions) {
-         for (const cond of threshold.conditions) {
-            const conditionBase = game.pf2e.ConditionManager.getCondition(
-               cond.slug,
-            )
-            if (!conditionBase) continue
-            const rule = {
-               key: "GrantItem",
-               uuid: conditionBase.sourceId || conditionBase.uuid,
-               onDeleteActions: { grantee: "restrict" },
-            }
-            if (cond.hasValue || cond.value > 1) {
-               rule.alterations = [
-                  {
-                     property: "badge-value",
-                     mode: "override",
-                     value: cond.value,
-                  },
-               ]
-            }
-            addRule(
-               cond,
-               rule,
-               `<li>@UUID[${conditionBase.sourceId || conditionBase.uuid}]</li>`,
-            )
-         }
-      }
-
-      if (threshold.effects) {
-         for (const ef of threshold.effects) {
-            if (ef.uuid && !ef.invalid) {
-               addRule(
-                  ef,
-                  {
-                     key: "GrantItem",
-                     uuid: ef.uuid,
-                     onDeleteActions: { grantee: "restrict" },
-                  },
-                  `<li>@UUID[${ef.uuid}]</li>`,
-               )
-            }
-         }
-      }
-
-      if (threshold.ruleElements) {
-         for (const re of threshold.ruleElements) {
-            if (!re.invalid && re.json && re.json.trim() !== "") {
-               try {
-                  const desc =
-                     re.customDescription && re.customDescription.trim() !== ""
-                        ? re.customDescription
-                        : "Rule Element"
-                  addRule(re, JSON.parse(re.json), `<li>${desc}</li>`)
-               } catch (e) {}
-            }
-         }
-      }
-   }
-
-   const effectsData = []
-   let index = 1
-
-   for (const group of groups.values()) {
-      const durationData =
-         group.durationValue &&
-         group.durationUnit &&
-         group.durationUnit !== "unlimited"
-            ? {
-                 value: group.durationValue,
-                 unit: group.durationUnit,
-                 expiry: "turn-end",
-              }
-            : { value: -1, unit: "unlimited" }
-
-      const descValue = `<ul>${group.descriptions.join("")}</ul>`
-
-      effectsData.push({
-         name: `${part.name} Damaged [${index}]`,
-         type: "effect",
-         img: part.img || "icons/commodities/biological/organ-heart-pink.webp",
-         system: {
-            description: { value: descValue },
-            duration: durationData,
-            rules: group.rules,
-         },
-         flags: {
-            [MODULE_ID]: {
-               isBodyPartEffect: true,
-               bodyPartName: part.name,
-               partId: part.id,
-            },
-         },
-      })
-      index++
-   }
-
-   return effectsData
-}
+export { createParentEffectsData, parseIWRString }
 
 async function playPartChangeSfx(part, isDamage, isManual = false) {
    const muteManual = game.settings.get(MODULE_ID, "muteManualHpSfx")
@@ -180,13 +26,6 @@ async function playPartChangeSfx(part, isDamage, isManual = false) {
    } else if (part.sfxDamage) {
       await playSfx(part.sfxDamage, "damage")
    }
-}
-
-function formatHpState(part) {
-   const displayData = prepareBodyPartDisplay(part, null, true)
-   let display = displayData.hpDisplay || ""
-   if (display.startsWith("HP: ")) display = display.replace("HP: ", "").trim()
-   return display
 }
 
 async function removePersistentEffectsForPart(actor, partId) {
@@ -262,23 +101,37 @@ export async function applyBodyPartDamage(
    ignoreHardAmount = 0,
    ignoreAllHard = false,
    rollOptions = new Set(),
+   options = {},
 ) {
-   if (!amount || amount <= 0) return
+   const suppressChat = options.suppressChat === true
+
+   if (!amount || amount <= 0) {
+      return
+   }
 
    const parts = foundry.utils.deepClone(
       actor.getFlag(MODULE_ID, "parts") || [],
    )
    const part = parts.find((p) => p.id === partId)
-   if (!part) return
+   if (!part) {
+      return
+   }
+
 
    if (dmgCategory === "persistent") {
       const effectData = {
-         name: `Persistent ${dmgType} (${part.name})`,
+         name: game.i18n.format(`${MODULE_ID}.persistentDamageEffectName`, {
+            damageType: dmgType,
+            partName: part.name,
+         }),
          type: "effect",
          img: "systems/pf2e/icons/conditions/persistent-damage.webp",
          system: {
             description: {
-               value: `Takes ${amount} persistent ${dmgType} damage.`,
+               value: game.i18n.format(
+                  `${MODULE_ID}.persistentDamageEffectDescription`,
+                  { amount, damageType: dmgType },
+               ),
             },
          },
          flags: {
@@ -289,10 +142,16 @@ export async function applyBodyPartDamage(
          },
       }
       await actor.createEmbeddedDocuments("Item", [effectData])
-      ChatMessage.create({
-         speaker: ChatMessage.getSpeaker({ actor }),
-         content: `<strong>${part.name}</strong> was afflicted with ${amount} Persistent ${dmgType} damage.`,
-      })
+      if (!suppressChat) {
+         ChatMessage.create({
+            speaker: ChatMessage.getSpeaker({ actor }),
+            content: game.i18n.format(`${MODULE_ID}.bodyPartPersistentDamage`, {
+               partName: strongText(part.name),
+               amount,
+               damageType: dmgType,
+            }),
+         })
+      }
       return
    }
 
@@ -306,11 +165,17 @@ export async function applyBodyPartDamage(
       dmgType &&
       !acceptedTypes.includes(dmgType)
    ) {
-      ChatMessage.create({
-         speaker: ChatMessage.getSpeaker({ actor }),
-         content: `<strong>${part.name}</strong> ignored ${amount} ${dmgType} damage (does not accept this damage type).`,
-         whisper: ChatMessage.getWhisperRecipients("GM"),
-      })
+      if (!suppressChat) {
+         ChatMessage.create({
+            speaker: ChatMessage.getSpeaker({ actor }),
+            content: game.i18n.format(`${MODULE_ID}.bodyPartIgnoredDamageType`, {
+               partName: strongText(part.name),
+               amount,
+               damageType: dmgType,
+            }),
+            whisper: ChatMessage.getWhisperRecipients("GM"),
+         })
+      }
       return
    }
 
@@ -318,13 +183,13 @@ export async function applyBodyPartDamage(
 
    const immuneList = part.customIWR
       ? parseIWRString(part.iwr?.immune)
-      : actor.system.attributes.immunities || []
+      : getActorIwrList(actor, "immunities")
    const weakList = part.customIWR
       ? parseIWRString(part.iwr?.weak)
-      : actor.system.attributes.weaknesses || []
+      : getActorIwrList(actor, "weaknesses")
    const resistList = part.customIWR
       ? parseIWRString(part.iwr?.resist)
-      : actor.system.attributes.resistances || []
+      : getActorIwrList(actor, "resistances")
 
    const immuneExcList = part.customIWR
       ? (part.iwr?.immuneExc || "")
@@ -399,13 +264,22 @@ export async function applyBodyPartDamage(
    if (absorbed > 0) {
       const hardnessMsg =
          finalAmount === 0
-            ? `<strong>${part.name}</strong> absorbed all of the damage with Hardness.`
-            : `<strong>${part.name}</strong> took ${finalAmount} damage (received ${preHardnessAmount} damage, absorbed ${absorbed} damage with Hardness).`
-      ChatMessage.create({
-         speaker: ChatMessage.getSpeaker({ actor }),
-         content: hardnessMsg,
-         whisper: ChatMessage.getWhisperRecipients("GM"),
-      })
+            ? game.i18n.format(`${MODULE_ID}.bodyPartAbsorbedAllHardness`, {
+                 partName: strongText(part.name),
+              })
+            : game.i18n.format(`${MODULE_ID}.bodyPartAbsorbedSomeHardness`, {
+                 partName: strongText(part.name),
+                 finalAmount,
+                 preHardnessAmount,
+                 absorbed,
+              })
+      if (!suppressChat) {
+         ChatMessage.create({
+            speaker: ChatMessage.getSpeaker({ actor }),
+            content: hardnessMsg,
+            whisper: ChatMessage.getWhisperRecipients("GM"),
+         })
+      }
    }
 
    const previousHp = part.hp.value
@@ -415,10 +289,16 @@ export async function applyBodyPartDamage(
    if (part.useRupture) {
       if (finalAmount >= part.hp.max) {
          part.hp.value = 0
-         chatReport = `<strong>${part.name}</strong> took ${finalAmount} damage and was <strong>Ruptured</strong>!`
+         chatReport = game.i18n.format(`${MODULE_ID}.bodyPartRuptured`, {
+            partName: strongText(part.name),
+            amount: finalAmount,
+         })
       } else {
          failedRupture = true
-         chatReport = `<strong>${part.name}</strong> received ${finalAmount} damage and was not Ruptured!`
+         chatReport = game.i18n.format(`${MODULE_ID}.bodyPartNotRuptured`, {
+            partName: strongText(part.name),
+            amount: finalAmount,
+         })
       }
    } else {
       part.hp.value = Math.max(0, part.hp.value - finalAmount)
@@ -439,7 +319,7 @@ export async function applyBodyPartDamage(
       const skipFailedRupture = failedRupture && !part.failedRuptureDealsDamage
       if (!skipPersistent && !skipFailedRupture) {
          const creatureDamage = Math.floor(finalAmount * part.multiplier)
-         const currentActorHp = actor.system.attributes.hp.value
+         const currentActorHp = getActorHpValue(actor)
          await actor.update(
             {
                "system.attributes.hp.value": Math.max(
@@ -455,14 +335,19 @@ export async function applyBodyPartDamage(
             },
          )
 
-         ChatMessage.create({
-            speaker: ChatMessage.getSpeaker({ actor }),
-            content: game.i18n.format(`${MODULE_ID}.chatCreatureDamageReport`, {
-               actorName: actor.name,
-               amount: creatureDamage,
-               partName: part.name,
-            }),
-         })
+         if (!suppressChat) {
+            ChatMessage.create({
+               speaker: ChatMessage.getSpeaker({ actor }),
+               content: game.i18n.format(
+                  `${MODULE_ID}.chatCreatureDamageReport`,
+                  {
+                     actorName: actor.name,
+                     amount: creatureDamage,
+                     partName: part.name,
+                  },
+               ),
+            })
+         }
       }
    } else if (finalAmount > 0 && !failedRupture) {
       import("./reaction-mechanics.mjs").then((m) => {
@@ -480,13 +365,74 @@ export async function applyBodyPartDamage(
       if (part.hp.value < previousHp) {
          await playPartChangeSfx(part, true)
       }
-      ChatMessage.create({
-         speaker: ChatMessage.getSpeaker({ actor }),
-         content: chatReport,
-      })
+      if (!suppressChat) {
+         ChatMessage.create({
+            speaker: ChatMessage.getSpeaker({ actor }),
+            content: chatReport,
+         })
+      }
    }
 
+
    await processThresholdState(actor, part, parts)
+
+   if (
+      finalAmount > 0 &&
+      part.disableRegenDmgTypes &&
+      part.disableRegenDmgTypes.includes(dmgType)
+   ) {
+      const dVal = part.disableRegenDurationValue || 1
+      const dUnit = part.disableRegenDurationUnit || "rounds"
+      const effectData = {
+         name: game.i18n.format(`${MODULE_ID}.regenerationDisabledEffectName`, {
+            partName: part.name,
+         }),
+         type: "effect",
+         img: "icons/magic/life/heart-broken-red.webp",
+         system: {
+            description: {
+               value: game.i18n.localize(
+                  `${MODULE_ID}.regenerationDisabledEffectDescription`,
+               ),
+            },
+            duration:
+               dUnit !== "unlimited"
+                  ? { value: dVal, unit: dUnit, expiry: "turn-end" }
+                  : { value: -1, unit: "unlimited" },
+            rules: [
+               {
+                  key: "AELike",
+                  mode: "override",
+                  path: "system.attributes.hp.regeneration.suppressed",
+                  value: true,
+                  priority: 99,
+               },
+               {
+                  key: "AELike",
+                  mode: "override",
+                  path: "system.attributes.hp.fastHealing",
+                  value: null,
+                  priority: 99,
+               },
+            ],
+         },
+         flags: { [MODULE_ID]: { isRegenDisabled: true, partId: part.id } },
+      }
+      await actor.createEmbeddedDocuments("Item", [effectData])
+      if (!suppressChat) {
+         ChatMessage.create({
+            speaker: ChatMessage.getSpeaker({ actor }),
+            content: game.i18n.format(
+               `${MODULE_ID}.bodyPartRegenerationDisabled`,
+               {
+                  partName: strongText(part.name),
+                  damageType: dmgType,
+               },
+            ),
+         })
+      }
+   }
+
    for (const otherPart of parts) {
       if (otherPart.id === part.id) continue
       const linksToMe = otherPart.thresholds?.some((t) =>
@@ -496,7 +442,7 @@ export async function applyBodyPartDamage(
    }
 }
 
-export async function applyBodyPartHealing(actor, partId, amount) {
+export async function applyBodyPartHealing(actor, partId, amount, options = {}) {
    if (!amount || amount <= 0) return
 
    const parts = foundry.utils.deepClone(
@@ -510,14 +456,16 @@ export async function applyBodyPartHealing(actor, partId, amount) {
 
    if (part.hp.value > previousHp) {
       await playPartChangeSfx(part, false)
-      ChatMessage.create({
-         speaker: ChatMessage.getSpeaker({ actor }),
-         content: game.i18n.format(`${MODULE_ID}.chatHealReport`, {
-            partName: part.name,
-            amount: part.hp.value - previousHp,
-            hpState: formatHpState(part),
-         }),
-      })
+      if (!options.suppressChat) {
+         ChatMessage.create({
+            speaker: ChatMessage.getSpeaker({ actor }),
+            content: game.i18n.format(`${MODULE_ID}.chatHealReport`, {
+               partName: part.name,
+               amount: part.hp.value - previousHp,
+               hpState: formatHpState(part),
+            }),
+         })
+      }
    }
 
    await processThresholdState(actor, part, parts)
@@ -528,149 +476,4 @@ export async function applyBodyPartHealing(actor, partId, amount) {
       )
       if (linksToMe) await processThresholdState(actor, otherPart, parts)
    }
-}
-
-async function processThresholdState(actor, part, parts) {
-   if (!part.thresholds || part.thresholds.length === 0) {
-      await actor.setFlag(MODULE_ID, "parts", parts)
-      return
-   }
-
-   let activeThresholds = []
-   let activeIndex = -1
-   const ascendingThresholds = part.thresholds
-      .map((t, i) => ({ ...t, originalIndex: i }))
-      .sort((a, b) => a.hpValue - b.hpValue)
-
-   for (const t of ascendingThresholds) {
-      let conditionMet = part.hp.value <= t.hpValue
-      if (conditionMet && t.linkedParts && t.linkedParts.length > 0) {
-         for (const lpId of t.linkedParts) {
-            const lp = parts.find((x) => x.id === lpId)
-            if (!lp || lp.hp.value > t.hpValue) {
-               conditionMet = false
-               break
-            }
-         }
-      }
-      if (conditionMet) {
-         activeThresholds.push(t)
-         if (activeIndex === -1) activeIndex = t.originalIndex
-      }
-   }
-
-   const existingParents = actor.items.filter(
-      (i) =>
-         i.getFlag(MODULE_ID, "isBodyPartEffect") &&
-         i.getFlag(MODULE_ID, "partId") === part.id,
-   )
-   const currentActiveIndex =
-      existingParents.length > 0
-         ? existingParents[0].getFlag(MODULE_ID, "activeThresholdIndex")
-         : -1
-
-   const isFullHeal = part.hp.value === part.hp.max
-   let shouldRemoveParent = false
-   let shouldApplyNewParent = false
-
-   if (activeIndex !== currentActiveIndex) {
-      let currentHpValue = Infinity
-      if (currentActiveIndex !== -1 && part.thresholds[currentActiveIndex]) {
-         currentHpValue = part.thresholds[currentActiveIndex].hpValue
-      }
-      const newHpValue =
-         activeThresholds.length > 0 ? activeThresholds[0].hpValue : Infinity
-      const isGettingBetter = newHpValue > currentHpValue
-
-      if (isGettingBetter) {
-         if (part.removeEffectsOnFullHeal) {
-            if (isFullHeal) {
-               shouldRemoveParent = true
-               if (activeThresholds.length > 0) shouldApplyNewParent = true
-            }
-         } else {
-            shouldRemoveParent = true
-            if (activeThresholds.length > 0) shouldApplyNewParent = true
-         }
-      } else {
-         shouldRemoveParent = true
-         if (activeThresholds.length > 0) shouldApplyNewParent = true
-      }
-   }
-
-   if (shouldRemoveParent && existingParents.length > 0) {
-      await actor.deleteEmbeddedDocuments(
-         "Item",
-         existingParents.map((e) => e.id),
-         { rntForceDelete: true },
-      )
-   }
-
-   if (shouldApplyNewParent && activeThresholds.length > 0) {
-      const parentEffectsData = createParentEffectsData(part, activeThresholds)
-      parentEffectsData.forEach(
-         (ef) => (ef.flags[MODULE_ID].activeThresholdIndex = activeIndex),
-      )
-      await actor.createEmbeddedDocuments("Item", parentEffectsData)
-
-      const mainActiveThreshold = activeThresholds[0]
-
-      if (
-         mainActiveThreshold.damages &&
-         mainActiveThreshold.damages.length > 0
-      ) {
-         const DamageRoll =
-            window.DamageRoll ||
-            CONFIG.Dice.rolls.find((r) => r.name === "DamageRoll") ||
-            window.Roll
-         const tokenDoc = actor.token ?? actor.getActiveTokens()[0]?.document
-         const targetData = tokenDoc
-            ? { actor: actor.uuid, token: tokenDoc.uuid }
-            : null
-
-         for (const d of mainActiveThreshold.damages) {
-            if (!d.diceNum && d.diceNum !== 0) continue
-            let formula = d.diceStep
-               ? `${d.diceNum}d${d.diceStep}`
-               : `${d.diceNum}`
-            const tags = []
-
-            if (d.dmgType === "bleed") {
-               tags.push("persistent", "bleed")
-            } else if (d.dmgCategory === "persistent") {
-               tags.push("persistent", d.dmgType)
-            } else if (d.dmgCategory) {
-               tags.push(d.dmgCategory, d.dmgType)
-            } else {
-               tags.push(d.dmgType)
-            }
-
-            formula += `[${tags.join(",")}]`
-            const roll = new DamageRoll(formula)
-            await roll.evaluate()
-            roll.toMessage({
-               speaker: ChatMessage.getSpeaker({ actor, token: tokenDoc }),
-               flavor: `<strong>${part.name}</strong> ${game.i18n.localize(`${MODULE_ID}.thresholdBreached`)}`,
-               flags: {
-                  pf2e: {
-                     target: targetData,
-                     context: { type: "damage-roll", target: targetData },
-                  },
-               },
-            })
-         }
-      }
-
-      if (mainActiveThreshold.macros && mainActiveThreshold.macros.length > 0) {
-         for (const mac of mainActiveThreshold.macros) {
-            if (!mac.uuid || mac.invalid) continue
-            const macroObj = await fromUuid(mac.uuid)
-            if (macroObj && macroObj.documentName === "Macro") {
-               macroObj.execute({ actor, part, threshold: mainActiveThreshold })
-            }
-         }
-      }
-   }
-
-   await actor.setFlag(MODULE_ID, "parts", parts)
 }

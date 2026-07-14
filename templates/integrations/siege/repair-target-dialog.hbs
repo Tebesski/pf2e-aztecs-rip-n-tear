@@ -1,0 +1,20 @@
+<form class="rnt-repair-target-form">
+   <section class="rnt-repair-target-list">
+      {{#each choices}}
+         {{#if dividerBefore}}
+            <div class="rnt-repair-target-divider"></div>
+         {{/if}}
+         <label class="rnt-repair-target-row {{#if isVehicle}}rnt-repair-target-vehicle{{/if}}">
+            <input type="radio" name="rnt-repair-target" value="{{id}}" {{checked checked}}>
+            <img class="rnt-repair-target-icon" src="{{img}}" alt="">
+            <span class="rnt-repair-target-main">
+               <span class="rnt-repair-target-name">{{label}}</span>
+               <span class="rnt-repair-target-bar" aria-hidden="true">
+                  <span style="width:{{hpPct}}%;"></span>
+               </span>
+            </span>
+            <span class="rnt-repair-target-hp">{{hpValue}} / {{hpMax}}</span>
+         </label>
+      {{/each}}
+   </section>
+</form>

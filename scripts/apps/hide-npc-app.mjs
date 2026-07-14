@@ -1,9 +1,11 @@
 const { ApplicationV2, HandlebarsApplicationMixin } = foundry.applications.api
 
 import { MODULE_ID } from "../constants.mjs"
+import { withRntActorTheme } from "../actor-support.mjs"
 
 export class HideNpcApp extends HandlebarsApplicationMixin(ApplicationV2) {
    constructor(options = {}) {
+      options = withRntActorTheme(options)
       super(options)
       this.actor = options.actor
    }

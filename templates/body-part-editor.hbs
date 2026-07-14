@@ -25,7 +25,7 @@
          <div class="rnt-identity-acitem">
             <label>{{localize "pf2e-aztecs-rip-n-tear.acAdjustment"}} <i class="fa-solid fa-circle-info rnt-info" data-tooltip="{{localize 'pf2e-aztecs-rip-n-tear.acAdjustmentTooltip'}}"></i></label>
             <div style="display: flex; align-items: center; gap: 4px;">
-               <input type="number" class="rnt-ac-adj-input" name="acAdjustment" value="{{part.acAdjustment}}" data-base-ac="{{@root.actor.system.attributes.ac.value}}" data-old-ac="{{part.ac}}" style="max-width: 60px;" />
+               <input type="number" class="rnt-ac-adj-input" name="acAdjustment" value="{{part.acAdjustment}}" data-base-ac="{{@root.actorBaseAc}}" data-old-ac="{{part.ac}}" style="max-width: 60px;" />
                <span style="color: var(--rnt-text-muted); white-space: nowrap; font-weight: 600;" class="rnt-ac-total-display"></span>
             </div>
          </div>
@@ -39,19 +39,19 @@
          <div class="rnt-save-inline {{#if part.saves.fortitude.enabled}}rnt-save-active{{/if}}" style="display: flex; align-items: center; gap: 4px;">
             <input type="checkbox" name="saves.fortitude.enabled" {{checked part.saves.fortitude.enabled}}>
             <label>Fortitude</label>
-            <input type="number" class="rnt-save-adj-input" name="saves.fortitude.adjustment" value="{{part.saves.fortitude.adjustment}}" data-base-save="{{@root.actor.saves.fortitude.mod}}" style="max-width: 50px;">
+            <input type="number" class="rnt-save-adj-input" name="saves.fortitude.adjustment" value="{{part.saves.fortitude.adjustment}}" data-base-save="{{@root.actorBaseSaves.fortitude}}" style="max-width: 50px;">
             <span class="rnt-save-total-display" style="color: var(--rnt-text-muted); font-weight: 600;"></span>
          </div>
          <div class="rnt-save-inline {{#if part.saves.reflex.enabled}}rnt-save-active{{/if}}" style="display: flex; align-items: center; gap: 4px;">
             <input type="checkbox" name="saves.reflex.enabled" {{checked part.saves.reflex.enabled}}>
             <label>Reflex</label>
-            <input type="number" class="rnt-save-adj-input" name="saves.reflex.adjustment" value="{{part.saves.reflex.adjustment}}" data-base-save="{{@root.actor.saves.reflex.mod}}" style="max-width: 50px;">
+            <input type="number" class="rnt-save-adj-input" name="saves.reflex.adjustment" value="{{part.saves.reflex.adjustment}}" data-base-save="{{@root.actorBaseSaves.reflex}}" style="max-width: 50px;">
             <span class="rnt-save-total-display" style="color: var(--rnt-text-muted); font-weight: 600;"></span>
          </div>
          <div class="rnt-save-inline {{#if part.saves.will.enabled}}rnt-save-active{{/if}}" style="display: flex; align-items: center; gap: 4px;">
             <input type="checkbox" name="saves.will.enabled" {{checked part.saves.will.enabled}}>
             <label>Will</label>
-            <input type="number" class="rnt-save-adj-input" name="saves.will.adjustment" value="{{part.saves.will.adjustment}}" data-base-save="{{@root.actor.saves.will.mod}}" style="max-width: 50px;">
+            <input type="number" class="rnt-save-adj-input" name="saves.will.adjustment" value="{{part.saves.will.adjustment}}" data-base-save="{{@root.actorBaseSaves.will}}" style="max-width: 50px;">
             <span class="rnt-save-total-display" style="color: var(--rnt-text-muted); font-weight: 600;"></span>
          </div>
       </div>
@@ -72,14 +72,19 @@
          </div>
       </div>
 
-      <div class="rnt-field rnt-field-stack rnt-regrowth-stack" {{#unless part.regrowth.enabled}}style="display: none;"{{/unless}}>
-         <div class="rnt-input-group">
-            <label>
-               <input type="checkbox" name="regrowth.full" onchange="this.closest('.rnt-input-group').querySelector('.rnt-regrowth-amount').style.display = this.checked ? 'none' : '';" {{checked part.regrowth.full}} />
-               {{localize "pf2e-aztecs-rip-n-tear.fullHeal"}}
-               <i class="fa-solid fa-circle-info rnt-info" data-tooltip="{{localize 'pf2e-aztecs-rip-n-tear.fullHealTooltip'}}"></i>
+<div class="rnt-field rnt-field-stack rnt-regrowth-stack" {{#unless part.regrowth.enabled}}style="display: none;"{{/unless}}>
+         <div style="display: flex; flex-direction: column; gap: var(--rnt-space-1);">
+            <div style="display: flex; gap: var(--rnt-space-2); align-items: center;">
+               <label class="rnt-toggle">
+                  <input type="checkbox" name="regrowth.full" onchange="this.closest('.rnt-field-stack').querySelector('.rnt-regrowth-amount').style.display = this.checked ? 'none' : '';" {{checked part.regrowth.full}} />
+                  <span>{{localize "pf2e-aztecs-rip-n-tear.fullHeal"}} <i class="fa-solid fa-circle-info rnt-info" data-tooltip="{{localize 'pf2e-aztecs-rip-n-tear.fullHealTooltip'}}"></i></span>
+               </label>
+               <input type="number" class="rnt-regrowth-amount" name="regrowth.amount" value="{{part.regrowth.amount}}" placeholder="{{localize 'pf2e-aztecs-rip-n-tear.regrowthAmount'}}" {{#if part.regrowth.full}}style="display: none;"{{/if}} style="flex: 1; min-width: 120px;" />
+            </div>
+            <label class="rnt-toggle">
+               <input type="checkbox" name="regrowth.anyTurn" {{checked part.regrowth.anyTurn}} />
+               <span>{{localize "pf2e-aztecs-rip-n-tear.regrowthAnyTurn"}} <i class="fa-solid fa-circle-info rnt-info" data-tooltip="{{localize 'pf2e-aztecs-rip-n-tear.regrowthAnyTurnTooltip'}}"></i></span>
             </label>
-            <input type="number" class="rnt-regrowth-amount" name="regrowth.amount" value="{{part.regrowth.amount}}" placeholder="{{localize 'pf2e-aztecs-rip-n-tear.regrowthAmount'}}" {{#if part.regrowth.full}}style="display: none;"{{/if}} />
          </div>
       </div>
 
@@ -102,9 +107,45 @@
          <label class="rnt-field-label">{{localize "pf2e-aztecs-rip-n-tear.damageMultiplier"}}</label>
          <div class="rnt-field-control"><input type="number" step="0.1" name="multiplier" value="{{part.multiplier}}" /></div>
       </div>
-      <div class="rnt-field">
+<div class="rnt-field">
          <label class="rnt-field-label">{{localize "pf2e-aztecs-rip-n-tear.removeEffectsOnFullHeal"}} <i class="fa-solid fa-circle-info rnt-info" data-tooltip="{{localize 'pf2e-aztecs-rip-n-tear.removeEffectsTooltip'}}"></i></label>
          <div class="rnt-field-control"><input type="checkbox" name="removeEffectsOnFullHeal" {{checked part.removeEffectsOnFullHeal}} /></div>
+      </div>
+
+      <div class="rnt-field rnt-field-stack" style="margin-top: var(--rnt-space-3); padding-top: var(--rnt-space-2); border-top: 1px solid rgba(0,0,0,0.15);">
+         <label class="rnt-field-label">{{localize "pf2e-aztecs-rip-n-tear.disableRegenDmgTypes"}}</label>
+         <div style="display: flex; gap: var(--rnt-space-3); align-items: flex-start;">
+            <div style="flex: 0 1 320px; display: flex; flex-direction: column; gap: var(--rnt-space-1);">
+               <select name="disableRegenDmgTypesSelect">
+                  <option value="" disabled selected>{{localize "pf2e-aztecs-rip-n-tear.addDmgType"}}</option>
+                  {{#each availableDisableRegenDmgTypes as |dt|}}
+                  <option value="{{dt.slug}}">{{dt.label}}</option>
+                  {{/each}}
+               </select>
+               <div class="rnt-chip-list">
+                  {{#each disableRegenChips as |dt|}}
+                  <span class="rnt-chip">
+                     {{dt.label}}
+                     <input type="hidden" name="disableRegenDmgTypes" value="{{dt.slug}}">
+                     <a class="rnt-chip-remove" data-action="removeDisableRegenDmgType" data-slug="{{dt.slug}}"><i class="fa-solid fa-times"></i></a>
+                  </span>
+                  {{/each}}
+               </div>
+            </div>
+            <div style="border-left: 1px solid var(--rnt-border); padding-left: var(--rnt-space-3); flex: 1; display: flex; flex-direction: column; gap: var(--rnt-space-1);">
+               <label style="font-size: var(--rnt-font-size-xs); color: var(--rnt-text-muted);">{{localize "pf2e-aztecs-rip-n-tear.disableDuration"}}</label>
+               <div class="rnt-input-group">
+                  <input type="number" name="disableRegenDurationValue" value="{{#if part.disableRegenDurationValue}}{{part.disableRegenDurationValue}}{{else}}1{{/if}}" />
+                  <select name="disableRegenDurationUnit">
+                     <option value="rounds" {{#if (eq part.disableRegenDurationUnit "rounds")}}selected{{/if}}>{{localize "pf2e-aztecs-rip-n-tear.rounds"}}</option>
+                     <option value="minutes" {{#if (eq part.disableRegenDurationUnit "minutes")}}selected{{/if}}>{{localize "pf2e-aztecs-rip-n-tear.minutes"}}</option>
+                     <option value="hours" {{#if (eq part.disableRegenDurationUnit "hours")}}selected{{/if}}>{{localize "pf2e-aztecs-rip-n-tear.hours"}}</option>
+                     <option value="days" {{#if (eq part.disableRegenDurationUnit "days")}}selected{{/if}}>{{localize "pf2e-aztecs-rip-n-tear.days"}}</option>
+                     <option value="unlimited" {{#if (eq part.disableRegenDurationUnit "unlimited")}}selected{{/if}}>{{localize "pf2e-aztecs-rip-n-tear.unlimited"}}</option>
+                  </select>
+               </div>
+            </div>
+         </div>
       </div>
    </details>
 
@@ -232,14 +273,18 @@
       <summary class="rnt-section-title rnt-summary-flex" style="cursor: pointer;">
          <span class="rnt-chevron-wrapper"><i class="fa-solid fa-chevron-right rnt-chevron-icon"></i></span>
          <span class="rnt-section-title-flex" style="flex: 1;">{{localize "pf2e-aztecs-rip-n-tear.linkedAbilities"}}</span>
+         {{#if showSpellcastingLinks}}
          <a class="rnt-action-link" data-action="configSpellcasting"><i class="fa-solid fa-wand-magic-sparkles"></i> {{localize "pf2e-aztecs-rip-n-tear.specificSpells"}}</a>
+         {{/if}}
       </summary>
       <select class="rnt-ability-select">
          <option value="">{{localize "pf2e-aztecs-rip-n-tear.selectAbility"}}</option>
          <optgroup label="{{localize 'pf2e-aztecs-rip-n-tear.attacks'}}">{{#each attacks}}<option value="{{this.id}}">{{this.name}}</option>{{/each}}</optgroup>
          <optgroup label="{{localize 'pf2e-aztecs-rip-n-tear.abilities'}}">{{#each abilities}}<option value="{{this.id}}">{{this.name}}</option>{{/each}}</optgroup>
          <optgroup label="{{localize 'pf2e-aztecs-rip-n-tear.passives'}}">{{#each passives}}<option value="{{this.id}}">{{this.name}}</option>{{/each}}</optgroup>
+         {{#if showSpellcastingLinks}}
          <optgroup label="{{localize 'pf2e-aztecs-rip-n-tear.spellcasting'}}"><option value="ALL_SPELLCASTING">{{localize "pf2e-aztecs-rip-n-tear.allSpellcasting"}}</option></optgroup>
+         {{/if}}
       </select>
       {{#if linkedItemsData.length}}
       <div class="rnt-repeat-list">
@@ -256,6 +301,34 @@
       </div>
       {{/if}}
    </details>
+
+   {{#if showLinkedModules}}
+   <details class="rnt-section" data-section="linkedModules">
+      <summary class="rnt-section-title rnt-summary-flex" style="cursor: pointer;">
+         <span class="rnt-chevron-wrapper"><i class="fa-solid fa-chevron-right rnt-chevron-icon"></i></span>
+         <span class="rnt-section-title-flex" style="flex: 1;">{{localize "pf2e-aztecs-rip-n-tear.linkedModules"}}</span>
+      </summary>
+      <select class="rnt-module-select">
+         <option value="">{{localize "pf2e-aztecs-rip-n-tear.selectModule"}}</option>
+         {{#each availableModules}}
+         <option value="{{this.id}}">{{this.name}}</option>
+         {{/each}}
+      </select>
+      {{#if linkedModulesData.length}}
+      <div class="rnt-repeat-list">
+         {{#each linkedModulesData}}
+         <div class="rnt-linked-row">
+            <a class="content-link item-link rnt-link-no-underline rnt-linked-module-link" data-id="{{this.id}}">
+               <img src="{{this.img}}" class="rnt-inline-module-img" />
+               <span class="rnt-linked-module-name">{{this.name}}</span>
+            </a>
+            <a class="rnt-repeat-remove" data-action="removeLinkedModule" data-id="{{this.id}}"><i class="fa-solid fa-trash"></i></a>
+         </div>
+         {{/each}}
+      </div>
+      {{/if}}
+   </details>
+   {{/if}}
 
    {{#if part.dependentParts.length}}
    <div class="rnt-callout">
@@ -281,7 +354,19 @@
          <summary class="rnt-threshold-header rnt-summary-flex" style="cursor: pointer;">
             <label>{{localize "pf2e-aztecs-rip-n-tear.activateAtHp"}}</label>
             <input type="number" class="rnt-input-tiny" name="thresholds.{{i}}.hpValue" value="{{t.hpValue}}" />
-            <label style="margin-left: 12px; flex: 1;"><input type="checkbox" name="thresholds.{{i}}.disableAbilities" {{checked t.disableAbilities}}> {{localize "pf2e-aztecs-rip-n-tear.disableAbilities"}}</label>
+            <label class="rnt-threshold-toggle">
+               <input type="checkbox" name="thresholds.{{i}}.disableAbilities" {{checked t.disableAbilities}}>
+               <span>{{localize "pf2e-aztecs-rip-n-tear.disableAbilities"}}</span>
+            </label>
+            {{#if @root.showLinkedModules}}
+            <label class="rnt-threshold-toggle">
+               <input type="checkbox" name="thresholds.{{i}}.disableModules" {{checked t.disableModules}}>
+               <span>{{localize "pf2e-aztecs-rip-n-tear.disableModules"}}</span>
+            </label>
+            <span class="rnt-threshold-header-spacer"></span>
+            {{else}}
+            <span class="rnt-threshold-header-spacer"></span>
+            {{/if}}
             
             <a class="rnt-threshold-remove rnt-chevron-orange" style="margin-right: 4px;"><i class="fa-solid fa-chevron-right rnt-chevron-icon"></i></a>
             <a class="rnt-threshold-remove" data-action="removeThreshold" data-index="{{i}}" data-tooltip="{{localize 'pf2e-aztecs-rip-n-tear.removeThreshold'}}"><i class="fa-solid fa-trash"></i></a>
@@ -313,6 +398,28 @@
             {{/if}}
          </div>
 
+         {{#if @root.showVehicleThresholdModifiers}}
+         <div class="rnt-threshold-subsection rnt-vehicle-threshold-modifiers">
+            <div class="rnt-subsection-title">
+               <span class="rnt-section-title-flex">{{localize "pf2e-aztecs-rip-n-tear.vehicleModifiers"}}</span>
+            </div>
+            <div class="rnt-vehicle-threshold-row">
+               <label>
+                  <input type="checkbox" name="thresholds.{{i}}.modifyVehicleLoadCapacity" {{checked t.modifyVehicleLoadCapacity}}>
+                  {{localize "pf2e-aztecs-rip-n-tear.modifyLoadingCapacity"}}
+               </label>
+               <input type="number" step="0.1" name="thresholds.{{i}}.vehicleLoadCapacityModifier" value="{{t.vehicleLoadCapacityModifier}}" placeholder="{{localize 'pf2e-aztecs-rip-n-tear.bulkDelta'}}" />
+            </div>
+            <div class="rnt-vehicle-threshold-row">
+               <label>
+                  <input type="checkbox" name="thresholds.{{i}}.modifyVehicleSpeed" {{checked t.modifyVehicleSpeed}}>
+                  {{localize "pf2e-aztecs-rip-n-tear.modifySpeed"}}
+               </label>
+               <input type="number" name="thresholds.{{i}}.vehicleSpeedModifier" value="{{t.vehicleSpeedModifier}}" placeholder="{{localize 'pf2e-aztecs-rip-n-tear.speedDelta'}}" />
+            </div>
+         </div>
+         {{/if}}
+
          <div class="rnt-threshold-subsection">
             <div class="rnt-subsection-title">
                <span class="rnt-section-title-flex">{{localize "pf2e-aztecs-rip-n-tear.conditions"}}</span>
@@ -343,6 +450,26 @@
                      <option value="days" {{#if (eq c.durationUnit "days")}}selected{{/if}}>Days</option>
                   </select>
                </div>
+               {{#if @root.showThresholdTargets}}
+               <div class="rnt-threshold-target-row">
+                  <label>{{localize "pf2e-aztecs-rip-n-tear.targets"}}:</label>
+                  <select class="rnt-threshold-target-select" data-ti="{{i}}" data-kind="conditions" data-entry-index="{{ci}}">
+                     <option value="" disabled selected>{{localize "pf2e-aztecs-rip-n-tear.addTarget"}}</option>
+                     {{#each @root.thresholdTargetOptions}}
+                     <option value="{{this.id}}">{{this.label}}</option>
+                     {{/each}}
+                  </select>
+                  <div class="rnt-chip-list rnt-threshold-target-chip-list">
+                     {{#each c.targetData as |target tgi|}}
+                     <span class="rnt-chip">
+                        {{target.label}}
+                        <input type="hidden" name="thresholds.{{i}}.conditions.{{ci}}.targets" value="{{target.id}}">
+                        <a class="rnt-chip-remove" data-action="removeThresholdTarget" data-ti="{{i}}" data-kind="conditions" data-entry-index="{{ci}}" data-target-index="{{tgi}}"><i class="fa-solid fa-times"></i></a>
+                     </span>
+                     {{/each}}
+                  </div>
+               </div>
+               {{/if}}
             </div>
             {{/each}}
          </div>
@@ -382,6 +509,26 @@
                      <option value="days" {{#if (eq e.durationUnit "days")}}selected{{/if}}>Days</option>
                   </select>
                </div>
+               {{#if @root.showThresholdTargets}}
+               <div class="rnt-threshold-target-row">
+                  <label>{{localize "pf2e-aztecs-rip-n-tear.targets"}}:</label>
+                  <select class="rnt-threshold-target-select" data-ti="{{i}}" data-kind="effects" data-entry-index="{{ei}}">
+                     <option value="" disabled selected>{{localize "pf2e-aztecs-rip-n-tear.addTarget"}}</option>
+                     {{#each @root.thresholdTargetOptions}}
+                     <option value="{{this.id}}">{{this.label}}</option>
+                     {{/each}}
+                  </select>
+                  <div class="rnt-chip-list rnt-threshold-target-chip-list">
+                     {{#each e.targetData as |target tgi|}}
+                     <span class="rnt-chip">
+                        {{target.label}}
+                        <input type="hidden" name="thresholds.{{i}}.effects.{{ei}}.targets" value="{{target.id}}">
+                        <a class="rnt-chip-remove" data-action="removeThresholdTarget" data-ti="{{i}}" data-kind="effects" data-entry-index="{{ei}}" data-target-index="{{tgi}}"><i class="fa-solid fa-times"></i></a>
+                     </span>
+                     {{/each}}
+                  </div>
+               </div>
+               {{/if}}
             </div>
             {{/each}}
          </div>
@@ -411,7 +558,18 @@
             </div>
             {{/each}}
          </div>
-
+         <div class="rnt-threshold-subsection">
+            <div class="rnt-subsection-title">
+               <span class="rnt-section-title-flex">{{localize "pf2e-aztecs-rip-n-tear.scripts"}}</span>
+               <a class="rnt-action-link rnt-action-add rnt-subsection-title-actions" data-action="addScript" data-ti="{{i}}"><i class="fa-solid fa-plus"></i> {{localize "pf2e-aztecs-rip-n-tear.addScript"}}</a>
+            </div>
+            {{#each t.scripts as |scr si|}}
+            <div class="rnt-repeat-row rnt-repeat-row-stretch re-entry" style="margin-bottom: 4px; border: none; padding-bottom: 4px; border-bottom: 1px solid rgba(0,0,0,0.1);">
+               <textarea class="rnt-re-json-input" name="thresholds.{{i}}.scripts.{{si}}.code" style="flex: 1; font-family: monospace;" placeholder="{{localize 'pf2e-aztecs-rip-n-tear.scriptCodePh'}}">{{scr.code}}</textarea>
+               <a class="rnt-repeat-remove" data-action="removeScript" data-ti="{{i}}" data-si="{{si}}"><i class="fa-solid fa-trash"></i></a>
+            </div>
+            {{/each}}
+         </div>
          <div class="rnt-threshold-subsection">
             <div class="rnt-subsection-title">
                <span class="rnt-section-title-flex">{{localize "pf2e-aztecs-rip-n-tear.ruleElements"}}</span>
@@ -439,6 +597,26 @@
                   <label style="margin-top: 4px;">Description:</label>
                   <textarea class="rnt-input-tiny" style="flex: 1; width: auto; resize: vertical;" rows="3" name="thresholds.{{i}}.ruleElements.{{rei}}.customDescription" placeholder="Rule Element">{{re.customDescription}}</textarea>
                </div>
+               {{#if @root.showThresholdTargets}}
+               <div class="rnt-threshold-target-row rnt-threshold-target-row-flat">
+                  <label>{{localize "pf2e-aztecs-rip-n-tear.targets"}}:</label>
+                  <select class="rnt-threshold-target-select" data-ti="{{i}}" data-kind="ruleElements" data-entry-index="{{rei}}">
+                     <option value="" disabled selected>{{localize "pf2e-aztecs-rip-n-tear.addTarget"}}</option>
+                     {{#each @root.thresholdTargetOptions}}
+                     <option value="{{this.id}}">{{this.label}}</option>
+                     {{/each}}
+                  </select>
+                  <div class="rnt-chip-list rnt-threshold-target-chip-list">
+                     {{#each re.targetData as |target tgi|}}
+                     <span class="rnt-chip">
+                        {{target.label}}
+                        <input type="hidden" name="thresholds.{{i}}.ruleElements.{{rei}}.targets" value="{{target.id}}">
+                        <a class="rnt-chip-remove" data-action="removeThresholdTarget" data-ti="{{i}}" data-kind="ruleElements" data-entry-index="{{rei}}" data-target-index="{{tgi}}"><i class="fa-solid fa-times"></i></a>
+                     </span>
+                     {{/each}}
+                  </div>
+               </div>
+               {{/if}}
             </div>
             {{/each}}
          </div>
@@ -449,31 +627,53 @@
                <a class="rnt-action-link rnt-action-add rnt-subsection-title-actions" data-action="addDamage" data-ti="{{i}}"><i class="fa-solid fa-plus"></i> {{localize "pf2e-aztecs-rip-n-tear.addDamage"}}</a>
             </div>
             {{#each t.damages as |d di|}}
-            <div class="rnt-damage-row">
-               <input type="number" name="thresholds.{{i}}.damages.{{di}}.diceNum" value="{{d.diceNum}}" />
-               <span class="rnt-dice-sep">d</span>
-               <select name="thresholds.{{i}}.damages.{{di}}.diceStep">
-                  <option value="" {{#if (eq d.diceStep "")}}selected{{/if}}>-</option>
-                  <option value="4" {{#if (eq d.diceStep "4")}}selected{{/if}}>4</option>
-                  <option value="6" {{#if (eq d.diceStep "6")}}selected{{/if}}>6</option>
-                  <option value="8" {{#if (eq d.diceStep "8")}}selected{{/if}}>8</option>
-                  <option value="10" {{#if (eq d.diceStep "10")}}selected{{/if}}>10</option>
-                  <option value="12" {{#if (eq d.diceStep "12")}}selected{{/if}}>12</option>
-               </select>
-               <select name="thresholds.{{i}}.damages.{{di}}.dmgType">
-                  {{#each @root.pf2eDamageTypes}}<option value="{{this.slug}}" {{#if (eq d.dmgType this.slug)}}selected{{/if}}>{{this.label}}</option>{{/each}}
-               </select>
-               <select class="rnt-dmg-cat-select" name="thresholds.{{i}}.damages.{{di}}.dmgCategory">
-                  {{#if (eq d.dmgType "bleed")}}
-                  <option value="persistent" selected>{{localize "pf2e-aztecs-rip-n-tear.persistent"}}</option>
-                  {{else}}
-                  <option value="" {{#if (eq d.dmgCategory "")}}selected{{/if}}>{{localize "pf2e-aztecs-rip-n-tear.normal"}}</option>
-                  <option value="persistent" {{#if (eq d.dmgCategory "persistent")}}selected{{/if}}>{{localize "pf2e-aztecs-rip-n-tear.persistent"}}</option>
-                  <option value="precision" {{#if (eq d.dmgCategory "precision")}}selected{{/if}}>{{localize "pf2e-aztecs-rip-n-tear.precision"}}</option>
-                  <option value="splash" {{#if (eq d.dmgCategory "splash")}}selected{{/if}}>{{localize "pf2e-aztecs-rip-n-tear.splash"}}</option>
-                  {{/if}}
-               </select>
-               <a class="rnt-repeat-remove" data-action="removeDamage" data-ti="{{i}}" data-di="{{di}}"><i class="fa-solid fa-trash"></i></a>
+            <div class="rnt-targeted-entry">
+               <div class="rnt-damage-row">
+                  <input type="number" name="thresholds.{{i}}.damages.{{di}}.diceNum" value="{{d.diceNum}}" />
+                  <span class="rnt-dice-sep">d</span>
+                  <select name="thresholds.{{i}}.damages.{{di}}.diceStep">
+                     <option value="" {{#if (eq d.diceStep "")}}selected{{/if}}>-</option>
+                     <option value="4" {{#if (eq d.diceStep "4")}}selected{{/if}}>4</option>
+                     <option value="6" {{#if (eq d.diceStep "6")}}selected{{/if}}>6</option>
+                     <option value="8" {{#if (eq d.diceStep "8")}}selected{{/if}}>8</option>
+                     <option value="10" {{#if (eq d.diceStep "10")}}selected{{/if}}>10</option>
+                     <option value="12" {{#if (eq d.diceStep "12")}}selected{{/if}}>12</option>
+                  </select>
+                  <select name="thresholds.{{i}}.damages.{{di}}.dmgType">
+                     {{#each @root.pf2eDamageTypes}}<option value="{{this.slug}}" {{#if (eq d.dmgType this.slug)}}selected{{/if}}>{{this.label}}</option>{{/each}}
+                  </select>
+                  <select class="rnt-dmg-cat-select" name="thresholds.{{i}}.damages.{{di}}.dmgCategory">
+                     {{#if (eq d.dmgType "bleed")}}
+                     <option value="persistent" selected>{{localize "pf2e-aztecs-rip-n-tear.persistent"}}</option>
+                     {{else}}
+                     <option value="" {{#if (eq d.dmgCategory "")}}selected{{/if}}>{{localize "pf2e-aztecs-rip-n-tear.normal"}}</option>
+                     <option value="persistent" {{#if (eq d.dmgCategory "persistent")}}selected{{/if}}>{{localize "pf2e-aztecs-rip-n-tear.persistent"}}</option>
+                     <option value="precision" {{#if (eq d.dmgCategory "precision")}}selected{{/if}}>{{localize "pf2e-aztecs-rip-n-tear.precision"}}</option>
+                     <option value="splash" {{#if (eq d.dmgCategory "splash")}}selected{{/if}}>{{localize "pf2e-aztecs-rip-n-tear.splash"}}</option>
+                     {{/if}}
+                  </select>
+                  <a class="rnt-repeat-remove" data-action="removeDamage" data-ti="{{i}}" data-di="{{di}}"><i class="fa-solid fa-trash"></i></a>
+               </div>
+               {{#if @root.showThresholdTargets}}
+               <div class="rnt-threshold-target-row rnt-threshold-target-row-flat">
+                  <label>{{localize "pf2e-aztecs-rip-n-tear.targets"}}:</label>
+                  <select class="rnt-threshold-target-select" data-ti="{{i}}" data-kind="damages" data-entry-index="{{di}}">
+                     <option value="" disabled selected>{{localize "pf2e-aztecs-rip-n-tear.addTarget"}}</option>
+                     {{#each @root.thresholdTargetOptions}}
+                     <option value="{{this.id}}">{{this.label}}</option>
+                     {{/each}}
+                  </select>
+                  <div class="rnt-chip-list rnt-threshold-target-chip-list">
+                     {{#each d.targetData as |target tgi|}}
+                     <span class="rnt-chip">
+                        {{target.label}}
+                        <input type="hidden" name="thresholds.{{i}}.damages.{{di}}.targets" value="{{target.id}}">
+                        <a class="rnt-chip-remove" data-action="removeThresholdTarget" data-ti="{{i}}" data-kind="damages" data-entry-index="{{di}}" data-target-index="{{tgi}}"><i class="fa-solid fa-times"></i></a>
+                     </span>
+                     {{/each}}
+                  </div>
+               </div>
+               {{/if}}
             </div>
             {{/each}}
          </div>

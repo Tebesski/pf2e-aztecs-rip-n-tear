@@ -1,9 +1,15 @@
 const { ApplicationV2, HandlebarsApplicationMixin } = foundry.applications.api
 
 import { MODULE_ID } from "../constants.mjs"
+import {
+   getRntLinkableModuleData,
+   syncRntDisabledModules,
+   withRntActorTheme,
+} from "../actor-support.mjs"
 
 export class LinkedItemsApp extends HandlebarsApplicationMixin(ApplicationV2) {
    constructor(options = {}) {
+      options = withRntActorTheme(options)
       super(options)
       this.actor = options.actor
       this.partId = options.partId
@@ -53,6 +59,19 @@ export class LinkedItemsApp extends HandlebarsApplicationMixin(ApplicationV2) {
                pushIfFound(id, "fa-suitcase")
             }
          }
+      } else if (this.linkType === "modules") {
+         const moduleData = getRntLinkableModuleData(this.actor)
+         for (const id of part.linkedModules || []) {
+            const data = moduleData.find((m) => m.id === id)
+            const item = this.actor.items.get(id)
+            if (data || item) {
+               items.push({
+                  id,
+                  name: data?.name || item.name,
+                  icon: "fa-gears",
+               })
+            }
+         }
       }
 
       return { part, items, linkType: this.linkType }
@@ -78,9 +97,14 @@ export class LinkedItemsApp extends HandlebarsApplicationMixin(ApplicationV2) {
          if (part.linkedItems) {
             part.linkedItems = part.linkedItems.filter((id) => id !== itemId)
          }
+      } else if (this.linkType === "modules") {
+         part.linkedModules = (part.linkedModules || []).filter(
+            (id) => id !== itemId,
+         )
       }
 
       await this.actor.setFlag(MODULE_ID, "parts", parts)
+      await syncRntDisabledModules(this.actor, parts)
       this.render()
    }
 

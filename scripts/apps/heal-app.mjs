@@ -2,9 +2,12 @@ const { ApplicationV2, HandlebarsApplicationMixin } = foundry.applications.api
 
 import { MODULE_ID } from "../constants.mjs"
 import { applyBodyPartHealing } from "../mechanics.mjs"
+import { withRntActorTheme } from "../actor-support.mjs"
+import { strongText } from "../html-format.mjs"
 
 export class HealBodyPartApp extends HandlebarsApplicationMixin(ApplicationV2) {
    constructor(options = {}) {
+      options = withRntActorTheme(options)
       super(options)
       this.actor = options.actor
       this.partId = options.partId
@@ -51,12 +54,17 @@ export class HealBodyPartApp extends HandlebarsApplicationMixin(ApplicationV2) {
             const part = parts.find((p) => p.id === this.partId) || {}
 
             const effectData = {
-               name: `Regeneration (${part.name})`,
+               name: game.i18n.format(`${MODULE_ID}.regenerationEffectName`, {
+                  partName: part.name,
+               }),
                type: "effect",
                img: "icons/magic/life/heart-cross-green.webp",
                system: {
                   description: {
-                     value: `Heals ${amount} HP per turn for ${duration} turns.`,
+                     value: game.i18n.format(
+                        `${MODULE_ID}.regenerationEffectDescription`,
+                        { amount, duration },
+                     ),
                   },
                   duration: {
                      value: duration,
@@ -75,7 +83,11 @@ export class HealBodyPartApp extends HandlebarsApplicationMixin(ApplicationV2) {
             await this.actor.createEmbeddedDocuments("Item", [effectData])
             ChatMessage.create({
                speaker: ChatMessage.getSpeaker({ actor: this.actor }),
-               content: `<strong>${part.name}</strong> is now regenerating ${amount} HP per turn for ${duration} turns.`,
+               content: game.i18n.format(`${MODULE_ID}.regenerationStarted`, {
+                  partName: strongText(part.name),
+                  amount,
+                  duration,
+               }),
             })
          }
       } else {
